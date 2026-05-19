@@ -1,0 +1,15 @@
+{
+  "name": "innova-crm",
+  "version": "1.0.0",
+  "description": "Monorepo for CRM Antropométrico y Motor de Somatotipo",
+  "private": true,
+  "scripts": {
+    "install:all": "npm install --prefix client && npm install --prefix server",
+    "dev": "concurrently \"npm run dev --prefix client\" \"npm run dev --prefix server\"",
+    "db:setup": "npm run prisma:db --prefix server && npm run prisma:generate --prefix server",
+    "postinstall": "npm run install:all && npm run db:setup"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

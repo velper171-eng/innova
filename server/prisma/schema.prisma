@@ -1,0 +1,133 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Patient {
+  id              Int              @id @default(autoincrement())
+  name            String
+  birthdate       String
+  gender          String           // "male" or "female"
+  email           String?
+  phone           String?
+  sport           String?
+  createdAt       DateTime         @default(now())
+  evaluations     Evaluation[]
+  supplements     Supplement[]
+  cycles          SupplementCycle[]
+  workoutSchedule WorkoutSchedule?
+  postureJobs     PostureAnalysisJob[]
+}
+
+model Evaluation {
+  id                   Int      @id @default(autoincrement())
+  patientId            Int
+  patient              Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  date                 String
+  weight               Float    // in kg
+  height               Float    // in cm
+  age                  Int
+  
+  // Skinfolds (Pliegues cutáneos in mm)
+  skinfoldTriceps      Float
+  skinfoldBiceps       Float
+  skinfoldSubescapular Float
+  skinfoldSupraspinale Float
+  skinfoldAbdominal    Float
+  skinfoldThigh        Float
+  skinfoldCalf         Float
+
+  // Perimeters (Perímetros in cm)
+  girthArm             Float
+  girthCalf            Float
+
+  // Diameters (Diámetros in cm)
+  diameterHumerus      Float
+  diameterFemur        Float
+
+  // Calculated Results
+  density              Float    // Body Density (Db)
+  bodyFat              Float    // Siri Body Fat %
+  endomorphy           Float
+  mesomorphy           Float
+  ectomorphy           Float
+  xCoord               Float    // X coordinate on Somatochart
+  yCoord               Float    // Y coordinate on Somatochart
+  
+  createdAt            DateTime @default(now())
+}
+
+model Supplement {
+  id                Int               @id @default(autoincrement())
+  patientId         Int
+  patient           Patient           @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  name              String            // e.g. "Creatina Monohidratada"
+  brand             String?           // e.g. "Evolufit"
+  totalCapacity     Float             // e.g. 300 (g) or 90 (caps)
+  remainingQuantity Float             // e.g. 250 (g) or 80 (caps)
+  unit              String            // "g", "caps", "scoops"
+  purchaseLink      String?           // Purchase URL
+  createdAt         DateTime          @default(now())
+  cycles            SupplementCycle[]
+}
+
+model SupplementCycle {
+  id           Int          @id @default(autoincrement())
+  patientId    Int
+  patient      Patient      @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  supplementId Int?
+  supplement   Supplement?  @relation(fields: [supplementId], references: [id], onDelete: SetNull)
+  name         String       // e.g. "Ciclo Creatina"
+  startDate    String       // YYYY-MM-DD
+  endDate      String?      // YYYY-MM-DD
+  isActive     Boolean      @default(true)
+  phases       CyclePhase[]
+  logs         IntakeLog[]
+  createdAt    DateTime     @default(now())
+}
+
+model CyclePhase {
+  id           Int             @id @default(autoincrement())
+  cycleId      Int
+  cycle        SupplementCycle @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  name         String          // "Carga", "Mantenimiento", "Normal"
+  durationDays Int
+  dailyDose    Float           // in grams or units
+  timingType   String          // "pre-workout", "post-workout", "morning", "night", "custom"
+  customTime   String?         // "08:00"
+}
+
+model IntakeLog {
+  id        Int             @id @default(autoincrement())
+  cycleId   Int
+  cycle     SupplementCycle @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  date      String          // YYYY-MM-DD
+  time      String          // HH:MM
+  doseTaken Float
+  status    String          // "taken", "skipped"
+  createdAt DateTime        @default(now())
+}
+
+model WorkoutSchedule {
+  id          Int     @id @default(autoincrement())
+  patientId   Int     @unique
+  patient     Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  workoutTime String  // "18:00"
+  activeDays  String  // Comma-separated active days, e.g. "Monday,Wednesday,Friday"
+}
+
+model PostureAnalysisJob {
+  id         Int      @id @default(autoincrement())
+  patientId  Int
+  patient    Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  videoPath  String
+  status     String   // "pending", "processing", "completed", "failed"
+  progress   Int      @default(0)
+  resultJson String?  // text containing frame-by-frame landmarks, angles, and alerts
+  createdAt  DateTime @default(now())
+}
+

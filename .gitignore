@@ -1,0 +1,27 @@
+# Node modules
+node_modules/
+client/node_modules/
+server/node_modules/
+
+# Local databases
+server/prisma/*.db
+server/prisma/*.db-journal
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Video uploads directory
+server/uploads/*
+!server/uploads/.gitkeep
+
+# Production builds
+client/dist/
+dist/
+
+# OS files
+.DS_Store
+Thumbs.db
