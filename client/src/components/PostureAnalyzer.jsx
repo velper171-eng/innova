@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 
-const API_BASE = "http://localhost:3001/api";
+const API_BASE = "/api";
 
 const PostureAnalyzer = ({ patientId }) => {
   const [jobs, setJobs] = useState([]);

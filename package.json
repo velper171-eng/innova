@@ -6,7 +6,7 @@
   "scripts": {
     "install:all": "npm install --prefix client && npm install --prefix server",
     "dev": "concurrently \"npm run dev --prefix client\" \"npm run dev --prefix server\"",
-    "db:setup": "npm run prisma:db --prefix server && npm run prisma:generate --prefix server",
+    "db:setup": "node db-setup.js",
     "postinstall": "npm run install:all && npm run db:setup"
   },
   "devDependencies": {

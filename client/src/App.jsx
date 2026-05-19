@@ -6,7 +6,7 @@ import CyclePlanner from "./components/CyclePlanner";
 import AthleteView from "./components/AthleteView";
 import PostureAnalyzer from "./components/PostureAnalyzer";
 
-const API_BASE = "http://localhost:3001/api";
+const API_BASE = "/api";
 
 function App() {
   const [patients, setPatients] = useState([]);
