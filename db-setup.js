@@ -1,6 +1,19 @@
+const fs = require('fs');
+const path = require('path');
 const { execSync } = require('child_process');
 
 console.log("Starting database setup...");
+
+// Load environment variables from server/.env if present (local development)
+const envPath = path.join(__dirname, 'server', '.env');
+if (fs.existsSync(envPath)) {
+  const envContent = fs.readFileSync(envPath, 'utf8');
+  const match = envContent.match(/^DATABASE_URL=["']?([^"\n\r']+)["']?/m);
+  if (match && match[1]) {
+    process.env.DATABASE_URL = match[1];
+    console.log("Loaded DATABASE_URL from server/.env");
+  }
+}
 
 try {
   // Always run prisma generate
