@@ -1,6 +1,6 @@
+import "./load-env.js";
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
 import multer from "multer";
@@ -8,8 +8,6 @@ import prisma from "./database.js";
 import { calculateSomatotype, calculateBodyFat } from "./calculator.js";
 import { getSupplementPresetPhases, checkInventoryAlert } from "./supplementEngine.js";
 import { enqueuePostureJob, getQueueStatus } from "./queue.js";
-
-dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -27,7 +25,9 @@ app.use((req, res, next) => {
 
 // Get all patients
 app.get("/api/patients", async (req, res) => {
+  console.log("ROUTE /api/patients: Request received.");
   try {
+    console.log("ROUTE /api/patients: Querying Prisma...");
     const patients = await prisma.patient.findMany({
       orderBy: { name: "asc" },
       include: {
@@ -36,9 +36,10 @@ app.get("/api/patients", async (req, res) => {
         }
       }
     });
+    console.log(`ROUTE /api/patients: Query successful. Patients found: ${patients.length}`);
     res.json(patients);
   } catch (error) {
-    console.error("Error fetching patients:", error);
+    console.error("ROUTE /api/patients: Error fetching patients:", error);
     res.status(500).json({ error: "Error al obtener los pacientes" });
   }
 });
