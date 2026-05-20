@@ -322,7 +322,7 @@ const PostureAnalyzer = ({ patientId }) => {
         
         {/* Left pane: Jobs history list */}
         <div className="glass-card" style={{ display: "flex", flexDirection: "column", gap: "16px", maxHeight: "550px", overflowY: "auto" }}>
-          <h4 style={{ fontSize: "1.1rem", borderBottom: "1px solid rgba(255,255,255,0.08)", paddingBottom: "10px" }}>
+          <h4 style={{ fontSize: "1.1rem", borderBottom: "1px solid var(--border-color)", paddingBottom: "10px" }}>
             Historial de Análisis
           </h4>
 
@@ -340,8 +340,8 @@ const PostureAnalyzer = ({ patientId }) => {
                     padding: "12px",
                     borderRadius: "8px",
                     cursor: "pointer",
-                    background: activeJob?.id === job.id ? "rgba(0, 242, 254, 0.05)" : "rgba(255,255,255,0.01)",
-                    border: `1px solid ${activeJob?.id === job.id ? "var(--primary)" : "rgba(255,255,255,0.06)"}`,
+                    background: activeJob?.id === job.id ? "var(--primary-glow)" : "var(--bg-main)",
+                    border: `1px solid ${activeJob?.id === job.id ? "var(--primary)" : "var(--border-color)"}`,
                   }}
                 >
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -389,8 +389,8 @@ const PostureAnalyzer = ({ patientId }) => {
                 El video ha sido recibido en el Data Lake y se está analizando fotograma a fotograma con MediaPipe Pose. La pantalla del usuario está desacoplada del proceso.
               </p>
 
-              <div style={{ width: "100%", maxWidth: "400px", height: "8px", background: "rgba(255,255,255,0.05)", borderRadius: "4px", overflow: "hidden", position: "relative" }}>
-                <div style={{ height: "100%", width: `${activeJob.progress}%`, background: "var(--primary)", boxShadow: "0 0 8px var(--primary)", transition: "width 0.4s" }} />
+              <div style={{ width: "100%", maxWidth: "400px", height: "8px", background: "var(--border-color)", borderRadius: "4px", overflow: "hidden", position: "relative" }}>
+                <div style={{ height: "100%", width: `${activeJob.progress}%`, background: "var(--primary)", boxShadow: "none", transition: "width 0.4s" }} />
               </div>
               
               <div style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
@@ -411,7 +411,7 @@ const PostureAnalyzer = ({ patientId }) => {
                     background: "black",
                     borderRadius: "16px",
                     overflow: "hidden",
-                    border: "1px solid rgba(255,255,255,0.08)",
+                    border: "1px solid var(--border-color)",
                     lineHeight: 0
                   }}
                 >
@@ -475,15 +475,15 @@ const PostureAnalyzer = ({ patientId }) => {
                     
                     {/* Angles panel */}
                     <div className="grid-2-cols" style={{ gap: "12px" }}>
-                      <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "8px", padding: "12px", textAlign: "center" }}>
-                        <span style={{ fontSize: "0.75rem", color: "var(--text-dark)" }}>Flexión Rodillas</span>
+                      <div style={{ background: "var(--bg-main)", border: "1px solid var(--border-color)", borderRadius: "8px", padding: "12px", textAlign: "center" }}>
+                        <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Flexión Rodillas</span>
                         <div style={{ fontSize: "1.8rem", fontWeight: 700, color: "var(--primary)", marginTop: "4px" }}>
                           {currentFrameData.angles.kneeAngle}°
                         </div>
                       </div>
                       
-                      <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "8px", padding: "12px", textAlign: "center" }}>
-                        <span style={{ fontSize: "0.75rem", color: "var(--text-dark)" }}>Extensión Lumbar</span>
+                      <div style={{ background: "var(--bg-main)", border: "1px solid var(--border-color)", borderRadius: "8px", padding: "12px", textAlign: "center" }}>
+                        <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Extensión Lumbar</span>
                         <div style={{ fontSize: "1.8rem", fontWeight: 700, color: currentFrameData.angles.lumbarAngle < 150 ? "var(--error)" : "var(--success)", marginTop: "4px" }}>
                           {currentFrameData.angles.lumbarAngle}°
                         </div>
@@ -494,13 +494,13 @@ const PostureAnalyzer = ({ patientId }) => {
                     <div>
                       <span style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>Alertas de Ejecución (Fotograma {currentFrameData.frame}):</span>
                       {currentFrameData.alerts.length === 0 ? (
-                        <div style={{ marginTop: "8px", padding: "10px", borderRadius: "8px", background: "rgba(16,185,129,0.05)", border: "1px solid rgba(16,185,129,0.1)", color: "var(--success)", fontSize: "0.8rem" }}>
+                        <div style={{ marginTop: "8px", padding: "10px", borderRadius: "8px", background: "rgba(50, 205, 50, 0.05)", border: "1px solid rgba(50, 205, 50, 0.15)", color: "var(--success)", fontSize: "0.8rem" }}>
                           ✓ Postura dentro de rangos seguros.
                         </div>
                       ) : (
                         <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "8px" }}>
                           {currentFrameData.alerts.map((al, aIdx) => (
-                            <div key={aIdx} style={{ padding: "10px", borderRadius: "8px", background: "rgba(244,63,94,0.08)", border: "1px solid rgba(244,63,94,0.2)", color: "var(--error)", fontSize: "0.8rem", fontWeight: 600 }}>
+                            <div key={aIdx} style={{ padding: "10px", borderRadius: "8px", background: "rgba(255, 69, 0, 0.08)", border: "1px solid rgba(255, 69, 0, 0.2)", color: "var(--error)", fontSize: "0.8rem", fontWeight: 600 }}>
                               🚨 {al}
                             </div>
                           ))}
@@ -509,8 +509,8 @@ const PostureAnalyzer = ({ patientId }) => {
                     </div>
 
                     {/* Summary statistics */}
-                    <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: "14px", marginTop: "10px" }}>
-                      <span style={{ fontSize: "0.85rem", color: "var(--text-dark)" }}>Resumen Diagnóstico:</span>
+                    <div style={{ borderTop: "1px solid var(--border-color)", paddingTop: "14px", marginTop: "10px" }}>
+                      <span style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>Resumen Diagnóstico:</span>
                       <ul style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "8px", paddingLeft: "16px", lineHeight: "1.6" }}>
                         <li>Flexión de rodilla máxima: <strong>{activeJob.result.summary.minKneeAngle}°</strong></li>
                         <li>Flexión lumbar máxima: <strong style={{ color: "var(--error)" }}>{activeJob.result.summary.minLumbarAngle}°</strong></li>

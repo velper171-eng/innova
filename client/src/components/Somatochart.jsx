@@ -49,10 +49,9 @@ const Somatochart = ({ evaluations = [] }) => {
         width="100%"
         height="100%"
         style={{
-          background: "rgba(15, 23, 42, 0.4)",
+          background: "var(--bg-main)",
           borderRadius: "16px",
-          border: "1px solid rgba(255, 255, 255, 0.08)",
-          boxShadow: "inset 0 0 20px rgba(0, 0, 0, 0.5)",
+          border: "1px solid var(--border-color)",
         }}
       >
         {/* Gradients definitions */}
@@ -99,7 +98,7 @@ const Somatochart = ({ evaluations = [] }) => {
             y1={getY(minY)}
             x2={getX(x)}
             y2={getY(maxY)}
-            stroke="rgba(255, 255, 255, 0.05)"
+            stroke="var(--border-color)"
             strokeWidth="1"
             strokeDasharray={x === 0 ? "0" : "4 4"}
           />
@@ -112,7 +111,7 @@ const Somatochart = ({ evaluations = [] }) => {
             y1={getY(y)}
             x2={getX(maxX)}
             y2={getY(y)}
-            stroke="rgba(255, 255, 255, 0.05)"
+            stroke="var(--border-color)"
             strokeWidth="1"
             strokeDasharray={y === 0 ? "0" : "4 4"}
           />
@@ -131,7 +130,7 @@ const Somatochart = ({ evaluations = [] }) => {
             ${getX(-5)},${getY(10)}
           `}
           fill="none"
-          stroke="rgba(255, 255, 255, 0.15)"
+          stroke="var(--border-color)"
           strokeWidth="2"
         />
 
@@ -141,7 +140,7 @@ const Somatochart = ({ evaluations = [] }) => {
           y1={getY(minY)}
           x2={getX(0)}
           y2={getY(maxY)}
-          stroke="rgba(255, 255, 255, 0.2)"
+          stroke="var(--border-color)"
           strokeWidth="1.5"
         />
         <line
@@ -149,7 +148,7 @@ const Somatochart = ({ evaluations = [] }) => {
           y1={getY(0)}
           x2={getX(maxX)}
           y2={getY(0)}
-          stroke="rgba(255, 255, 255, 0.2)"
+          stroke="var(--border-color)"
           strokeWidth="1.5"
         />
 
@@ -179,7 +178,7 @@ const Somatochart = ({ evaluations = [] }) => {
         <text
           x={getX(7.5)}
           y={getY(-6.5)}
-          fill="#a78bfa"
+          fill="var(--success)"
           textAnchor="middle"
           fontSize="12"
           fontWeight="700"
@@ -194,14 +193,14 @@ const Somatochart = ({ evaluations = [] }) => {
           cy={getY(0)}
           r="25"
           fill="none"
-          stroke="rgba(255, 255, 255, 0.2)"
+          stroke="var(--border-color)"
           strokeWidth="1"
           strokeDasharray="2 2"
         />
         <text
           x={getX(0)}
           y={getY(0) + 4}
-          fill="rgba(255, 255, 255, 0.4)"
+          fill="var(--text-muted)"
           textAnchor="middle"
           fontSize="10"
         >
@@ -264,8 +263,8 @@ const Somatochart = ({ evaluations = [] }) => {
                 cx={x}
                 cy={y}
                 r={isLatest ? "7" : "5"}
-                fill={isLatest ? "var(--primary)" : "rgba(255, 255, 255, 0.8)"}
-                stroke={isLatest ? "#060913" : "var(--primary)"}
+                fill={isLatest ? "var(--primary)" : "var(--bg-card)"}
+                stroke={isLatest ? "#ffffff" : "var(--primary)"}
                 strokeWidth="2"
                 style={{ cursor: "pointer", transition: "all 0.2s" }}
                 onMouseEnter={() => setHoveredPoint(ev)}
@@ -288,9 +287,9 @@ const Somatochart = ({ evaluations = [] }) => {
             padding: "12px",
             fontSize: "0.85rem",
             zIndex: 10,
-            border: "1px solid var(--primary)",
-            background: "rgba(11, 19, 41, 0.95)",
-            boxShadow: "var(--shadow-glow)",
+            border: "1px solid var(--border-color)",
+            background: "var(--bg-card)",
+            boxShadow: "var(--box-shadow)",
           }}
         >
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>

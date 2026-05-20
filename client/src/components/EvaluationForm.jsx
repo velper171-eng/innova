@@ -464,7 +464,7 @@ const EvaluationForm = ({ onSubmit, onCancel, patient }) => {
       </form>
 
       {/* Live Preview Sidebar */}
-      <div className="glass-card" style={{ height: "fit-content", background: "rgba(10, 15, 30, 0.8)", border: "1px solid rgba(0, 242, 254, 0.15)" }}>
+      <div className="glass-card" style={{ height: "fit-content" }}>
         <h4 className="glow-text" style={{ fontSize: "1.1rem", marginBottom: "16px" }}>
           Cálculos en Tiempo Real
         </h4>
@@ -487,7 +487,7 @@ const EvaluationForm = ({ onSubmit, onCancel, patient }) => {
               </div>
             )}
 
-            <hr style={{ border: "none", borderTop: "1px solid rgba(255,255,255,0.08)" }} />
+            <hr style={{ border: "none", borderTop: "1px solid var(--border-color)" }} />
 
             {/* Fat values */}
             {results.fat ? (

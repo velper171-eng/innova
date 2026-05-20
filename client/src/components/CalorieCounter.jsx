@@ -192,7 +192,7 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
           <div style={{ position: "relative", width: "120px", height: "120px" }}>
             <svg height="120" width="120" style={{ transform: "rotate(-90deg)" }}>
               <circle
-                stroke="rgba(255,255,255,0.05)"
+                stroke="var(--border-color)"
                 fill="transparent"
                 strokeWidth={stroke}
                 r={normalizedRadius}
@@ -292,7 +292,7 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
               <span style={{ color: "var(--text-muted)" }}>Proteínas (4 kcal/g)</span>
               <span style={{ color: "var(--primary)", fontWeight: 700 }}>{totalProteinToday.toFixed(1)}g</span>
             </div>
-            <div style={{ height: "6px", width: "100%", background: "rgba(255,255,255,0.05)", borderRadius: "3px", overflow: "hidden" }}>
+            <div style={{ height: "6px", width: "100%", background: "var(--border-color)", borderRadius: "3px", overflow: "hidden" }}>
               <div style={{ height: "100%", width: `${Math.min(100, (totalProteinToday / 150) * 100)}%`, background: "var(--primary)", transition: "width 0.3s" }} />
             </div>
           </div>
@@ -300,20 +300,20 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
           <div>
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem", marginBottom: "4px" }}>
               <span style={{ color: "var(--text-muted)" }}>Carbohidratos (4 kcal/g)</span>
-              <span style={{ color: "var(--accent)", fontWeight: 700 }}>{totalCarbsToday.toFixed(1)}g</span>
+              <span style={{ color: "var(--success)", fontWeight: 700 }}>{totalCarbsToday.toFixed(1)}g</span>
             </div>
-            <div style={{ height: "6px", width: "100%", background: "rgba(255,255,255,0.05)", borderRadius: "3px", overflow: "hidden" }}>
-              <div style={{ height: "100%", width: `${Math.min(100, (totalCarbsToday / 250) * 100)}%`, background: "var(--accent)", transition: "width 0.3s" }} />
+            <div style={{ height: "6px", width: "100%", background: "var(--border-color)", borderRadius: "3px", overflow: "hidden" }}>
+              <div style={{ height: "100%", width: `${Math.min(100, (totalCarbsToday / 250) * 100)}%`, background: "var(--success)", transition: "width 0.3s" }} />
             </div>
           </div>
           {/* Fat */}
           <div>
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem", marginBottom: "4px" }}>
               <span style={{ color: "var(--text-muted)" }}>Grasas (9 kcal/g)</span>
-              <span style={{ color: "#fbbf24", fontWeight: 700 }}>{totalFatToday.toFixed(1)}g</span>
+              <span style={{ color: "var(--warning)", fontWeight: 700 }}>{totalFatToday.toFixed(1)}g</span>
             </div>
-            <div style={{ height: "6px", width: "100%", background: "rgba(255,255,255,0.05)", borderRadius: "3px", overflow: "hidden" }}>
-              <div style={{ height: "100%", width: `${Math.min(100, (totalFatToday / 80) * 100)}%`, background: "#fbbf24", transition: "width 0.3s" }} />
+            <div style={{ height: "6px", width: "100%", background: "var(--border-color)", borderRadius: "3px", overflow: "hidden" }}>
+              <div style={{ height: "100%", width: `${Math.min(100, (totalFatToday / 80) * 100)}%`, background: "var(--warning)", transition: "width 0.3s" }} />
             </div>
           </div>
         </div>
@@ -332,12 +332,12 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
             <div
               onClick={() => fileInputRef.current?.click()}
               style={{
-                border: "2px dashed rgba(0, 242, 254, 0.2)",
+                border: "2px dashed var(--primary)",
                 borderRadius: "12px",
                 padding: "20px",
                 textAlign: "center",
                 cursor: "pointer",
-                background: "rgba(255,255,255,0.01)",
+                background: "var(--bg-main)",
                 transition: "all var(--transition-fast)",
                 position: "relative",
                 minHeight: "150px",
@@ -399,7 +399,7 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
                   <span style={{ fontSize: "0.9rem", color: "var(--text-main)", fontWeight: 500 }}>
                     Toma o sube una foto del plato
                   </span>
-                  <span style={{ fontSize: "0.75rem", color: "var(--text-dark)" }}>
+                  <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
                     Arrastra la imagen o haz clic para abrir tu cámara/galería
                   </span>
                 </div>
@@ -453,7 +453,7 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
             </div>
 
             {errorMsg && (
-              <div style={{ padding: "10px", borderRadius: "8px", background: "rgba(244,63,94,0.08)", border: "1px solid rgba(244,63,94,0.2)", color: "var(--error)", fontSize: "0.85rem" }}>
+              <div style={{ padding: "10px", borderRadius: "8px", background: "rgba(255, 69, 0, 0.08)", border: "1px solid rgba(255, 69, 0, 0.2)", color: "var(--error)", fontSize: "0.85rem" }}>
                 ⚠️ {errorMsg}
               </div>
             )}
@@ -466,7 +466,7 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
             >
               {analyzing ? (
                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  <div className="spinner" style={{ width: "16px", height: "16px", border: "2px solid #030712", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
+                  <div className="spinner" style={{ width: "16px", height: "16px", border: "2px solid white", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
                   Analizando Plato...
                 </div>
               ) : (
@@ -479,7 +479,7 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
           <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
             {result ? (
               <div className="glass-card animate-fade-in" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid rgba(255,255,255,0.08)", paddingBottom: "12px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--border-color)", paddingBottom: "12px" }}>
                   <div>
                     <h4 style={{ fontSize: "1.2rem", color: "var(--text-main)" }}>Resultado del Análisis</h4>
                     <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Plato: {result.foodName}</span>
@@ -498,7 +498,7 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
                 {/* Micro KPIs layout */}
                 <div style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
                   {/* Calories ring card */}
-                  <div style={{ flex: 1, minWidth: "100px", padding: "12px", background: "rgba(0, 242, 254, 0.03)", border: "1px solid rgba(0, 242, 254, 0.15)", borderRadius: "8px", textAlign: "center" }}>
+                  <div style={{ flex: 1, minWidth: "100px", padding: "12px", background: "var(--primary-glow)", border: "1px solid var(--primary)", borderRadius: "8px", textAlign: "center" }}>
                     <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Calorías</span>
                     <div style={{ fontSize: "1.8rem", fontWeight: 800, color: "var(--primary)", marginTop: "4px" }}>
                       {result.calories} kcal
@@ -506,7 +506,7 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
                   </div>
 
                   {/* Protein card */}
-                  <div style={{ flex: 1, minWidth: "80px", padding: "12px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "8px", textAlign: "center" }}>
+                  <div style={{ flex: 1, minWidth: "80px", padding: "12px", background: "var(--bg-main)", border: "1px solid var(--border-color)", borderRadius: "8px", textAlign: "center" }}>
                     <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Proteína</span>
                     <div style={{ fontSize: "1.4rem", fontWeight: 700, color: "var(--primary)", marginTop: "4px" }}>
                       {result.protein}g
@@ -514,7 +514,7 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
                   </div>
 
                   {/* Carbs card */}
-                  <div style={{ flex: 1, minWidth: "80px", padding: "12px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "8px", textAlign: "center" }}>
+                  <div style={{ flex: 1, minWidth: "80px", padding: "12px", background: "var(--bg-main)", border: "1px solid var(--border-color)", borderRadius: "8px", textAlign: "center" }}>
                     <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Carbos</span>
                     <div style={{ fontSize: "1.4rem", fontWeight: 700, color: "var(--accent)", marginTop: "4px" }}>
                       {result.carbs}g
@@ -522,7 +522,7 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
                   </div>
 
                   {/* Fat card */}
-                  <div style={{ flex: 1, minWidth: "80px", padding: "12px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "8px", textAlign: "center" }}>
+                  <div style={{ flex: 1, minWidth: "80px", padding: "12px", background: "var(--bg-main)", border: "1px solid var(--border-color)", borderRadius: "8px", textAlign: "center" }}>
                     <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Grasa</span>
                     <div style={{ fontSize: "1.4rem", fontWeight: 700, color: "#fbbf24", marginTop: "4px" }}>
                       {result.fat}g
@@ -530,7 +530,6 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
                   </div>
                 </div>
 
-                {/* Details textareas */}
                 <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                   <div>
                     <label className="form-label" style={{ fontSize: "0.75rem" }}>Desglose de Ingredientes Estimados:</label>
@@ -539,7 +538,7 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
                       value={result.ingredients || ""}
                       onChange={(e) => setResult(prev => ({ ...prev, ingredients: e.target.value }))}
                       rows={4}
-                      style={{ fontSize: "0.85rem", resize: "none", background: "rgba(255,255,255,0.02)", border: "1px dashed rgba(255,255,255,0.1)" }}
+                      style={{ fontSize: "0.85rem", resize: "none", background: "#ffffff", border: "1px dashed var(--border-color)" }}
                     />
                   </div>
                   <div>
@@ -549,13 +548,13 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
                       className="form-input"
                       value={result.preparation || ""}
                       onChange={(e) => setResult(prev => ({ ...prev, preparation: e.target.value }))}
-                      style={{ fontSize: "0.85rem", background: "rgba(255,255,255,0.02)", border: "1px dashed rgba(255,255,255,0.1)" }}
+                      style={{ fontSize: "0.85rem", background: "#ffffff", border: "1px dashed var(--border-color)" }}
                     />
                   </div>
                 </div>
-
+ 
                 {/* Action buttons */}
-                <div style={{ display: "flex", gap: "12px", borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: "12px" }}>
+                <div style={{ display: "flex", gap: "12px", borderTop: "1px solid var(--border-color)", paddingTop: "12px" }}>
                   <button
                     type="button"
                     className="btn btn-secondary"
@@ -607,8 +606,8 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
               <div
                 key={log.id}
                 style={{
-                  background: "rgba(255, 255, 255, 0.01)",
-                  border: "1px solid rgba(255, 255, 255, 0.06)",
+                  background: "var(--bg-main)",
+                  border: "1px solid var(--border-color)",
                   borderRadius: "12px",
                   padding: "16px",
                   display: "flex",
@@ -618,7 +617,7 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
               >
                 {/* Food image if present */}
                 {log.imagePath && (
-                  <div style={{ width: "64px", height: "64px", borderRadius: "8px", overflow: "hidden", border: "1px solid rgba(255,255,255,0.08)", flexShrink: 0 }}>
+                  <div style={{ width: "64px", height: "64px", borderRadius: "8px", overflow: "hidden", border: "1px solid var(--border-color)", flexShrink: 0 }}>
                     <img
                       src={`${API_BASE}${log.imagePath}`}
                       alt={log.foodName}
@@ -650,7 +649,7 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
 
                   {/* Collapsible/Show ingredients list */}
                   {(log.ingredients || log.preparation) && (
-                    <div style={{ marginTop: "10px", padding: "10px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)", borderRadius: "8px", fontSize: "0.8rem" }}>
+                    <div style={{ marginTop: "10px", padding: "10px", background: "#ffffff", border: "1px solid var(--border-color)", borderRadius: "8px", fontSize: "0.8rem" }}>
                       {log.ingredients && (
                         <div style={{ whiteSpace: "pre-line", color: "var(--text-muted)" }}>
                           <strong>Ingredientes:</strong><br />
@@ -665,11 +664,11 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
                     </div>
                   )}
                 </div>
-
+ 
                 {!isAdminMode && (
                   <button
                     className="btn"
-                    style={{ padding: "8px", background: "rgba(244,63,94,0.1)", color: "var(--error)", borderRadius: "50%", width: "36px", height: "36px", flexShrink: 0 }}
+                    style={{ padding: "8px", background: "rgba(255, 69, 0, 0.08)", color: "var(--error)", borderRadius: "50%", width: "36px", height: "36px", flexShrink: 0 }}
                     onClick={() => handleDeleteLog(log.id)}
                   >
                     🗑

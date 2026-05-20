@@ -285,8 +285,8 @@ const AthleteView = ({ patientId, onBack }) => {
           <div className="glass-card animate-fade-in" style={{
             marginBottom: "20px",
             padding: "12px 16px",
-            background: "rgba(0, 242, 254, 0.02)",
-            border: "1px solid rgba(0, 242, 254, 0.15)",
+            background: "var(--primary-glow)",
+            border: "1px solid var(--primary)",
             borderRadius: "12px",
             display: "flex",
             justifyContent: "space-between",
@@ -310,9 +310,9 @@ const AthleteView = ({ patientId, onBack }) => {
           </div>
 
           {/* 1. Daily reminders & intake checkoffs */}
-          <section className="glass-card" style={{ marginBottom: "20px", border: "1px solid rgba(0, 242, 254, 0.2)" }}>
+          <section className="glass-card" style={{ marginBottom: "20px" }}>
             <h4 className="glow-text" style={{ fontSize: "1.2rem", marginBottom: "16px", display: "flex", alignItems: "center", gap: "8px" }}>
-              <span style={{ display: "inline-block", width: "10px", height: "10px", borderRadius: "50%", background: "var(--primary)", boxShadow: "0 0 10px var(--primary)" }} />
+              <span style={{ display: "inline-block", width: "10px", height: "10px", borderRadius: "50%", background: "var(--primary)", boxShadow: "var(--shadow-glow)" }} />
               Tomas Programadas para Hoy
             </h4>
 
@@ -326,8 +326,8 @@ const AthleteView = ({ patientId, onBack }) => {
                   <div
                     key={idx}
                     style={{
-                      background: rem.status === "taken" ? "rgba(16, 185, 129, 0.08)" : rem.status === "skipped" ? "rgba(244, 63, 94, 0.08)" : "rgba(255, 255, 255, 0.02)",
-                      border: `1px solid ${rem.status === "taken" ? "var(--success)" : rem.status === "skipped" ? "var(--error)" : "rgba(255, 255, 255, 0.08)"}`,
+                      background: rem.status === "taken" ? "rgba(0, 191, 255, 0.08)" : rem.status === "skipped" ? "rgba(255, 69, 0, 0.08)" : "var(--bg-main)",
+                      border: `1px solid ${rem.status === "taken" ? "var(--success)" : rem.status === "skipped" ? "var(--error)" : "var(--border-color)"}`,
                       borderRadius: "12px",
                       padding: "16px",
                     }}
@@ -345,7 +345,7 @@ const AthleteView = ({ patientId, onBack }) => {
                           padding: "2px 8px",
                           borderRadius: "6px",
                           fontWeight: 600,
-                          background: rem.status === "taken" ? "rgba(16,185,129,0.2)" : rem.status === "skipped" ? "rgba(244,63,94,0.2)" : "rgba(255,255,255,0.05)",
+                          background: rem.status === "taken" ? "rgba(0,191,255,0.15)" : rem.status === "skipped" ? "rgba(255,69,0,0.15)" : "var(--bg-main)",
                           color: rem.status === "taken" ? "var(--success)" : rem.status === "skipped" ? "var(--error)" : "var(--text-muted)"
                         }}
                       >
@@ -355,7 +355,7 @@ const AthleteView = ({ patientId, onBack }) => {
 
                     {/* Low Stock Warning */}
                     {rem.stock?.isLowStock && (
-                      <div style={{ marginTop: "12px", padding: "8px 12px", background: "rgba(244, 63, 94, 0.1)", border: "1px solid rgba(244, 63, 94, 0.2)", borderRadius: "8px", fontSize: "0.8rem", color: "var(--error)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div style={{ marginTop: "12px", padding: "8px 12px", background: "rgba(255, 69, 0, 0.08)", border: "1px solid rgba(255, 69, 0, 0.2)", borderRadius: "8px", fontSize: "0.8rem", color: "var(--error)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                         <span>⚠️ ¡Quedan aprox. <strong>{rem.stock.daysRemaining} días</strong> ({rem.stock.remainingQuantity.toFixed(1)} {rem.stock.unit})!</span>
                         {rem.stock.purchaseLink && (
                           <a
@@ -400,7 +400,7 @@ const AthleteView = ({ patientId, onBack }) => {
           <section className="glass-card" style={{ marginBottom: "20px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
               <h4 className="glow-text" style={{ fontSize: "1.2rem" }}>Racha de Adherencia</h4>
-              <div style={{ background: "rgba(16, 185, 129, 0.15)", border: "1px solid var(--success)", padding: "4px 10px", borderRadius: "12px", fontSize: "0.85rem", color: "var(--success)", fontWeight: 700 }}>
+              <div style={{ background: "rgba(0, 191, 255, 0.08)", border: "1px solid var(--success)", padding: "4px 10px", borderRadius: "12px", fontSize: "0.85rem", color: "var(--success)", fontWeight: 700 }}>
                 🔥 {streak} Días de Racha
               </div>
             </div>
@@ -423,9 +423,9 @@ const AthleteView = ({ patientId, onBack }) => {
                     justifyContent: "center",
                     fontSize: "0.75rem",
                     fontWeight: 600,
-                    background: day.status === "taken" ? "rgba(16, 185, 129, 0.4)" : day.status === "skipped" ? "rgba(244, 63, 94, 0.4)" : "rgba(255, 255, 255, 0.03)",
-                    border: `1px solid ${day.status === "taken" ? "var(--success)" : day.status === "skipped" ? "var(--error)" : "rgba(255,255,255,0.06)"}`,
-                    color: day.status !== "none" ? "var(--text-main)" : "var(--text-dark)"
+                    background: day.status === "taken" ? "rgba(0, 191, 255, 0.25)" : day.status === "skipped" ? "rgba(255, 69, 0, 0.2)" : "var(--bg-main)",
+                    border: `1px solid ${day.status === "taken" ? "var(--success)" : day.status === "skipped" ? "var(--error)" : "var(--border-color)"}`,
+                    color: day.status !== "none" ? "var(--text-main)" : "var(--text-muted)"
                   }}
                 >
                   {day.dayNum}
@@ -453,7 +453,7 @@ const AthleteView = ({ patientId, onBack }) => {
             </div>
 
             {isEditingSchedule && (
-              <form onSubmit={handleSaveSchedule} style={{ marginTop: "16px", borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: "16px", display: "flex", flexDirection: "column", gap: "12px" }}>
+              <form onSubmit={handleSaveSchedule} style={{ marginTop: "16px", borderTop: "1px solid var(--border-color)", paddingTop: "16px", display: "flex", flexDirection: "column", gap: "12px" }}>
                 <div className="form-group">
                   <label className="form-label">Hora del Entrenamiento (HH:MM)</label>
                   <input
@@ -497,7 +497,7 @@ const AthleteView = ({ patientId, onBack }) => {
 
             {/* Add supplement form */}
             {isAddingSupplement && (
-              <form onSubmit={handleAddSupplement} style={{ marginBottom: "20px", padding: "16px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "12px", display: "flex", flexDirection: "column", gap: "12px" }}>
+              <form onSubmit={handleAddSupplement} style={{ marginBottom: "20px", padding: "16px", background: "var(--bg-main)", border: "1px solid var(--border-color)", borderRadius: "12px", display: "flex", flexDirection: "column", gap: "12px" }}>
                 <div className="grid-2-cols" style={{ gap: "12px" }}>
                   <div className="form-group">
                     <label className="form-label">Nombre *</label>
@@ -548,7 +548,7 @@ const AthleteView = ({ patientId, onBack }) => {
                   const isLow = sup.remainingQuantity <= (sup.totalCapacity * 0.15) || percent <= 15;
 
                   return (
-                    <div key={sup.id} style={{ background: "rgba(255,255,255,0.01)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "12px", padding: "14px" }}>
+                    <div key={sup.id} style={{ background: "var(--bg-main)", border: "1px solid var(--border-color)", borderRadius: "12px", padding: "14px" }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
                         <div>
                           <h5 style={{ fontWeight: 600, fontSize: "1rem" }}>{sup.name}</h5>
@@ -563,7 +563,7 @@ const AthleteView = ({ patientId, onBack }) => {
                       </div>
 
                       {/* Stock progress bar */}
-                      <div style={{ height: "6px", width: "100%", background: "rgba(255,255,255,0.05)", borderRadius: "3px", overflow: "hidden", marginBottom: "8px" }}>
+                      <div style={{ height: "6px", width: "100%", background: "rgba(112, 128, 144, 0.15)", borderRadius: "3px", overflow: "hidden", marginBottom: "8px" }}>
                         <div style={{ height: "100%", width: `${percent}%`, background: isLow ? "var(--error)" : "var(--primary)", transition: "width 0.3s" }} />
                       </div>
 
@@ -571,7 +571,7 @@ const AthleteView = ({ patientId, onBack }) => {
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "12px" }}>
                         <button
                           className="btn"
-                          style={{ padding: "4px 8px", fontSize: "0.75rem", background: "rgba(244,63,94,0.05)", color: "var(--error)" }}
+                          style={{ padding: "4px 8px", fontSize: "0.75rem", background: "rgba(255, 69, 0, 0.08)", color: "var(--error)" }}
                           onClick={() => handleDeleteSupplement(sup.id)}
                         >
                           Eliminar

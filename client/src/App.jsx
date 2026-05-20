@@ -220,9 +220,9 @@ function App() {
       {/* Top Navigation */}
       <header
         style={{
-          background: "rgba(10, 15, 30, 0.8)",
+          background: "var(--bg-card)",
           backdropFilter: "blur(12px)",
-          borderBottom: "1px solid rgba(255,255,255,0.08)",
+          borderBottom: "1px solid var(--border-color)",
           padding: "16px 32px",
           display: "flex",
           justifyContent: "space-between",
@@ -299,7 +299,7 @@ function App() {
         {/* Sidebar Drawer: Patient List & Search */}
         <aside className={`sidebar-drawer ${isSidebarOpen ? "open" : ""}`}>
           {/* Search bar & Add Button */}
-          <div style={{ padding: "20px", borderBottom: "1px solid rgba(255,255,255,0.08)", display: "flex", flexDirection: "column", gap: "12px" }}>
+          <div style={{ padding: "20px", borderBottom: "1px solid var(--border-color)", display: "flex", flexDirection: "column", gap: "12px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <span style={{ fontSize: "0.9rem", fontWeight: "700", color: "var(--primary)" }}>Panel de Pacientes</span>
               <button
@@ -349,8 +349,8 @@ function App() {
                   width: "100%",
                   padding: "20px 16px",
                   borderRadius: "12px",
-                  background: "rgba(255, 255, 255, 0.03)",
-                  border: "1px dashed rgba(0, 242, 254, 0.25)",
+                  background: "var(--bg-main)",
+                  border: "1px dashed var(--primary)",
                   color: "var(--text-main)",
                   display: "flex",
                   alignItems: "center",
@@ -420,8 +420,8 @@ function App() {
                         borderRadius: "12px",
                         cursor: "pointer",
                         transition: "all var(--transition-fast)",
-                        background: selectedPatient?.id === p.id ? "rgba(0, 242, 254, 0.08)" : "transparent",
-                        border: `1px solid ${selectedPatient?.id === p.id ? "rgba(0, 242, 254, 0.3)" : "transparent"}`,
+                        background: selectedPatient?.id === p.id ? "var(--primary-glow)" : "transparent",
+                        border: `1px solid ${selectedPatient?.id === p.id ? "var(--primary)" : "transparent"}`,
                         marginBottom: "8px",
                       }}
                       className="patient-item"
@@ -430,7 +430,7 @@ function App() {
                         <h4 style={{ color: selectedPatient?.id === p.id ? "var(--primary)" : "var(--text-main)", fontSize: "1rem" }}>
                           {p.name}
                         </h4>
-                        <span style={{ fontSize: "0.75rem", color: "var(--text-dark)", background: "rgba(255,255,255,0.05)", padding: "2px 6px", borderRadius: "4px" }}>
+                        <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", background: "var(--bg-main)", padding: "2px 6px", borderRadius: "4px", border: "1px solid var(--border-color)" }}>
                           {p.gender === "male" ? "M" : "F"}
                         </span>
                       </div>
@@ -773,20 +773,20 @@ function App() {
 
               {/* KPI cards */}
               <div className="grid-3-cols">
-                <div className="glass-card" style={{ background: "rgba(255,255,255,0.02)" }}>
-                  <span style={{ fontSize: "0.85rem", color: "var(--text-dark)", textTransform: "uppercase" }}>Total Pacientes</span>
+                <div className="glass-card" style={{ background: "var(--bg-main)" }}>
+                  <span style={{ fontSize: "0.85rem", color: "var(--text-muted)", textTransform: "uppercase" }}>Total Pacientes</span>
                   <div style={{ fontSize: "2.5rem", fontWeight: 800, color: "var(--primary)", marginTop: "8px" }}>
                     {patients.length}
                   </div>
                 </div>
-                <div className="glass-card" style={{ background: "rgba(255,255,255,0.02)" }}>
-                  <span style={{ fontSize: "0.85rem", color: "var(--text-dark)", textTransform: "uppercase" }}>Evaluaciones Registradas</span>
+                <div className="glass-card" style={{ background: "var(--bg-main)" }}>
+                  <span style={{ fontSize: "0.85rem", color: "var(--text-muted)", textTransform: "uppercase" }}>Evaluaciones Registradas</span>
                   <div style={{ fontSize: "2.5rem", fontWeight: 800, color: "var(--accent)", marginTop: "8px" }}>
                     {patients.reduce((sum, p) => sum + (p._count?.evaluations || p.evaluations?.length || 0), 0)}
                   </div>
                 </div>
-                <div className="glass-card" style={{ background: "rgba(255,255,255,0.02)" }}>
-                  <span style={{ fontSize: "0.85rem", color: "var(--text-dark)", textTransform: "uppercase" }}>Consola Activa</span>
+                <div className="glass-card" style={{ background: "var(--bg-main)" }}>
+                  <span style={{ fontSize: "0.85rem", color: "var(--text-muted)", textTransform: "uppercase" }}>Consola Activa</span>
                   <div style={{ fontSize: "1.1rem", fontWeight: 600, color: "var(--success)", marginTop: "18px", display: "flex", alignItems: "center", gap: "8px" }}>
                     <div style={{ width: "8px", height: "8px", background: "var(--success)", borderRadius: "50%", boxShadow: "0 0 6px var(--success)" }} />
                     Conectado a SQLite
