@@ -380,10 +380,10 @@ function App() {
           {!isAddingPatient && !isEditingPatient && !isAddingEvaluation && !isAddingCycle && selectedPatient && (
             <div className="animate-fade-in" style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
               {/* Header profile details */}
-              <div className="glass-card" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                    <h2 style={{ fontSize: "2rem" }}>{selectedPatient.name}</h2>
+              <div className="glass-card profile-header-card">
+                <div className="profile-details">
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+                    <h2 className="profile-name">{selectedPatient.name}</h2>
                     <span
                       style={{
                         background: "rgba(0,242,254,0.1)",
@@ -398,14 +398,14 @@ function App() {
                       {selectedPatient.sport || "Sin Deporte"}
                     </span>
                   </div>
-                  <div style={{ display: "flex", gap: "16px", marginTop: "8px", fontSize: "0.9rem", color: "var(--text-muted)" }}>
+                  <div className="profile-info-row">
                     <span>Género: <strong>{selectedPatient.gender === "male" ? "Masculino" : "Femenino"}</strong></span>
                     <span>Nacimiento: <strong>{selectedPatient.birthdate}</strong></span>
                     {selectedPatient.email && <span>Email: <strong>{selectedPatient.email}</strong></span>}
                   </div>
                 </div>
 
-                <div style={{ display: "flex", gap: "12px" }}>
+                <div className="profile-actions">
                   <button className="btn btn-secondary" style={{ border: "1px solid var(--primary)", color: "var(--primary)" }} onClick={() => setIsAthleteView(true)}>
                     📱 Vista Móvil (Atleta PWA)
                   </button>

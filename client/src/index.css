@@ -420,6 +420,11 @@ p {
     overflow-x: auto;
     white-space: nowrap;
     padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+  
+  .tabs::-webkit-scrollbar {
+    display: none;
   }
   
   .tab-btn {
@@ -427,4 +432,66 @@ p {
     font-size: 0.85rem !important;
   }
 }
+
+/* Profile Header Card */
+.profile-header-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+}
+
+.profile-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.profile-name {
+  font-size: 2rem;
+  line-height: 1.2;
+}
+
+.profile-info-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.profile-actions {
+  display: flex;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .profile-header-card {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+  
+  .profile-actions {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+  
+  .profile-actions button,
+  .profile-actions a {
+    flex: 1 1 calc(50% - 8px);
+  }
+  
+  .profile-actions button:first-child {
+    flex: 1 1 100% !important;
+  }
+}
+
+@media (max-width: 576px) {
+  .profile-name {
+    font-size: 1.5rem;
+  }
+}
+
 
