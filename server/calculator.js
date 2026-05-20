@@ -26,6 +26,7 @@ export function calculateSomatotype(data) {
     skinfoldSupraspinale,
     skinfoldCalf,
     girthArm,
+    girthArmContracted,
     girthCalf,
     diameterHumerus,
     diameterFemur,
@@ -38,7 +39,8 @@ export function calculateSomatotype(data) {
   endomorphy = Math.max(0.1, Number(endomorphy.toFixed(2)));
 
   // 2. Mesomorphy
-  const correctedArmGirth = girthArm - (skinfoldTriceps / 10);
+  const armGirth = girthArmContracted || girthArm || 0;
+  const correctedArmGirth = armGirth - (skinfoldTriceps / 10);
   const correctedCalfGirth = girthCalf - (skinfoldCalf / 10);
   let mesomorphy = (0.858 * diameterHumerus) + (0.601 * diameterFemur) + (0.188 * correctedArmGirth) + (0.161 * correctedCalfGirth) - (height * 0.131) + 4.50;
   mesomorphy = Math.max(0.1, Number(mesomorphy.toFixed(2)));
@@ -202,57 +204,59 @@ export function calculateBodyFat(data) {
     skinfoldTriceps,
     skinfoldBiceps,
     skinfoldSubescapular,
-    skinfoldSupraspinale, // can act as suprailiac
+    skinfoldSupraspinale,
+    skinfoldCrestaIliaca,
     skinfoldAbdominal,
     skinfoldThigh,
-    skinfoldCalf, // midaxillary can be mapped here or we can check J-P 3
+    skinfoldCalf,
   } = data;
 
   let density = 0;
   let formulaUsed = "";
+  let bodyFat = 0;
 
-  // 1. Check if we have J-P 3-site for Men: Chest, Abdominal, Thigh (Wait, we need Chest skinfold, let's assume it's supplied or check women)
-  // Let's implement a fallback. Since our DB has:
-  // Triceps, Biceps, Subscapular, Supraspinale, Abdominal, Thigh, Calf.
-  // We can calculate Durnin-Womersley 4-site since we have Triceps, Biceps, Subscapular, Supraspinale (used as suprailiac).
-  // Or we can calculate Jackson-Pollock 3-site (using Triceps, Supraspinale, Thigh for women; and check if we can approximate for men).
-  // Let's use Durnin-Womersley 4-Site as the primary default because it uses the exact 4 limbs/torso skinfolds we have and is highly robust.
+  const hasFaulkner = (skinfoldTriceps || 0) > 0 && (skinfoldSubescapular || 0) > 0 && (skinfoldSupraspinale || 0) > 0 && (skinfoldCrestaIliaca || 0) > 0;
+  const hasDW = (skinfoldTriceps || 0) > 0 && (skinfoldBiceps || 0) > 0 && (skinfoldSubescapular || 0) > 0 && (skinfoldSupraspinale || 0) > 0;
   
-  const hasDW = skinfoldTriceps > 0 && skinfoldBiceps > 0 && skinfoldSubescapular > 0 && skinfoldSupraspinale > 0;
-  
-  if (hasDW) {
+  if (hasFaulkner) {
+    const sum4 = (skinfoldTriceps || 0) + (skinfoldSubescapular || 0) + (skinfoldSupraspinale || 0) + (skinfoldCrestaIliaca || 0);
+    bodyFat = Number((sum4 * 0.153 + 5.783).toFixed(2));
+    formulaUsed = "Faulkner (4 Pliegues)";
+    density = 4.95 / ((bodyFat / 100) + 4.50);
+  } else if (hasDW) {
     const sum4 = skinfoldTriceps + skinfoldBiceps + skinfoldSubescapular + skinfoldSupraspinale;
     density = calculateDensityDurninWomersley(sum4, age, gender);
+    bodyFat = convertDensityToFatPercent(density);
     formulaUsed = "Durnin-Womersley (4 Pliegues)";
   } else {
-    // Fallback: JP 3-site for Women if we have Triceps, Supraspinale, Thigh
     const hasJP3Women = gender === "female" && skinfoldTriceps > 0 && skinfoldSupraspinale > 0 && skinfoldThigh > 0;
-    // For Men, JP 3-site uses Chest, Abdominal, Thigh. If we don't have Chest, let's fall back to another approximation.
-    // If we have Abdominal, Thigh, and Triceps, we can estimate.
     const hasJP3MenFallback = gender === "male" && skinfoldAbdominal > 0 && skinfoldThigh > 0 && skinfoldTriceps > 0;
     
     if (hasJP3Women) {
       const sum3 = skinfoldTriceps + skinfoldSupraspinale + skinfoldThigh;
       density = calculateDensityJacksonPollock3(sum3, age, gender);
+      bodyFat = convertDensityToFatPercent(density);
       formulaUsed = "Jackson-Pollock (3 Pliegues)";
     } else if (hasJP3MenFallback) {
-      // Approximate Chest with Triceps for calculation purposes or Abdominal + Thigh + Supraspinale
       const sum3 = skinfoldAbdominal + skinfoldThigh + skinfoldTriceps;
       density = calculateDensityJacksonPollock3(sum3, age, gender);
+      bodyFat = convertDensityToFatPercent(density);
       formulaUsed = "Jackson-Pollock (3 Pliegues - Estimación)";
     } else {
-      // Minimal fallback: if we have at least 3 skinfolds, sum them and apply general average
       const sumAny = [skinfoldTriceps, skinfoldBiceps, skinfoldSubescapular, skinfoldSupraspinale, skinfoldAbdominal, skinfoldThigh, skinfoldCalf]
         .filter(v => v > 0);
       if (sumAny.length >= 3) {
         const sum3 = sumAny.slice(0, 3).reduce((a, b) => a + b, 0);
         density = calculateDensityJacksonPollock3(sum3, age, gender);
+        bodyFat = convertDensityToFatPercent(density);
         formulaUsed = "Jackson-Pollock Generalizado";
       }
     }
   }
 
-  const bodyFat = convertDensityToFatPercent(density);
+  if (bodyFat === 0 && density > 0) {
+    bodyFat = convertDensityToFatPercent(density);
+  }
 
   return {
     density: Number(density.toFixed(5)),

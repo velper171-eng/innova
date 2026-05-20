@@ -11,6 +11,7 @@ export function calculateSomatotype(data) {
     skinfoldSupraspinale,
     skinfoldCalf,
     girthArm,
+    girthArmContracted,
     girthCalf,
     diameterHumerus,
     diameterFemur,
@@ -25,7 +26,8 @@ export function calculateSomatotype(data) {
   endomorphy = Math.max(0.1, Number(endomorphy.toFixed(2)));
 
   // 2. Mesomorphy
-  const correctedArmGirth = (girthArm || 0) - ((skinfoldTriceps || 0) / 10);
+  const armGirth = girthArmContracted || girthArm || 0;
+  const correctedArmGirth = armGirth - ((skinfoldTriceps || 0) / 10);
   const correctedCalfGirth = (girthCalf || 0) - ((skinfoldCalf || 0) / 10);
   let mesomorphy = (0.858 * (diameterHumerus || 0)) + (0.601 * (diameterFemur || 0)) + (0.188 * correctedArmGirth) + (0.161 * correctedCalfGirth) - (height * 0.131) + 4.50;
   mesomorphy = Math.max(0.1, Number(mesomorphy.toFixed(2)));
@@ -155,6 +157,7 @@ export function calculateBodyFat(data) {
     skinfoldBiceps,
     skinfoldSubescapular,
     skinfoldSupraspinale,
+    skinfoldCrestaIliaca,
     skinfoldAbdominal,
     skinfoldThigh,
   } = data;
@@ -163,12 +166,20 @@ export function calculateBodyFat(data) {
 
   let density = 0;
   let formulaUsed = "";
+  let bodyFat = 0;
 
-  const hasDW = skinfoldTriceps > 0 && skinfoldBiceps > 0 && skinfoldSubescapular > 0 && skinfoldSupraspinale > 0;
-  
-  if (hasDW) {
+  const hasFaulkner = (skinfoldTriceps || 0) > 0 && (skinfoldSubescapular || 0) > 0 && (skinfoldSupraspinale || 0) > 0 && (skinfoldCrestaIliaca || 0) > 0;
+  const hasDW = (skinfoldTriceps || 0) > 0 && (skinfoldBiceps || 0) > 0 && (skinfoldSubescapular || 0) > 0 && (skinfoldSupraspinale || 0) > 0;
+
+  if (hasFaulkner) {
+    const sum4 = (skinfoldTriceps || 0) + (skinfoldSubescapular || 0) + (skinfoldSupraspinale || 0) + (skinfoldCrestaIliaca || 0);
+    bodyFat = Number((sum4 * 0.153 + 5.783).toFixed(2));
+    formulaUsed = "Faulkner (4 Pliegues)";
+    density = 4.95 / ((bodyFat / 100) + 4.50);
+  } else if (hasDW) {
     const sum4 = skinfoldTriceps + skinfoldBiceps + skinfoldSubescapular + skinfoldSupraspinale;
     density = calculateDensityDurninWomersley(sum4, age, gender);
+    bodyFat = convertDensityToFatPercent(density);
     formulaUsed = "Durnin-Womersley";
   } else {
     const hasJP3Women = gender === "female" && skinfoldTriceps > 0 && skinfoldSupraspinale > 0 && skinfoldThigh > 0;
@@ -177,17 +188,21 @@ export function calculateBodyFat(data) {
     if (hasJP3Women) {
       const sum3 = skinfoldTriceps + skinfoldSupraspinale + skinfoldThigh;
       density = calculateDensityJacksonPollock3(sum3, age, gender);
+      bodyFat = convertDensityToFatPercent(density);
       formulaUsed = "Jackson-Pollock 3P";
     } else if (hasJP3MenFallback) {
       const sum3 = skinfoldAbdominal + skinfoldThigh + skinfoldTriceps;
       density = calculateDensityJacksonPollock3(sum3, age, gender);
+      bodyFat = convertDensityToFatPercent(density);
       formulaUsed = "Jackson-Pollock 3P (Est.)";
     }
   }
 
-  if (density === 0) return null;
+  if (bodyFat === 0 && density > 0) {
+    bodyFat = convertDensityToFatPercent(density);
+  }
 
-  const bodyFat = convertDensityToFatPercent(density);
+  if (bodyFat === 0) return null;
 
   return {
     density,

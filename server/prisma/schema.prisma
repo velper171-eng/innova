@@ -37,16 +37,23 @@ model Evaluation {
   skinfoldBiceps       Float
   skinfoldSubescapular Float
   skinfoldSupraspinale Float
+  skinfoldCrestaIliaca Float    @default(0.0)
   skinfoldAbdominal    Float
   skinfoldThigh        Float
   skinfoldCalf         Float
 
   // Perimeters (Perímetros in cm)
   girthArm             Float
+  girthArmRelaxed      Float    @default(0.0)
+  girthArmContracted   Float    @default(0.0)
+  girthWaist           Float    @default(0.0)
+  girthHip             Float    @default(0.0)
+  girthThigh           Float    @default(0.0)
   girthCalf            Float
 
   // Diameters (Diámetros in cm)
   diameterHumerus      Float
+  diameterBiestiloideo Float    @default(0.0)
   diameterFemur        Float
 
   // Calculated Results

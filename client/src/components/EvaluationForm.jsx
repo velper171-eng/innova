@@ -16,16 +16,22 @@ const EvaluationForm = ({ onSubmit, onCancel, patient }) => {
   const [skinfoldBiceps, setSkinfoldBiceps] = useState("");
   const [skinfoldSubescapular, setSkinfoldSubescapular] = useState("");
   const [skinfoldSupraspinale, setSkinfoldSupraspinale] = useState("");
+  const [skinfoldCrestaIliaca, setSkinfoldCrestaIliaca] = useState("");
   const [skinfoldAbdominal, setSkinfoldAbdominal] = useState("");
   const [skinfoldThigh, setSkinfoldThigh] = useState("");
   const [skinfoldCalf, setSkinfoldCalf] = useState("");
 
   // Perimeters (cm)
-  const [girthArm, setGirthArm] = useState("");
+  const [girthArmRelaxed, setGirthArmRelaxed] = useState("");
+  const [girthArmContracted, setGirthArmContracted] = useState("");
+  const [girthWaist, setGirthWaist] = useState("");
+  const [girthHip, setGirthHip] = useState("");
+  const [girthThigh, setGirthThigh] = useState("");
   const [girthCalf, setGirthCalf] = useState("");
 
   // Diameters (cm)
   const [diameterHumerus, setDiameterHumerus] = useState("");
+  const [diameterBiestiloideo, setDiameterBiestiloideo] = useState("");
   const [diameterFemur, setDiameterFemur] = useState("");
 
   // Live calculation results
@@ -56,12 +62,18 @@ const EvaluationForm = ({ onSubmit, onCancel, patient }) => {
       skinfoldBiceps: parseFloat(skinfoldBiceps) || 0,
       skinfoldSubescapular: parseFloat(skinfoldSubescapular) || 0,
       skinfoldSupraspinale: parseFloat(skinfoldSupraspinale) || 0,
+      skinfoldCrestaIliaca: parseFloat(skinfoldCrestaIliaca) || 0,
       skinfoldAbdominal: parseFloat(skinfoldAbdominal) || 0,
       skinfoldThigh: parseFloat(skinfoldThigh) || 0,
       skinfoldCalf: parseFloat(skinfoldCalf) || 0,
-      girthArm: parseFloat(girthArm) || 0,
+      girthArmRelaxed: parseFloat(girthArmRelaxed) || 0,
+      girthArmContracted: parseFloat(girthArmContracted) || 0,
+      girthWaist: parseFloat(girthWaist) || 0,
+      girthHip: parseFloat(girthHip) || 0,
+      girthThigh: parseFloat(girthThigh) || 0,
       girthCalf: parseFloat(girthCalf) || 0,
       diameterHumerus: parseFloat(diameterHumerus) || 0,
+      diameterBiestiloideo: parseFloat(diameterBiestiloideo) || 0,
       diameterFemur: parseFloat(diameterFemur) || 0,
     };
 
@@ -93,12 +105,18 @@ const EvaluationForm = ({ onSubmit, onCancel, patient }) => {
     skinfoldBiceps,
     skinfoldSubescapular,
     skinfoldSupraspinale,
+    skinfoldCrestaIliaca,
     skinfoldAbdominal,
     skinfoldThigh,
     skinfoldCalf,
-    girthArm,
+    girthArmRelaxed,
+    girthArmContracted,
+    girthWaist,
+    girthHip,
+    girthThigh,
     girthCalf,
     diameterHumerus,
+    diameterBiestiloideo,
     diameterFemur,
     patient,
   ]);
@@ -119,12 +137,19 @@ const EvaluationForm = ({ onSubmit, onCancel, patient }) => {
       skinfoldBiceps: parseFloat(skinfoldBiceps) || 0,
       skinfoldSubescapular: parseFloat(skinfoldSubescapular) || 0,
       skinfoldSupraspinale: parseFloat(skinfoldSupraspinale) || 0,
+      skinfoldCrestaIliaca: parseFloat(skinfoldCrestaIliaca) || 0,
       skinfoldAbdominal: parseFloat(skinfoldAbdominal) || 0,
       skinfoldThigh: parseFloat(skinfoldThigh) || 0,
       skinfoldCalf: parseFloat(skinfoldCalf) || 0,
-      girthArm: parseFloat(girthArm) || 0,
+      girthArm: parseFloat(girthArmContracted) || 0, // Backward compatibility
+      girthArmRelaxed: parseFloat(girthArmRelaxed) || 0,
+      girthArmContracted: parseFloat(girthArmContracted) || 0,
+      girthWaist: parseFloat(girthWaist) || 0,
+      girthHip: parseFloat(girthHip) || 0,
+      girthThigh: parseFloat(girthThigh) || 0,
       girthCalf: parseFloat(girthCalf) || 0,
       diameterHumerus: parseFloat(diameterHumerus) || 0,
+      diameterBiestiloideo: parseFloat(diameterBiestiloideo) || 0,
       diameterFemur: parseFloat(diameterFemur) || 0,
     });
   };
@@ -157,10 +182,17 @@ const EvaluationForm = ({ onSubmit, onCancel, patient }) => {
           </button>
           <button
             type="button"
-            className={`tab-btn ${activeTab === "girths_diameters" ? "active" : ""}`}
-            onClick={() => setActiveTab("girths_diameters")}
+            className={`tab-btn ${activeTab === "perimeters" ? "active" : ""}`}
+            onClick={() => setActiveTab("perimeters")}
           >
-            Perímetros / Diámetros
+            Perímetros (cm)
+          </button>
+          <button
+            type="button"
+            className={`tab-btn ${activeTab === "diameters" ? "active" : ""}`}
+            onClick={() => setActiveTab("diameters")}
+          >
+            Diámetros (cm)
           </button>
         </div>
 
@@ -264,6 +296,17 @@ const EvaluationForm = ({ onSubmit, onCancel, patient }) => {
               />
             </div>
             <div className="form-group">
+              <label className="form-label">Cresta Ilíaca (mm)</label>
+              <input
+                type="number"
+                step="0.1"
+                className="form-input"
+                value={skinfoldCrestaIliaca}
+                onChange={(e) => setSkinfoldCrestaIliaca(e.target.value)}
+                placeholder="0.0"
+              />
+            </div>
+            <div className="form-group">
               <label className="form-label">Abdominal (mm)</label>
               <input
                 type="number"
@@ -299,59 +342,113 @@ const EvaluationForm = ({ onSubmit, onCancel, patient }) => {
           </div>
         )}
 
-        {/* Tab 3: Girths & Diameters */}
-        {activeTab === "girths_diameters" && (
-          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-            <h4 style={{ fontSize: "1rem", color: "var(--primary)" }}>Perímetros (cm)</h4>
-            <div className="grid-2-cols">
-              <div className="form-group">
-                <label className="form-label">Brazo Contraído (cm)</label>
-                <input
-                  type="number"
-                  step="0.1"
-                  className="form-input"
-                  value={girthArm}
-                  onChange={(e) => setGirthArm(e.target.value)}
-                  placeholder="0.0"
-                />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Pantorrilla (cm)</label>
-                <input
-                  type="number"
-                  step="0.1"
-                  className="form-input"
-                  value={girthCalf}
-                  onChange={(e) => setGirthCalf(e.target.value)}
-                  placeholder="0.0"
-                />
-              </div>
+        {/* Tab 3: Perimeters */}
+        {activeTab === "perimeters" && (
+          <div className="grid-2-cols">
+            <div className="form-group">
+              <label className="form-label">Brazo Relajado (cm)</label>
+              <input
+                type="number"
+                step="0.1"
+                className="form-input"
+                value={girthArmRelaxed}
+                onChange={(e) => setGirthArmRelaxed(e.target.value)}
+                placeholder="0.0"
+              />
             </div>
+            <div className="form-group">
+              <label className="form-label">Brazo Contraído (cm)</label>
+              <input
+                type="number"
+                step="0.1"
+                className="form-input"
+                value={girthArmContracted}
+                onChange={(e) => setGirthArmContracted(e.target.value)}
+                placeholder="0.0"
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Cintura (cm)</label>
+              <input
+                type="number"
+                step="0.1"
+                className="form-input"
+                value={girthWaist}
+                onChange={(e) => setGirthWaist(e.target.value)}
+                placeholder="0.0"
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Cadera (cm)</label>
+              <input
+                type="number"
+                step="0.1"
+                className="form-input"
+                value={girthHip}
+                onChange={(e) => setGirthHip(e.target.value)}
+                placeholder="0.0"
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Muslo Medio (cm)</label>
+              <input
+                type="number"
+                step="0.1"
+                className="form-input"
+                value={girthThigh}
+                onChange={(e) => setGirthThigh(e.target.value)}
+                placeholder="0.0"
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Pantorrilla (cm)</label>
+              <input
+                type="number"
+                step="0.1"
+                className="form-input"
+                value={girthCalf}
+                onChange={(e) => setGirthCalf(e.target.value)}
+                placeholder="0.0"
+              />
+            </div>
+          </div>
+        )}
 
-            <h4 style={{ fontSize: "1rem", color: "var(--primary)", marginTop: "8px" }}>Diámetros Óseos (cm)</h4>
-            <div className="grid-2-cols">
-              <div className="form-group">
-                <label className="form-label">Bicondilar Húmero (cm)</label>
-                <input
-                  type="number"
-                  step="0.1"
-                  className="form-input"
-                  value={diameterHumerus}
-                  onChange={(e) => setDiameterHumerus(e.target.value)}
-                  placeholder="0.0"
-                />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Bicondilar Fémur (cm)</label>
-                <input
-                  type="number"
-                  step="0.1"
-                  className="form-input"
-                  value={diameterFemur}
-                  onChange={(e) => setDiameterFemur(e.target.value)}
-                  placeholder="0.0"
-                />
-              </div>
+        {/* Tab 4: Diameters */}
+        {activeTab === "diameters" && (
+          <div className="grid-2-cols">
+            <div className="form-group">
+              <label className="form-label">Bicondilar Húmero (cm)</label>
+              <input
+                type="number"
+                step="0.1"
+                className="form-input"
+                value={diameterHumerus}
+                onChange={(e) => setDiameterHumerus(e.target.value)}
+                placeholder="0.0"
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Biestiloideo Muñeca (cm)</label>
+              <input
+                type="number"
+                step="0.1"
+                className="form-input"
+                value={diameterBiestiloideo}
+                onChange={(e) => setDiameterBiestiloideo(e.target.value)}
+                placeholder="0.0"
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Bicondilar Fémur (cm)</label>
+              <input
+                type="number"
+                step="0.1"
+                className="form-input"
+                value={diameterFemur}
+                onChange={(e) => setDiameterFemur(e.target.value)}
+                placeholder="0.0"
+              />
             </div>
           </div>
         )}
@@ -414,8 +511,8 @@ const EvaluationForm = ({ onSubmit, onCancel, patient }) => {
                 </div>
               </div>
             ) : (
-              <div style={{ color: "var(--text-muted)", fontStyle: "italic" }}>
-                Rellene al menos 4 pliegues (Tríceps, Bíceps, Subescapular, Supraespinal) para calcular la grasa corporal.
+              <div style={{ color: "var(--text-muted)", fontStyle: "italic", fontSize: "0.8rem" }}>
+                Rellene los pliegues para calcular la grasa (Faulkner: Tríceps, Subescapular, Supraespinal, Cresta Ilíaca; Durnin-Womersley: Bíceps, Tríceps, Subescapular, Supraespinal).
               </div>
             )}
           </div>
