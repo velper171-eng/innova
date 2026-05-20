@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import CalorieCounter from "./CalorieCounter";
+import TrainingPlanner from "./TrainingPlanner";
 
 const API_BASE = "/api";
 
@@ -13,7 +14,7 @@ const AthleteView = ({ patientId, onBack }) => {
   // UI toggles
   const [isEditingSchedule, setIsEditingSchedule] = useState(false);
   const [isAddingSupplement, setIsAddingSupplement] = useState(false);
-  const [athleteTab, setAthleteTab] = useState("supplements"); // "supplements", "calories"
+  const [athleteTab, setAthleteTab] = useState("supplements"); // "supplements", "calories", "training"
 
   
   // New supplement form state
@@ -270,6 +271,12 @@ const AthleteView = ({ patientId, onBack }) => {
           💊 Plan de Suplementos
         </button>
         <button
+          className={`athlete-tab-btn ${athleteTab === "training" ? "active" : ""}`}
+          onClick={() => setAthleteTab("training")}
+        >
+          🏋️ Entrenamiento
+        </button>
+        <button
           className={`athlete-tab-btn ${athleteTab === "calories" ? "active" : ""}`}
           onClick={() => setAthleteTab("calories")}
         >
@@ -277,7 +284,7 @@ const AthleteView = ({ patientId, onBack }) => {
         </button>
       </div>
 
-      {athleteTab === "supplements" ? (
+      {athleteTab === "supplements" && (
         <>
           {/* PWA Cloud Sync Status Panel */}
           <div className="glass-card animate-fade-in" style={{
@@ -593,7 +600,13 @@ const AthleteView = ({ patientId, onBack }) => {
             )}
           </section>
         </>
-      ) : (
+      )}
+
+      {athleteTab === "training" && (
+        <TrainingPlanner patientId={patientId} isAdminMode={false} />
+      )}
+
+      {athleteTab === "calories" && (
         <CalorieCounter patientId={patientId} />
       )}
 

@@ -22,6 +22,7 @@ model Patient {
   workoutSchedule WorkoutSchedule?
   postureJobs     PostureAnalysisJob[]
   calorieLogs     CalorieLog[]
+  trainingPlans   TrainingPlan[]
 }
 
 model Evaluation {
@@ -155,3 +156,54 @@ model CalorieLog {
   createdAt   DateTime @default(now())
 }
 
+
+// ─────────────────────────────────────────────
+// TRAINING PLANS
+// ─────────────────────────────────────────────
+
+model TrainingPlan {
+  id          Int           @id @default(autoincrement())
+  patientId   Int
+  patient     Patient       @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  name        String        // e.g. "Plan Hipertrofia 4 días"
+  goal        String        // "hypertrophy", "strength", "endurance", "fat_loss"
+  daysPerWeek Int           @default(4)
+  isActive    Boolean       @default(true)
+  days        TrainingDay[]
+  createdAt   DateTime      @default(now())
+}
+
+model TrainingDay {
+  id         Int                @id @default(autoincrement())
+  planId     Int
+  plan       TrainingPlan       @relation(fields: [planId], references: [id], onDelete: Cascade)
+  dayIndex   Int                // 0=Mon, 1=Tue, ... 6=Sun
+  name       String             // "Pierna - Hipertrofia"
+  muscleGroup String            // "legs", "chest", "back", "shoulders", "arms", "full_body", "rest"
+  exercises  TrainingExercise[]
+}
+
+model TrainingExercise {
+  id          Int           @id @default(autoincrement())
+  dayId       Int
+  day         TrainingDay   @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  name        String        // "Sentadilla"
+  sets        Int           @default(3)
+  reps        String        @default("8-12")  // can be "8-12" or "30s"
+  weight      Float?        // in kg, optional
+  muscleGroup String        // primary muscle group for the diagram
+  order       Int           @default(0)
+  logs        ExerciseLog[]
+}
+
+model ExerciseLog {
+  id         Int              @id @default(autoincrement())
+  exerciseId Int
+  exercise   TrainingExercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  date       String           // YYYY-MM-DD
+  completed  Boolean          @default(false)
+  actualSets Int?
+  actualReps String?
+  actualWeight Float?
+  createdAt  DateTime         @default(now())
+}

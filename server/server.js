@@ -882,6 +882,222 @@ app.delete("/api/calories/logs/:id", async (req, res) => {
 });
 
 
+// ─────────────────────────────────────────────────────────────────────────────
+// TRAINING PLANS — CRUD
+// ─────────────────────────────────────────────────────────────────────────────
+
+// GET /api/patients/:id/training-plans — list all plans for a patient
+app.get("/api/patients/:id/training-plans", async (req, res) => {
+  try {
+    const patientId = parseInt(req.params.id);
+    if (isNaN(patientId)) return res.status(400).json({ error: "ID inválido" });
+
+    const plans = await prisma.trainingPlan.findMany({
+      where: { patientId },
+      include: {
+        days: {
+          include: { exercises: { orderBy: { order: "asc" } } },
+          orderBy: { dayIndex: "asc" },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    res.json(plans);
+  } catch (error) {
+    console.error("Error fetching training plans:", error);
+    res.status(500).json({ error: "Error al obtener los planes" });
+  }
+});
+
+// POST /api/patients/:id/training-plans — create a new plan
+app.post("/api/patients/:id/training-plans", async (req, res) => {
+  try {
+    const patientId = parseInt(req.params.id);
+    const { name, goal, daysPerWeek } = req.body;
+
+    if (!name || !goal) return res.status(400).json({ error: "Nombre y objetivo son requeridos" });
+
+    // Deactivate previous plans
+    await prisma.trainingPlan.updateMany({
+      where: { patientId },
+      data: { isActive: false },
+    });
+
+    const plan = await prisma.trainingPlan.create({
+      data: { patientId, name, goal, daysPerWeek: daysPerWeek || 4, isActive: true },
+      include: { days: { include: { exercises: true } } },
+    });
+
+    res.status(201).json(plan);
+  } catch (error) {
+    console.error("Error creating training plan:", error);
+    res.status(500).json({ error: "Error al crear el plan" });
+  }
+});
+
+// DELETE /api/training-plans/:id
+app.delete("/api/training-plans/:id", async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    await prisma.trainingPlan.delete({ where: { id } });
+    res.json({ message: "Plan eliminado" });
+  } catch (error) {
+    res.status(500).json({ error: "Error al eliminar el plan" });
+  }
+});
+
+// POST /api/training-days — create or update a training day
+app.post("/api/training-days", async (req, res) => {
+  try {
+    const { planId, dayIndex, name, muscleGroup } = req.body;
+
+    // Upsert by planId + dayIndex
+    const existing = await prisma.trainingDay.findFirst({
+      where: { planId, dayIndex },
+    });
+
+    let day;
+    if (existing) {
+      day = await prisma.trainingDay.update({
+        where: { id: existing.id },
+        data: { name, muscleGroup },
+        include: { exercises: { orderBy: { order: "asc" } } },
+      });
+    } else {
+      day = await prisma.trainingDay.create({
+        data: { planId, dayIndex, name, muscleGroup },
+        include: { exercises: { orderBy: { order: "asc" } } },
+      });
+    }
+
+    res.status(201).json(day);
+  } catch (error) {
+    console.error("Error creating training day:", error);
+    res.status(500).json({ error: "Error al crear/actualizar el día" });
+  }
+});
+
+// POST /api/training-days/:dayId/exercises — add exercise to a day
+app.post("/api/training-days/:dayId/exercises", async (req, res) => {
+  try {
+    const dayId = parseInt(req.params.dayId);
+    const { name, sets, reps, weight, muscleGroup, order } = req.body;
+
+    const countExisting = await prisma.trainingExercise.count({ where: { dayId } });
+
+    const exercise = await prisma.trainingExercise.create({
+      data: {
+        dayId,
+        name,
+        sets: sets || 3,
+        reps: reps || "8-12",
+        weight: weight || null,
+        muscleGroup: muscleGroup || "full_body",
+        order: order !== undefined ? order : countExisting,
+      },
+    });
+
+    res.status(201).json(exercise);
+  } catch (error) {
+    console.error("Error adding exercise:", error);
+    res.status(500).json({ error: "Error al añadir el ejercicio" });
+  }
+});
+
+// DELETE /api/training-exercises/:id
+app.delete("/api/training-exercises/:id", async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    await prisma.trainingExercise.delete({ where: { id } });
+    res.json({ message: "Ejercicio eliminado" });
+  } catch (error) {
+    res.status(500).json({ error: "Error al eliminar el ejercicio" });
+  }
+});
+
+// GET /api/patients/:id/exercise-logs — logs for current week
+app.get("/api/patients/:id/exercise-logs", async (req, res) => {
+  try {
+    const patientId = parseInt(req.params.id);
+
+    // Get all exercise IDs for this patient
+    const plans = await prisma.trainingPlan.findMany({
+      where: { patientId },
+      include: { days: { include: { exercises: { select: { id: true } } } } },
+    });
+
+    const exerciseIds = plans.flatMap((p) =>
+      p.days.flatMap((d) => d.exercises.map((e) => e.id))
+    );
+
+    // Get logs from the last 14 days
+    const since = new Date();
+    since.setDate(since.getDate() - 14);
+    const sinceStr = since.toISOString().split("T")[0];
+
+    const logs = await prisma.exerciseLog.findMany({
+      where: {
+        exerciseId: { in: exerciseIds },
+        date: { gte: sinceStr },
+      },
+      orderBy: { date: "desc" },
+    });
+
+    res.json(logs);
+  } catch (error) {
+    console.error("Error fetching exercise logs:", error);
+    res.status(500).json({ error: "Error al obtener los registros" });
+  }
+});
+
+// POST /api/exercise-logs — log a completed exercise
+app.post("/api/exercise-logs", async (req, res) => {
+  try {
+    const { exerciseId, date, completed, actualSets, actualReps, actualWeight } = req.body;
+
+    const log = await prisma.exerciseLog.create({
+      data: {
+        exerciseId,
+        date: date || new Date().toISOString().split("T")[0],
+        completed: completed !== undefined ? completed : true,
+        actualSets: actualSets || null,
+        actualReps: actualReps || null,
+        actualWeight: actualWeight || null,
+      },
+    });
+
+    res.status(201).json(log);
+  } catch (error) {
+    console.error("Error creating exercise log:", error);
+    res.status(500).json({ error: "Error al registrar el ejercicio" });
+  }
+});
+
+// PATCH /api/exercise-logs/:id — update log (toggle completed, weight etc)
+app.patch("/api/exercise-logs/:id", async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    const { completed, actualWeight, actualSets, actualReps } = req.body;
+
+    const log = await prisma.exerciseLog.update({
+      where: { id },
+      data: {
+        ...(completed !== undefined && { completed }),
+        ...(actualWeight !== undefined && { actualWeight }),
+        ...(actualSets !== undefined && { actualSets }),
+        ...(actualReps !== undefined && { actualReps }),
+      },
+    });
+
+    res.json(log);
+  } catch (error) {
+    console.error("Error updating exercise log:", error);
+    res.status(500).json({ error: "Error al actualizar el registro" });
+  }
+});
+
+
 if (!process.env.VERCEL) {
   app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);

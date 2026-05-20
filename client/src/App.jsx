@@ -2,10 +2,12 @@ import React, { useState, useEffect } from "react";
 import PatientForm from "./components/PatientForm";
 import EvaluationForm from "./components/EvaluationForm";
 import Somatochart from "./components/Somatochart";
+import BodyTrendChart from "./components/BodyTrendChart";
 import CyclePlanner from "./components/CyclePlanner";
 import AthleteView from "./components/AthleteView";
 import PostureAnalyzer from "./components/PostureAnalyzer";
 import CalorieCounter from "./components/CalorieCounter";
+import TrainingPlanner from "./components/TrainingPlanner";
 
 const API_BASE = "/api";
 
@@ -556,6 +558,12 @@ function App() {
                   Ciclos de Suplementación
                 </button>
                 <button
+                  className={`tab-btn ${activeTab === "training" ? "active" : ""}`}
+                  onClick={() => setActiveTab("training")}
+                >
+                  🏋️ Plan de Entrenamiento
+                </button>
+                <button
                   className={`tab-btn ${activeTab === "posture" ? "active" : ""}`}
                   onClick={() => setActiveTab("posture")}
                 >
@@ -571,74 +579,89 @@ function App() {
 
               {/* Sub-section 1: Anthropometry */}
               {activeTab === "anthropometry" && (
-                <div className="grid-1-2-cols animate-fade-in">
-                  {/* Somatochart */}
-                  <div className="glass-card" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                    <h3 className="glow-text" style={{ fontSize: "1.25rem" }}>
-                      Somatocarta Histórica
-                    </h3>
-                    <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginTop: "-8px" }}>
-                      La línea de tendencia conecta tus evaluaciones de forma cronológica. Pasa el cursor por los puntos para ver el desglose.
-                    </p>
-                    <Somatochart evaluations={selectedPatient.evaluations} />
-                  </div>
-
-                  {/* Evaluations timeline list */}
-                  <div className="glass-card" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <h3 className="glow-text" style={{ fontSize: "1.25rem" }}>
-                        Historial de Evaluaciones
+                <div style={{ display: "flex", flexDirection: "column", gap: "20px" }} className="animate-fade-in">
+                  {/* Body Trend Chart */}
+                  {selectedPatient.evaluations?.length >= 2 && (
+                    <div className="glass-card">
+                      <h3 className="glow-text" style={{ fontSize: "1.15rem", marginBottom: "4px" }}>
+                        📈 Evolución Corporal
                       </h3>
-                      <button
-                        className="btn btn-primary"
-                        style={{ padding: "8px 16px", fontSize: "0.85rem" }}
-                        onClick={() => setIsAddingEvaluation(true)}
-                      >
-                        + Nueva Evaluación
-                      </button>
+                      <p style={{ fontSize: "0.82rem", color: "var(--text-muted)", marginBottom: "16px", marginTop: "-2px" }}>
+                        Tendencia de peso y porcentaje de grasa a lo largo del tiempo.
+                      </p>
+                      <BodyTrendChart evaluations={selectedPatient.evaluations} />
+                    </div>
+                  )}
+
+                  <div className="grid-1-2-cols">
+                    {/* Somatochart */}
+                    <div className="glass-card" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                      <h3 className="glow-text" style={{ fontSize: "1.25rem" }}>
+                        Somatocarta Histórica
+                      </h3>
+                      <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginTop: "-8px" }}>
+                        La línea de tendencia conecta tus evaluaciones de forma cronológica. Pasa el cursor por los puntos para ver el desglose.
+                      </p>
+                      <Somatochart evaluations={selectedPatient.evaluations} />
                     </div>
 
-                    <div style={{ flex: 1, overflowX: "auto" }}>
-                      {selectedPatient.evaluations?.length === 0 ? (
-                        <div style={{ color: "var(--text-dark)", textAlign: "center", padding: "40px", fontStyle: "italic" }}>
-                          Aún no se han registrado evaluaciones para este paciente.
-                        </div>
-                      ) : (
-                        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.85rem", color: "var(--text-muted)", textAlign: "left" }}>
-                          <thead>
-                            <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.08)", color: "var(--text-main)" }}>
-                              <th style={{ padding: "12px 8px" }}>Fecha</th>
-                              <th style={{ padding: "12px 8px" }}>Peso</th>
-                              <th style={{ padding: "12px 8px" }}>Grasa %</th>
-                              <th style={{ padding: "12px 8px" }}>Somatotipo</th>
-                              <th style={{ padding: "12px 8px" }}>Acción</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {selectedPatient.evaluations.map((ev) => (
-                              <tr key={ev.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-                                <td style={{ padding: "12px 8px", color: "var(--text-main)", fontWeight: 600 }}>{ev.date}</td>
-                                <td style={{ padding: "12px 8px" }}>{ev.weight} kg</td>
-                                <td style={{ padding: "12px 8px", color: "var(--accent)", fontWeight: 600 }}>
-                                  {ev.bodyFat ? `${ev.bodyFat}%` : "N/A"}
-                                </td>
-                                <td style={{ padding: "12px 8px" }}>
-                                  {ev.endomorphy.toFixed(1)} - {ev.mesomorphy.toFixed(1)} - {ev.ectomorphy.toFixed(1)}
-                                </td>
-                                <td style={{ padding: "12px 8px" }}>
-                                  <button
-                                    className="btn"
-                                    style={{ padding: "4px 8px", fontSize: "0.75rem", background: "rgba(244,63,94,0.1)", color: "var(--error)" }}
-                                    onClick={() => handleDeleteEvaluation(ev.id)}
-                                  >
-                                    Borrar
-                                  </button>
-                                </td>
+                    {/* Evaluations timeline list */}
+                    <div className="glass-card" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <h3 className="glow-text" style={{ fontSize: "1.25rem" }}>
+                          Historial de Evaluaciones
+                        </h3>
+                        <button
+                          className="btn btn-primary"
+                          style={{ padding: "8px 16px", fontSize: "0.85rem" }}
+                          onClick={() => setIsAddingEvaluation(true)}
+                        >
+                          + Nueva Evaluación
+                        </button>
+                      </div>
+
+                      <div style={{ flex: 1, overflowX: "auto" }}>
+                        {selectedPatient.evaluations?.length === 0 ? (
+                          <div style={{ color: "var(--text-dark)", textAlign: "center", padding: "40px", fontStyle: "italic" }}>
+                            Aún no se han registrado evaluaciones para este paciente.
+                          </div>
+                        ) : (
+                          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.85rem", color: "var(--text-muted)", textAlign: "left" }}>
+                            <thead>
+                              <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.08)", color: "var(--text-main)" }}>
+                                <th style={{ padding: "12px 8px" }}>Fecha</th>
+                                <th style={{ padding: "12px 8px" }}>Peso</th>
+                                <th style={{ padding: "12px 8px" }}>Grasa %</th>
+                                <th style={{ padding: "12px 8px" }}>Somatotipo</th>
+                                <th style={{ padding: "12px 8px" }}>Acción</th>
                               </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      )}
+                            </thead>
+                            <tbody>
+                              {selectedPatient.evaluations.map((ev) => (
+                                <tr key={ev.id} style={{ borderBottom: "1px solid var(--border-color)" }}>
+                                  <td style={{ padding: "12px 8px", color: "var(--text-main)", fontWeight: 600 }}>{ev.date}</td>
+                                  <td style={{ padding: "12px 8px" }}>{ev.weight} kg</td>
+                                  <td style={{ padding: "12px 8px", color: "var(--warning)", fontWeight: 600 }}>
+                                    {ev.bodyFat ? `${ev.bodyFat}%` : "N/A"}
+                                  </td>
+                                  <td style={{ padding: "12px 8px" }}>
+                                    {ev.endomorphy.toFixed(1)} - {ev.mesomorphy.toFixed(1)} - {ev.ectomorphy.toFixed(1)}
+                                  </td>
+                                  <td style={{ padding: "12px 8px" }}>
+                                    <button
+                                      className="btn"
+                                      style={{ padding: "4px 8px", fontSize: "0.75rem", background: "rgba(255,69,0,0.1)", color: "var(--error)" }}
+                                      onClick={() => handleDeleteEvaluation(ev.id)}
+                                    >
+                                      Borrar
+                                    </button>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -746,12 +769,17 @@ function App() {
                 </div>
               )}
 
-              {/* Sub-section 3: Posture Biomechanics */}
+              {/* Sub-section 3: Training Plan */}
+              {activeTab === "training" && (
+                <TrainingPlanner patientId={selectedPatient.id} isAdminMode={true} />
+              )}
+
+              {/* Sub-section 4: Posture Biomechanics */}
               {activeTab === "posture" && (
                 <PostureAnalyzer patientId={selectedPatient.id} />
               )}
 
-              {/* Sub-section 4: Nutrition Control */}
+              {/* Sub-section 5: Nutrition Control */}
               {activeTab === "nutrition" && (
                 <CalorieCounter patientId={selectedPatient.id} isAdminMode={true} />
               )}
