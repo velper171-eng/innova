@@ -22,6 +22,7 @@ function App() {
   const [activeTab, setActiveTab] = useState("anthropometry"); // "anthropometry", "supplementation"
   const [loading, setLoading] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Fetch all patients on mount
   useEffect(() => {
@@ -228,35 +229,93 @@ function App() {
           zIndex: 100,
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <div
+        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+          {/* Toggle Sidebar Button */}
+          <button
+            type="button"
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             style={{
-              width: "12px",
-              height: "12px",
-              background: "var(--primary)",
-              borderRadius: "50%",
-              boxShadow: "0 0 10px var(--primary)",
+              background: "none",
+              border: "none",
+              color: "var(--primary)",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "8px",
+              borderRadius: "8px",
+              transition: "all var(--transition-fast)",
             }}
-          />
-          <h1 className="glow-text" style={{ fontSize: "1.5rem", fontWeight: 800 }}>
-            INNOVA
-          </h1>
-          <span style={{ fontSize: "0.8rem", color: "var(--text-dark)", textTransform: "uppercase", letterSpacing: "2px", marginLeft: "10px" }}>
-            CRM & Suplementación
-          </span>
+            className="sidebar-toggle-btn"
+            title="Toggle Sidebar"
+          >
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <rect x="3" y="3" width="18" height="18" rx="2" />
+              <line x1="9" y1="3" x2="9" y2="21" />
+            </svg>
+          </button>
+
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <div
+              style={{
+                width: "12px",
+                height: "12px",
+                background: "var(--primary)",
+                borderRadius: "50%",
+                boxShadow: "0 0 10px var(--primary)",
+              }}
+            />
+            <h1 className="glow-text" style={{ fontSize: "1.5rem", fontWeight: 800 }}>
+              INNOVA
+            </h1>
+            <span style={{ fontSize: "0.8rem", color: "var(--text-dark)", textTransform: "uppercase", letterSpacing: "2px", marginLeft: "10px" }}>
+              CRM & Suplementación
+            </span>
+          </div>
         </div>
         <div style={{ fontSize: "0.9rem", color: "var(--text-muted)" }}>
           Modo Administrador
         </div>
       </header>
 
+      {/* Drawer Backdrop */}
+      {isSidebarOpen && (
+        <div className="drawer-backdrop" onClick={() => setIsSidebarOpen(false)} />
+      )}
+
       {/* Main Layout Grid */}
       <div className={`main-layout ${selectedPatient || isAddingPatient || isEditingPatient || isAddingEvaluation || isAddingCycle ? "has-active-content" : ""}`}>
         
-        {/* Sidebar: Patient List & Search */}
-        <aside className="sidebar-panel">
+        {/* Sidebar Drawer: Patient List & Search */}
+        <aside className={`sidebar-drawer ${isSidebarOpen ? "open" : ""}`}>
           {/* Search bar & Add Button */}
           <div style={{ padding: "20px", borderBottom: "1px solid rgba(255,255,255,0.08)", display: "flex", flexDirection: "column", gap: "12px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontSize: "0.9rem", fontWeight: "700", color: "var(--primary)" }}>Panel de Pacientes</span>
+              <button
+                type="button"
+                onClick={() => setIsSidebarOpen(false)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "var(--text-muted)",
+                  cursor: "pointer",
+                  fontSize: "1.2rem",
+                  padding: "4px 8px"
+                }}
+              >
+                ✕
+              </button>
+            </div>
             <input
               type="text"
               className="form-input"
@@ -272,6 +331,7 @@ function App() {
                 setIsEditingPatient(false);
                 setIsAddingEvaluation(false);
                 setIsAddingCycle(false);
+                setIsSidebarOpen(false);
               }}
             >
               + Nuevo Paciente
@@ -352,6 +412,7 @@ function App() {
                         setIsEditingPatient(false);
                         setIsAddingEvaluation(false);
                         setIsAddingCycle(false);
+                        setIsSidebarOpen(false);
                       }}
                       style={{
                         padding: "16px",
@@ -694,8 +755,16 @@ function App() {
                   Panel de Comando Antropométrico
                 </h2>
                 <p style={{ fontSize: "1.1rem", marginBottom: "24px" }}>
-                  Bienvenido a la consola logística de rendimiento físico. Selecciona un atleta de la lista lateral o crea uno nuevo para gestionar sus evaluaciones antropométricas, estructurar ciclos de ayudas ergogénicas o monitorear inventario de suplementos.
+                  Bienvenido a la consola logística de rendimiento físico. Abre el panel desplegable con el botón de menú arriba a la izquierda para seleccionar un atleta, buscar o crear uno nuevo.
                 </p>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => setIsSidebarOpen(true)}
+                  style={{ display: "inline-flex", alignItems: "center", gap: "8px", marginTop: "8px" }}
+                >
+                  📁 Abrir Panel de Pacientes
+                </button>
               </div>
 
               {/* KPI cards */}
