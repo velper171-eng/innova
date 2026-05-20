@@ -674,9 +674,13 @@ app.get("/api/patients/:id/reminders", async (req, res) => {
 
 // --- POSTURE ANALYSIS MODULE ---
 
-const uploadDir = "uploads";
+const uploadDir = process.env.VERCEL ? "/tmp" : "uploads";
 if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir);
+  try {
+    fs.mkdirSync(uploadDir, { recursive: true });
+  } catch (err) {
+    console.error("Failed to create uploads directory:", err);
+  }
 }
 
 const storage = multer.diskStorage({
