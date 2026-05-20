@@ -185,10 +185,10 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
     <div style={{ display: "flex", flexDirection: "column", gap: "24px" }} className="animate-fade-in">
       
       {/* 1. Nutrition Dashboard Card */}
-      <div className="glass-card" style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: "24px" }}>
+      <div className="glass-card calorie-dashboard-grid">
         
         {/* Left Side: Summary ring progress */}
-        <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
+        <div className="calorie-summary-left">
           <div style={{ position: "relative", width: "120px", height: "120px" }}>
             <svg height="120" width="120" style={{ transform: "rotate(-90deg)" }}>
               <circle
@@ -322,7 +322,7 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
 
       {/* 2. Interactive Analyzer (Only in Athlete mode, or Coach mock view) */}
       {!isAdminMode && (
-        <div className="grid-2-cols" style={{ gap: "24px" }}>
+        <div className="calorie-analyzer-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }}>
           
           {/* Form to submit food image & info */}
           <form onSubmit={handleAnalyze} className="glass-card" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>

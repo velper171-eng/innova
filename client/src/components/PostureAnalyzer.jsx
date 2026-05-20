@@ -283,7 +283,7 @@ const PostureAnalyzer = ({ patientId }) => {
     <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "24px" }} className="animate-fade-in">
       
       {/* Top action row */}
-      <div className="glass-card" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      <div className="glass-card posture-header-card">
         <div>
           <h3 className="glow-text" style={{ fontSize: "1.4rem" }}>Análisis de Postura Biomecánico</h3>
           <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginTop: "-6px" }}>
@@ -291,7 +291,7 @@ const PostureAnalyzer = ({ patientId }) => {
           </p>
         </div>
 
-        <div style={{ display: "flex", gap: "12px" }}>
+        <div className="posture-header-actions">
           <button
             className="btn btn-secondary"
             style={{ border: "1px solid var(--accent)", color: "var(--accent)" }}

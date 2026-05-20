@@ -248,7 +248,7 @@ const AthleteView = ({ patientId, onBack }) => {
   }, []);
 
   return (
-    <div style={{ maxWidth: "600px", margin: "0 auto", paddingBottom: "40px" }} className="animate-fade-in">
+    <div style={{ maxWidth: "640px", margin: "0 auto", padding: "0 0 40px", width: "100%" }} className="animate-fade-in">
       
       {/* Mobile Nav Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
@@ -262,18 +262,16 @@ const AthleteView = ({ patientId, onBack }) => {
       </div>
 
       {/* Tab Switcher */}
-      <div className="tabs" style={{ marginBottom: "24px", display: "flex" }}>
+      <div className="athlete-tabs" style={{ marginBottom: "24px" }}>
         <button
-          className={`tab-btn ${athleteTab === "supplements" ? "active" : ""}`}
+          className={`athlete-tab-btn ${athleteTab === "supplements" ? "active" : ""}`}
           onClick={() => setAthleteTab("supplements")}
-          style={{ flex: 1, textAlign: "center", borderBottom: athleteTab === "supplements" ? "2px solid var(--primary)" : "none" }}
         >
           💊 Plan de Suplementos
         </button>
         <button
-          className={`tab-btn ${athleteTab === "calories" ? "active" : ""}`}
+          className={`athlete-tab-btn ${athleteTab === "calories" ? "active" : ""}`}
           onClick={() => setAthleteTab("calories")}
-          style={{ flex: 1, textAlign: "center", borderBottom: athleteTab === "calories" ? "2px solid var(--primary)" : "none" }}
         >
           🥗 Conteo de Calorías
         </button>
