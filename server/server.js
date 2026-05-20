@@ -4,7 +4,25 @@ import cors from "cors";
 import fs from "fs";
 import path from "path";
 import multer from "multer";
-import prisma from "./database.js";
+let prismaInstance = null;
+const prisma = new Proxy({}, {
+  get(target, prop) {
+    if (prop === 'then') return undefined;
+    return new Proxy({}, {
+      get(modelTarget, method) {
+        if (method === 'then') return undefined;
+        return async (...args) => {
+          if (!prismaInstance) {
+            console.log("Prisma Client: Lazy loading database.js...");
+            const dbModule = await import("./database.js");
+            prismaInstance = dbModule.default;
+          }
+          return prismaInstance[prop][method](...args);
+        };
+      }
+    });
+  }
+});
 import { calculateSomatotype, calculateBodyFat } from "./calculator.js";
 import { getSupplementPresetPhases, checkInventoryAlert } from "./supplementEngine.js";
 import { enqueuePostureJob, getQueueStatus } from "./queue.js";

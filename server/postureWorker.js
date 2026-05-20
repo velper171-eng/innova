@@ -1,4 +1,22 @@
-import prisma from "./database.js";
+let prismaInstance = null;
+const prisma = new Proxy({}, {
+  get(target, prop) {
+    if (prop === 'then') return undefined;
+    return new Proxy({}, {
+      get(modelTarget, method) {
+        if (method === 'then') return undefined;
+        return async (...args) => {
+          if (!prismaInstance) {
+            console.log("Prisma Client: Lazy loading database.js...");
+            const dbModule = await import("./database.js");
+            prismaInstance = dbModule.default;
+          }
+          return prismaInstance[prop][method](...args);
+        };
+      }
+    });
+  }
+});
 import { exec } from "child_process";
 import fs from "fs";
 
