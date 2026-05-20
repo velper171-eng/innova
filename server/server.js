@@ -103,7 +103,7 @@ app.post("/api/patients", async (req, res) => {
     res.status(201).json(newPatient);
   } catch (error) {
     console.error("Error creating patient:", error);
-    res.status(500).json({ error: "Error al crear el paciente" });
+    res.status(500).json({ error: `Error al crear el paciente: ${error.message || error}` });
   }
 });
 
