@@ -350,7 +350,7 @@ const AthleteView = ({ patientId, onBack }) => {
 
                 {/* Big Action Checkboxes for gym use */}
                 {rem.status === "pending" && (
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginTop: "14px" }}>
+                  <div className="grid-2-cols" style={{ gap: "12px", marginTop: "14px" }}>
                     <button
                       className="btn btn-secondary"
                       style={{ padding: "10px", fontSize: "0.85rem", color: "var(--error)" }}
@@ -475,7 +475,7 @@ const AthleteView = ({ patientId, onBack }) => {
         {/* Add supplement form */}
         {isAddingSupplement && (
           <form onSubmit={handleAddSupplement} style={{ marginBottom: "20px", padding: "16px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "12px", display: "flex", flexDirection: "column", gap: "12px" }}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+            <div className="grid-2-cols" style={{ gap: "12px" }}>
               <div className="form-group">
                 <label className="form-label">Nombre *</label>
                 <input type="text" className="form-input" value={newSupName} onChange={(e) => setNewSupName(e.target.value)} placeholder="Ej. Creatina" required />
@@ -485,7 +485,7 @@ const AthleteView = ({ patientId, onBack }) => {
                 <input type="text" className="form-input" value={newSupBrand} onChange={(e) => setNewSupBrand(e.target.value)} placeholder="Ej. Evolufit" />
               </div>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px" }}>
+            <div className="grid-3-cols" style={{ gap: "12px" }}>
               <div className="form-group">
                 <label className="form-label">Capacidad Total *</label>
                 <input type="number" className="form-input" value={newSupCap} onChange={(e) => setNewSupCap(e.target.value)} placeholder="300" required />

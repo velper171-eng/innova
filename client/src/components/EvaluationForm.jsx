@@ -130,7 +130,7 @@ const EvaluationForm = ({ onSubmit, onCancel, patient }) => {
   };
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: "24px" }} className="animate-fade-in">
+    <div className="grid-1fr-320px animate-fade-in">
       <form onSubmit={handleSubmit} className="glass-card" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
         <h3 className="glow-text" style={{ fontSize: "1.5rem" }}>
           Nueva Evaluación Antropométrica
@@ -177,7 +177,7 @@ const EvaluationForm = ({ onSubmit, onCancel, patient }) => {
                 required
               />
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+            <div className="grid-2-cols">
               <div className="form-group">
                 <label className="form-label">Peso (kg) *</label>
                 <input
@@ -218,7 +218,7 @@ const EvaluationForm = ({ onSubmit, onCancel, patient }) => {
 
         {/* Tab 2: Skinfolds */}
         {activeTab === "skinfolds" && (
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+          <div className="grid-2-cols">
             <div className="form-group">
               <label className="form-label">Tríceps (mm)</label>
               <input
@@ -303,7 +303,7 @@ const EvaluationForm = ({ onSubmit, onCancel, patient }) => {
         {activeTab === "girths_diameters" && (
           <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
             <h4 style={{ fontSize: "1rem", color: "var(--primary)" }}>Perímetros (cm)</h4>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+            <div className="grid-2-cols">
               <div className="form-group">
                 <label className="form-label">Brazo Contraído (cm)</label>
                 <input
@@ -329,7 +329,7 @@ const EvaluationForm = ({ onSubmit, onCancel, patient }) => {
             </div>
 
             <h4 style={{ fontSize: "1rem", color: "var(--primary)", marginTop: "8px" }}>Diámetros Óseos (cm)</h4>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+            <div className="grid-2-cols">
               <div className="form-group">
                 <label className="form-label">Bicondilar Húmero (cm)</label>
                 <input
@@ -402,7 +402,7 @@ const EvaluationForm = ({ onSubmit, onCancel, patient }) => {
                 <div style={{ fontSize: "0.8rem", color: "var(--text-dark)" }}>
                   Fórmula: {results.fat.formulaUsed}
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginTop: "8px" }}>
+                <div className="grid-2-cols" style={{ marginTop: "8px" }}>
                   <div>
                     <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Masa Grasa</span>
                     <div style={{ fontWeight: "600" }}>{results.fatMass} kg</div>

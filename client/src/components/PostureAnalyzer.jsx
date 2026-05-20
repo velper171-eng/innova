@@ -318,7 +318,7 @@ const PostureAnalyzer = ({ patientId }) => {
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "300px 1fr", gap: "24px" }}>
+      <div className="grid-300px-1-cols">
         
         {/* Left pane: Jobs history list */}
         <div className="glass-card" style={{ display: "flex", flexDirection: "column", gap: "16px", maxHeight: "550px", overflowY: "auto" }}>
@@ -401,7 +401,7 @@ const PostureAnalyzer = ({ patientId }) => {
 
           {/* Completed Job Player */}
           {activeJob && activeJob.status === "completed" && (
-            <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: "24px" }}>
+            <div className="grid-1-3-1-cols">
               
               {/* Left Column: Synchronized Video + Canvas Overlay */}
               <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
@@ -474,7 +474,7 @@ const PostureAnalyzer = ({ patientId }) => {
                   <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                     
                     {/* Angles panel */}
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                    <div className="grid-2-cols" style={{ gap: "12px" }}>
                       <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "8px", padding: "12px", textAlign: "center" }}>
                         <span style={{ fontSize: "0.75rem", color: "var(--text-dark)" }}>Flexión Rodillas</span>
                         <div style={{ fontSize: "1.8rem", fontWeight: 700, color: "var(--primary)", marginTop: "4px" }}>

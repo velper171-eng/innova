@@ -250,18 +250,10 @@ function App() {
       </header>
 
       {/* Main Layout Grid */}
-      <div style={{ display: "grid", gridTemplateColumns: "340px 1fr", flex: 1, overflow: "hidden" }}>
+      <div className={`main-layout ${selectedPatient || isAddingPatient || isEditingPatient || isAddingEvaluation || isAddingCycle ? "has-active-content" : ""}`}>
         
         {/* Sidebar: Patient List & Search */}
-        <aside
-          style={{
-            borderRight: "1px solid rgba(255,255,255,0.08)",
-            background: "rgba(8, 12, 24, 0.4)",
-            display: "flex",
-            flexDirection: "column",
-            overflow: "hidden",
-          }}
-        >
+        <aside className="sidebar-panel">
           {/* Search bar & Add Button */}
           <div style={{ padding: "20px", borderBottom: "1px solid rgba(255,255,255,0.08)", display: "flex", flexDirection: "column", gap: "12px" }}>
             <input
@@ -331,7 +323,22 @@ function App() {
         </aside>
 
         {/* Content Area */}
-        <main style={{ overflowY: "auto", padding: "32px", display: "flex", flexDirection: "column" }}>
+        <main className="content-panel">
+          {/* Mobile Back Button */}
+          {(selectedPatient || isAddingPatient || isEditingPatient || isAddingEvaluation || isAddingCycle) && (
+            <button
+              className="btn btn-secondary mobile-back-btn"
+              onClick={() => {
+                setSelectedPatient(null);
+                setIsAddingPatient(false);
+                setIsEditingPatient(false);
+                setIsAddingEvaluation(false);
+                setIsAddingCycle(false);
+              }}
+            >
+              ← Volver a Pacientes
+            </button>
+          )}
           
           {/* 1. Add Patient View */}
           {isAddingPatient && (
@@ -435,7 +442,7 @@ function App() {
 
               {/* Sub-section 1: Anthropometry */}
               {activeTab === "anthropometry" && (
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1.2fr", gap: "24px" }} className="animate-fade-in">
+                <div className="grid-1-2-cols animate-fade-in">
                   {/* Somatochart */}
                   <div className="glass-card" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                     <h3 className="glow-text" style={{ fontSize: "1.25rem" }}>
@@ -510,7 +517,7 @@ function App() {
 
               {/* Sub-section 2: Supplementation Planner */}
               {activeTab === "supplementation" && (
-                <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: "24px" }} className="animate-fade-in">
+                <div className="grid-1-2-1-cols animate-fade-in">
                   
                   {/* Cycles list */}
                   <div className="glass-card" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
@@ -631,7 +638,7 @@ function App() {
               </div>
 
               {/* KPI cards */}
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "20px" }}>
+              <div className="grid-3-cols">
                 <div className="glass-card" style={{ background: "rgba(255,255,255,0.02)" }}>
                   <span style={{ fontSize: "0.85rem", color: "var(--text-dark)", textTransform: "uppercase" }}>Total Pacientes</span>
                   <div style={{ fontSize: "2.5rem", fontWeight: 800, color: "var(--primary)", marginTop: "8px" }}>

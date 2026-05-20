@@ -61,7 +61,7 @@ const PatientForm = ({ onSubmit, onCancel, patient = null }) => {
         />
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+      <div className="grid-2-cols">
         <div className="form-group">
           <label className="form-label">Fecha de Nacimiento *</label>
           <input
@@ -86,7 +86,7 @@ const PatientForm = ({ onSubmit, onCancel, patient = null }) => {
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+      <div className="grid-2-cols">
         <div className="form-group">
           <label className="form-label">Correo Electrónico</label>
           <input
