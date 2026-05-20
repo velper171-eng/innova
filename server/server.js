@@ -26,6 +26,8 @@ const prisma = new Proxy({}, {
 import { calculateSomatotype, calculateBodyFat } from "./calculator.js";
 import { getSupplementPresetPhases, checkInventoryAlert } from "./supplementEngine.js";
 import { enqueuePostureJob, getQueueStatus } from "./queue.js";
+import { analyzeCalories } from "./calorieEngine.js";
+
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -83,7 +85,10 @@ app.get("/api/patients/:id", async (req, res) => {
             logs: true
           }
         },
-        workoutSchedule: true
+        workoutSchedule: true,
+        calorieLogs: {
+          orderBy: { createdAt: "desc" }
+        }
       }
     });
 
@@ -755,6 +760,127 @@ app.get("/api/posture/jobs/:id", async (req, res) => {
 app.get("/api/posture/queue", (req, res) => {
   res.json(getQueueStatus());
 });
+
+// --- CALORIE TRACKER MODULE ---
+
+const calorieStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    const ext = path.extname(file.originalname);
+    cb(null, "food-" + uniqueSuffix + ext);
+  }
+});
+
+const uploadCalorie = multer({ storage: calorieStorage });
+
+// 1. Analyze food calories (AI / Simulation fallback)
+app.post("/api/patients/:id/calories/analyze", uploadCalorie.single("image"), async (req, res) => {
+  try {
+    const patientId = parseInt(req.params.id);
+    if (isNaN(patientId)) {
+      return res.status(400).json({ error: "ID de paciente inválido" });
+    }
+
+    const { foodName, ingredients, preparation } = req.body;
+    const file = req.file;
+
+    const result = await analyzeCalories({
+      imagePath: file ? file.path : null,
+      mimeType: file ? file.mimetype : null,
+      foodName,
+      ingredients,
+      preparation
+    });
+
+    if (file) {
+      result.imagePath = `/uploads/${file.filename}`;
+    }
+
+    res.json(result);
+  } catch (error) {
+    console.error("Error analyzing calories:", error);
+    res.status(500).json({ error: "Error al analizar calorías del plato" });
+  }
+});
+
+// 2. Save Calorie Log to DB
+app.post("/api/patients/:id/calories/logs", async (req, res) => {
+  try {
+    const patientId = parseInt(req.params.id);
+    if (isNaN(patientId)) {
+      return res.status(400).json({ error: "ID de paciente inválido" });
+    }
+
+    const { date, foodName, calories, protein, carbs, fat, ingredients, preparation, imagePath } = req.body;
+
+    if (!date || !foodName || calories === undefined) {
+      return res.status(400).json({ error: "Fecha, alimento y calorías son obligatorios" });
+    }
+
+    const log = await prisma.calorieLog.create({
+      data: {
+        patientId,
+        date,
+        foodName,
+        calories: parseInt(calories),
+        protein: protein ? parseFloat(protein) : null,
+        carbs: carbs ? parseFloat(carbs) : null,
+        fat: fat ? parseFloat(fat) : null,
+        ingredients,
+        preparation,
+        imagePath
+      }
+    });
+
+    res.status(201).json(log);
+  } catch (error) {
+    console.error("Error saving calorie log:", error);
+    res.status(500).json({ error: "Error al guardar registro en el diario" });
+  }
+});
+
+// 3. Get Calorie Logs
+app.get("/api/patients/:id/calories/logs", async (req, res) => {
+  try {
+    const patientId = parseInt(req.params.id);
+    if (isNaN(patientId)) {
+      return res.status(400).json({ error: "ID de paciente inválido" });
+    }
+
+    const logs = await prisma.calorieLog.findMany({
+      where: { patientId },
+      orderBy: { createdAt: "desc" }
+    });
+
+    res.json(logs);
+  } catch (error) {
+    console.error("Error fetching calorie logs:", error);
+    res.status(500).json({ error: "Error al obtener el historial del diario" });
+  }
+});
+
+// 4. Delete Calorie Log
+app.delete("/api/calories/logs/:id", async (req, res) => {
+  try {
+    const logId = parseInt(req.params.id);
+    if (isNaN(logId)) {
+      return res.status(400).json({ error: "ID de registro inválido" });
+    }
+
+    await prisma.calorieLog.delete({
+      where: { id: logId }
+    });
+
+    res.json({ message: "Registro eliminado exitosamente" });
+  } catch (error) {
+    console.error("Error deleting calorie log:", error);
+    res.status(500).json({ error: "Error al eliminar el registro del diario" });
+  }
+});
+
 
 if (!process.env.VERCEL) {
   app.listen(PORT, () => {

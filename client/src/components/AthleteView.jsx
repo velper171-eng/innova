@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import CalorieCounter from "./CalorieCounter";
 
 const API_BASE = "/api";
 
@@ -12,6 +13,8 @@ const AthleteView = ({ patientId, onBack }) => {
   // UI toggles
   const [isEditingSchedule, setIsEditingSchedule] = useState(false);
   const [isAddingSupplement, setIsAddingSupplement] = useState(false);
+  const [athleteTab, setAthleteTab] = useState("supplements"); // "supplements", "calories"
+
   
   // New supplement form state
   const [newSupName, setNewSupName] = useState("");
@@ -258,319 +261,343 @@ const AthleteView = ({ patientId, onBack }) => {
         </div>
       </div>
 
-      {/* PWA Cloud Sync Status Panel */}
-      <div className="glass-card animate-fade-in" style={{
-        marginBottom: "20px",
-        padding: "12px 16px",
-        background: "rgba(0, 242, 254, 0.02)",
-        border: "1px solid rgba(0, 242, 254, 0.15)",
-        borderRadius: "12px",
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center"
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <div style={{
-            width: "8px",
-            height: "8px",
-            background: isOnline ? "var(--success)" : "#fbbf24",
-            borderRadius: "50%",
-            boxShadow: isOnline ? "0 0 8px var(--success)" : "0 0 8px #fbbf24"
-          }} />
-          <span style={{ fontSize: "0.8rem", fontWeight: 600, color: "var(--text-main)" }}>
-            {isOnline ? "PWA Online: Sincronizado" : "PWA Offline: Modo Gimnasio (Local)"}
-          </span>
-        </div>
-        <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", fontStyle: "italic" }}>
-          Serverless & MongoDB
-        </span>
+      {/* Tab Switcher */}
+      <div className="tabs" style={{ marginBottom: "24px", display: "flex" }}>
+        <button
+          className={`tab-btn ${athleteTab === "supplements" ? "active" : ""}`}
+          onClick={() => setAthleteTab("supplements")}
+          style={{ flex: 1, textAlign: "center", borderBottom: athleteTab === "supplements" ? "2px solid var(--primary)" : "none" }}
+        >
+          💊 Plan de Suplementos
+        </button>
+        <button
+          className={`tab-btn ${athleteTab === "calories" ? "active" : ""}`}
+          onClick={() => setAthleteTab("calories")}
+          style={{ flex: 1, textAlign: "center", borderBottom: athleteTab === "calories" ? "2px solid var(--primary)" : "none" }}
+        >
+          🥗 Conteo de Calorías
+        </button>
       </div>
 
-      {/* 1. Daily reminders & intake checkoffs */}
-      <section className="glass-card" style={{ marginBottom: "20px", border: "1px solid rgba(0, 242, 254, 0.2)" }}>
-        <h4 className="glow-text" style={{ fontSize: "1.2rem", marginBottom: "16px", display: "flex", alignItems: "center", gap: "8px" }}>
-          <span style={{ display: "inline-block", width: "10px", height: "10px", borderRadius: "50%", background: "var(--primary)", boxShadow: "0 0 10px var(--primary)" }} />
-          Tomas Programadas para Hoy
-        </h4>
-
-        {reminders.length === 0 ? (
-          <div style={{ color: "var(--text-dark)", textAlign: "center", padding: "20px", fontStyle: "italic" }}>
-            No hay ciclos de suplementación activos hoy.
+      {athleteTab === "supplements" ? (
+        <>
+          {/* PWA Cloud Sync Status Panel */}
+          <div className="glass-card animate-fade-in" style={{
+            marginBottom: "20px",
+            padding: "12px 16px",
+            background: "rgba(0, 242, 254, 0.02)",
+            border: "1px solid rgba(0, 242, 254, 0.15)",
+            borderRadius: "12px",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center"
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <div style={{
+                width: "8px",
+                height: "8px",
+                background: isOnline ? "var(--success)" : "#fbbf24",
+                borderRadius: "50%",
+                boxShadow: isOnline ? "0 0 8px var(--success)" : "0 0 8px #fbbf24"
+              }} />
+              <span style={{ fontSize: "0.8rem", fontWeight: 600, color: "var(--text-main)" }}>
+                {isOnline ? "PWA Online: Sincronizado" : "PWA Offline: Modo Gimnasio (Local)"}
+              </span>
+            </div>
+            <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", fontStyle: "italic" }}>
+              Serverless & MongoDB
+            </span>
           </div>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-            {reminders.map((rem, idx) => (
-              <div
-                key={idx}
-                style={{
-                  background: rem.status === "taken" ? "rgba(16, 185, 129, 0.08)" : rem.status === "skipped" ? "rgba(244, 63, 94, 0.08)" : "rgba(255, 255, 255, 0.02)",
-                  border: `1px solid ${rem.status === "taken" ? "var(--success)" : rem.status === "skipped" ? "var(--error)" : "rgba(255, 255, 255, 0.08)"}`,
-                  borderRadius: "12px",
-                  padding: "16px",
-                }}
-              >
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                  <div>
-                    <h5 style={{ fontSize: "1.05rem", color: "var(--text-main)", fontWeight: 600 }}>{rem.cycleName}</h5>
-                    <div style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginTop: "4px" }}>
-                      Dosis: <strong>{rem.dailyDose} {rem.stock?.unit || "g"}</strong> | Hora: <strong>{rem.scheduledTime}</strong> ({rem.timingType})
-                    </div>
-                  </div>
-                  <span
+
+          {/* 1. Daily reminders & intake checkoffs */}
+          <section className="glass-card" style={{ marginBottom: "20px", border: "1px solid rgba(0, 242, 254, 0.2)" }}>
+            <h4 className="glow-text" style={{ fontSize: "1.2rem", marginBottom: "16px", display: "flex", alignItems: "center", gap: "8px" }}>
+              <span style={{ display: "inline-block", width: "10px", height: "10px", borderRadius: "50%", background: "var(--primary)", boxShadow: "0 0 10px var(--primary)" }} />
+              Tomas Programadas para Hoy
+            </h4>
+
+            {reminders.length === 0 ? (
+              <div style={{ color: "var(--text-dark)", textAlign: "center", padding: "20px", fontStyle: "italic" }}>
+                No hay ciclos de suplementación activos hoy.
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                {reminders.map((rem, idx) => (
+                  <div
+                    key={idx}
                     style={{
-                      fontSize: "0.75rem",
-                      padding: "2px 8px",
-                      borderRadius: "6px",
-                      fontWeight: 600,
-                      background: rem.status === "taken" ? "rgba(16,185,129,0.2)" : rem.status === "skipped" ? "rgba(244,63,94,0.2)" : "rgba(255,255,255,0.05)",
-                      color: rem.status === "taken" ? "var(--success)" : rem.status === "skipped" ? "var(--error)" : "var(--text-muted)"
+                      background: rem.status === "taken" ? "rgba(16, 185, 129, 0.08)" : rem.status === "skipped" ? "rgba(244, 63, 94, 0.08)" : "rgba(255, 255, 255, 0.02)",
+                      border: `1px solid ${rem.status === "taken" ? "var(--success)" : rem.status === "skipped" ? "var(--error)" : "rgba(255, 255, 255, 0.08)"}`,
+                      borderRadius: "12px",
+                      padding: "16px",
                     }}
                   >
-                    {rem.status === "taken" ? "Tomado" : rem.status === "skipped" ? "Omitido" : "Pendiente"}
-                  </span>
-                </div>
-
-                {/* Low Stock Warning */}
-                {rem.stock?.isLowStock && (
-                  <div style={{ marginTop: "12px", padding: "8px 12px", background: "rgba(244, 63, 94, 0.1)", border: "1px solid rgba(244, 63, 94, 0.2)", borderRadius: "8px", fontSize: "0.8rem", color: "var(--error)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <span>⚠️ ¡Quedan aprox. <strong>{rem.stock.daysRemaining} días</strong> ({rem.stock.remainingQuantity.toFixed(1)} {rem.stock.unit})!</span>
-                    {rem.stock.purchaseLink && (
-                      <a
-                        href={rem.stock.purchaseLink}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="btn"
-                        style={{ padding: "4px 8px", fontSize: "0.75rem", background: "var(--error)", color: "white" }}
+                    <div style={{ display: "flex", justifycontent: "space-between", alignItems: "flex-start" }}>
+                      <div>
+                        <h5 style={{ fontSize: "1.05rem", color: "var(--text-main)", fontWeight: 600 }}>{rem.cycleName}</h5>
+                        <div style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginTop: "4px" }}>
+                          Dosis: <strong>{rem.dailyDose} {rem.stock?.unit || "g"}</strong> | Hora: <strong>{rem.scheduledTime}</strong> ({rem.timingType})
+                        </div>
+                      </div>
+                      <span
+                        style={{
+                          fontSize: "0.75rem",
+                          padding: "2px 8px",
+                          borderRadius: "6px",
+                          fontWeight: 600,
+                          background: rem.status === "taken" ? "rgba(16,185,129,0.2)" : rem.status === "skipped" ? "rgba(244,63,94,0.2)" : "rgba(255,255,255,0.05)",
+                          color: rem.status === "taken" ? "var(--success)" : rem.status === "skipped" ? "var(--error)" : "var(--text-muted)"
+                        }}
                       >
-                        Recomprar
-                      </a>
-                    )}
-                  </div>
-                )}
-
-                {/* Big Action Checkboxes for gym use */}
-                {rem.status === "pending" && (
-                  <div className="grid-2-cols" style={{ gap: "12px", marginTop: "14px" }}>
-                    <button
-                      className="btn btn-secondary"
-                      style={{ padding: "10px", fontSize: "0.85rem", color: "var(--error)" }}
-                      onClick={() => handleLogIntake(rem.cycleId, rem.dailyDose, "skipped")}
-                    >
-                      Omitir
-                    </button>
-                    <button
-                      className="btn btn-primary"
-                      style={{ padding: "10px", fontSize: "0.85rem" }}
-                      onClick={() => handleLogIntake(rem.cycleId, rem.dailyDose, "taken")}
-                    >
-                      ✓ Tomar
-                    </button>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* 2. Streak Adherence and Calendar */}
-      <section className="glass-card" style={{ marginBottom: "20px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-          <h4 className="glow-text" style={{ fontSize: "1.2rem" }}>Racha de Adherencia</h4>
-          <div style={{ background: "rgba(16, 185, 129, 0.15)", border: "1px solid var(--success)", padding: "4px 10px", borderRadius: "12px", fontSize: "0.85rem", color: "var(--success)", fontWeight: 700 }}>
-            🔥 {streak} Días de Racha
-          </div>
-        </div>
-
-        <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginBottom: "12px" }}>
-          Registro de cumplimiento de los últimos 30 días. Mantén las celdas verdes.
-        </p>
-
-        {/* 30 day mini calendar grid */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "8px" }}>
-          {past30Days.map((day, idx) => (
-            <div
-              key={idx}
-              title={day.dateStr}
-              style={{
-                aspectRatio: "1/1",
-                borderRadius: "8px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "0.75rem",
-                fontWeight: 600,
-                background: day.status === "taken" ? "rgba(16, 185, 129, 0.4)" : day.status === "skipped" ? "rgba(244, 63, 94, 0.4)" : "rgba(255, 255, 255, 0.03)",
-                border: `1px solid ${day.status === "taken" ? "var(--success)" : day.status === "skipped" ? "var(--error)" : "rgba(255,255,255,0.06)"}`,
-                color: day.status !== "none" ? "var(--text-main)" : "var(--text-dark)"
-              }}
-            >
-              {day.dayNum}
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* 3. Workout schedule editor */}
-      <section className="glass-card" style={{ marginBottom: "20px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div>
-            <h4 style={{ fontSize: "1.1rem" }}>Horario de Entrenamiento</h4>
-            <div style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginTop: "4px" }}>
-              Hora: <strong>{workoutTime}</strong> | Días: <strong>{activeDays}</strong>
-            </div>
-          </div>
-          <button
-            className="btn btn-secondary"
-            style={{ padding: "6px 12px", fontSize: "0.8rem" }}
-            onClick={() => setIsEditingSchedule(!isEditingSchedule)}
-          >
-            {isEditingSchedule ? "Cerrar" : "Ajustar"}
-          </button>
-        </div>
-
-        {isEditingSchedule && (
-          <form onSubmit={handleSaveSchedule} style={{ marginTop: "16px", borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: "16px", display: "flex", flexDirection: "column", gap: "12px" }}>
-            <div className="form-group">
-              <label className="form-label">Hora del Entrenamiento (HH:MM)</label>
-              <input
-                type="time"
-                className="form-input"
-                value={workoutTime}
-                onChange={(e) => setWorkoutTime(e.target.value)}
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Días Activos (separados por comas)</label>
-              <input
-                type="text"
-                className="form-input"
-                value={activeDays}
-                onChange={(e) => setActiveDays(e.target.value)}
-                placeholder="Lunes,Miércoles,Viernes"
-                required
-              />
-            </div>
-            <button type="submit" className="btn btn-primary" style={{ alignSelf: "flex-end", padding: "8px 16px", fontSize: "0.85rem" }}>
-              Guardar Horario
-            </button>
-          </form>
-        )}
-      </section>
-
-      {/* 4. Supplement inventory & Replenishment warnings */}
-      <section className="glass-card">
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-          <h4 className="glow-text" style={{ fontSize: "1.2rem" }}>Mi Inventario de Suplementos</h4>
-          <button
-            className="btn btn-primary"
-            style={{ padding: "6px 12px", fontSize: "0.8rem" }}
-            onClick={() => setIsAddingSupplement(!isAddingSupplement)}
-          >
-            {isAddingSupplement ? "Cancelar" : "+ Agregar"}
-          </button>
-        </div>
-
-        {/* Add supplement form */}
-        {isAddingSupplement && (
-          <form onSubmit={handleAddSupplement} style={{ marginBottom: "20px", padding: "16px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "12px", display: "flex", flexDirection: "column", gap: "12px" }}>
-            <div className="grid-2-cols" style={{ gap: "12px" }}>
-              <div className="form-group">
-                <label className="form-label">Nombre *</label>
-                <input type="text" className="form-input" value={newSupName} onChange={(e) => setNewSupName(e.target.value)} placeholder="Ej. Creatina" required />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Marca</label>
-                <input type="text" className="form-input" value={newSupBrand} onChange={(e) => setNewSupBrand(e.target.value)} placeholder="Ej. Evolufit" />
-              </div>
-            </div>
-            <div className="grid-3-cols" style={{ gap: "12px" }}>
-              <div className="form-group">
-                <label className="form-label">Capacidad Total *</label>
-                <input type="number" className="form-input" value={newSupCap} onChange={(e) => setNewSupCap(e.target.value)} placeholder="300" required />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Cant. Restante *</label>
-                <input type="number" className="form-input" value={newSupRem} onChange={(e) => setNewSupRem(e.target.value)} placeholder="300" required />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Unidad</label>
-                <select className="form-select" value={newSupUnit} onChange={(e) => setNewSupUnit(e.target.value)}>
-                  <option value="g">gramos (g)</option>
-                  <option value="caps">cápsulas</option>
-                  <option value="scoops">scoops</option>
-                </select>
-              </div>
-            </div>
-            <div className="form-group">
-              <label className="form-label">Enlace Recompra (WhatsApp / Tienda)</label>
-              <input type="url" className="form-input" value={newSupLink} onChange={(e) => setNewSupLink(e.target.value)} placeholder="https://wa.me/..." />
-            </div>
-            <button type="submit" className="btn btn-primary" style={{ alignSelf: "flex-end" }}>
-              Agregar al Stock
-            </button>
-          </form>
-        )}
-
-        {/* Inventory list */}
-        {supplements.length === 0 ? (
-          <div style={{ color: "var(--text-dark)", textAlign: "center", padding: "20px", fontStyle: "italic" }}>
-            No hay suplementos registrados en inventario.
-          </div>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-            {supplements.map((sup) => {
-              const percent = Math.min(100, Math.round((sup.remainingQuantity / sup.totalCapacity) * 100));
-              const isLow = sup.remainingQuantity <= (sup.totalCapacity * 0.15) || percent <= 15;
-
-              return (
-                <div key={sup.id} style={{ background: "rgba(255,255,255,0.01)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "12px", padding: "14px" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-                    <div>
-                      <h5 style={{ fontWeight: 600, fontSize: "1rem" }}>{sup.name}</h5>
-                      <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>{sup.brand || "Genérico"}</span>
-                    </div>
-                    <div style={{ textAlign: "right" }}>
-                      <span style={{ fontWeight: 700, color: isLow ? "var(--error)" : "var(--primary)" }}>
-                        {sup.remainingQuantity} / {sup.totalCapacity} {sup.unit}
+                        {rem.status === "taken" ? "Tomado" : rem.status === "skipped" ? "Omitido" : "Pendiente"}
                       </span>
-                      <div style={{ fontSize: "0.75rem", color: "var(--text-dark)" }}>{percent}% restante</div>
                     </div>
-                  </div>
 
-                  {/* Stock progress bar */}
-                  <div style={{ height: "6px", width: "100%", background: "rgba(255,255,255,0.05)", borderRadius: "3px", overflow: "hidden", marginBottom: "8px" }}>
-                    <div style={{ height: "100%", width: `${percent}%`, background: isLow ? "var(--error)" : "var(--primary)", transition: "width 0.3s" }} />
-                  </div>
+                    {/* Low Stock Warning */}
+                    {rem.stock?.isLowStock && (
+                      <div style={{ marginTop: "12px", padding: "8px 12px", background: "rgba(244, 63, 94, 0.1)", border: "1px solid rgba(244, 63, 94, 0.2)", borderRadius: "8px", fontSize: "0.8rem", color: "var(--error)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <span>⚠️ ¡Quedan aprox. <strong>{rem.stock.daysRemaining} días</strong> ({rem.stock.remainingQuantity.toFixed(1)} {rem.stock.unit})!</span>
+                        {rem.stock.purchaseLink && (
+                          <a
+                            href={rem.stock.purchaseLink}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="btn"
+                            style={{ padding: "4px 8px", fontSize: "0.75rem", background: "var(--error)", color: "white" }}
+                          >
+                            Recomprar
+                          </a>
+                        )}
+                      </div>
+                    )}
 
-                  {/* Stock alerts & Reorder */}
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "12px" }}>
-                    <button
-                      className="btn"
-                      style={{ padding: "4px 8px", fontSize: "0.75rem", background: "rgba(244,63,94,0.05)", color: "var(--error)" }}
-                      onClick={() => handleDeleteSupplement(sup.id)}
-                    >
-                      Eliminar
-                    </button>
-                    {isLow && sup.purchaseLink && (
-                      <a
-                        href={sup.purchaseLink}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="btn btn-danger"
-                        style={{ padding: "6px 12px", fontSize: "0.75rem", display: "inline-flex", gap: "4px" }}
-                      >
-                        ⚡ Recomprar
-                      </a>
+                    {/* Big Action Checkboxes for gym use */}
+                    {rem.status === "pending" && (
+                      <div className="grid-2-cols" style={{ gap: "12px", marginTop: "14px" }}>
+                        <button
+                          className="btn btn-secondary"
+                          style={{ padding: "10px", fontSize: "0.85rem", color: "var(--error)" }}
+                          onClick={() => handleLogIntake(rem.cycleId, rem.dailyDose, "skipped")}
+                        >
+                          Omitir
+                        </button>
+                        <button
+                          className="btn btn-primary"
+                          style={{ padding: "10px", fontSize: "0.85rem" }}
+                          onClick={() => handleLogIntake(rem.cycleId, rem.dailyDose, "taken")}
+                        >
+                          ✓ Tomar
+                        </button>
+                      </div>
                     )}
                   </div>
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* 2. Streak Adherence and Calendar */}
+          <section className="glass-card" style={{ marginBottom: "20px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+              <h4 className="glow-text" style={{ fontSize: "1.2rem" }}>Racha de Adherencia</h4>
+              <div style={{ background: "rgba(16, 185, 129, 0.15)", border: "1px solid var(--success)", padding: "4px 10px", borderRadius: "12px", fontSize: "0.85rem", color: "var(--success)", fontWeight: 700 }}>
+                🔥 {streak} Días de Racha
+              </div>
+            </div>
+
+            <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginBottom: "12px" }}>
+              Registro de cumplimiento de los últimos 30 días. Mantén las celdas verdes.
+            </p>
+
+            {/* 30 day mini calendar grid */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "8px" }}>
+              {past30Days.map((day, idx) => (
+                <div
+                  key={idx}
+                  title={day.dateStr}
+                  style={{
+                    aspectRatio: "1/1",
+                    borderRadius: "8px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "0.75rem",
+                    fontWeight: 600,
+                    background: day.status === "taken" ? "rgba(16, 185, 129, 0.4)" : day.status === "skipped" ? "rgba(244, 63, 94, 0.4)" : "rgba(255, 255, 255, 0.03)",
+                    border: `1px solid ${day.status === "taken" ? "var(--success)" : day.status === "skipped" ? "var(--error)" : "rgba(255,255,255,0.06)"}`,
+                    color: day.status !== "none" ? "var(--text-main)" : "var(--text-dark)"
+                  }}
+                >
+                  {day.dayNum}
                 </div>
-              );
-            })}
-          </div>
-        )}
-      </section>
+              ))}
+            </div>
+          </section>
+
+          {/* 3. Workout schedule editor */}
+          <section className="glass-card" style={{ marginBottom: "20px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <h4 style={{ fontSize: "1.1rem" }}>Horario de Entrenamiento</h4>
+                <div style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginTop: "4px" }}>
+                  Hora: <strong>{workoutTime}</strong> | Días: <strong>{activeDays}</strong>
+                </div>
+              </div>
+              <button
+                className="btn btn-secondary"
+                style={{ padding: "6px 12px", fontSize: "0.8rem" }}
+                onClick={() => setIsEditingSchedule(!isEditingSchedule)}
+              >
+                {isEditingSchedule ? "Cerrar" : "Ajustar"}
+              </button>
+            </div>
+
+            {isEditingSchedule && (
+              <form onSubmit={handleSaveSchedule} style={{ marginTop: "16px", borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: "16px", display: "flex", flexDirection: "column", gap: "12px" }}>
+                <div className="form-group">
+                  <label className="form-label">Hora del Entrenamiento (HH:MM)</label>
+                  <input
+                    type="time"
+                    className="form-input"
+                    value={workoutTime}
+                    onChange={(e) => setWorkoutTime(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Días Activos (separados por comas)</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    value={activeDays}
+                    onChange={(e) => setActiveDays(e.target.value)}
+                    placeholder="Lunes,Miércoles,Viernes"
+                    required
+                  />
+                </div>
+                <button type="submit" className="btn btn-primary" style={{ alignSelf: "flex-end", padding: "8px 16px", fontSize: "0.85rem" }}>
+                  Guardar Horario
+                </button>
+              </form>
+            )}
+          </section>
+
+          {/* 4. Supplement inventory & Replenishment warnings */}
+          <section className="glass-card">
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+              <h4 className="glow-text" style={{ fontSize: "1.2rem" }}>Mi Inventario de Suplementos</h4>
+              <button
+                className="btn btn-primary"
+                style={{ padding: "6px 12px", fontSize: "0.8rem" }}
+                onClick={() => setIsAddingSupplement(!isAddingSupplement)}
+              >
+                {isAddingSupplement ? "Cancelar" : "+ Agregar"}
+              </button>
+            </div>
+
+            {/* Add supplement form */}
+            {isAddingSupplement && (
+              <form onSubmit={handleAddSupplement} style={{ marginBottom: "20px", padding: "16px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "12px", display: "flex", flexDirection: "column", gap: "12px" }}>
+                <div className="grid-2-cols" style={{ gap: "12px" }}>
+                  <div className="form-group">
+                    <label className="form-label">Nombre *</label>
+                    <input type="text" className="form-input" value={newSupName} onChange={(e) => setNewSupName(e.target.value)} placeholder="Ej. Creatina" required />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Marca</label>
+                    <input type="text" className="form-input" value={newSupBrand} onChange={(e) => setNewSupBrand(e.target.value)} placeholder="Ej. Evolufit" />
+                  </div>
+                </div>
+                <div className="grid-3-cols" style={{ gap: "12px" }}>
+                  <div className="form-group">
+                    <label className="form-label">Capacidad Total *</label>
+                    <input type="number" className="form-input" value={newSupCap} onChange={(e) => setNewSupCap(e.target.value)} placeholder="300" required />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Cant. Restante *</label>
+                    <input type="number" className="form-input" value={newSupRem} onChange={(e) => setNewSupRem(e.target.value)} placeholder="300" required />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Unidad</label>
+                    <select className="form-select" value={newSupUnit} onChange={(e) => setNewSupUnit(e.target.value)}>
+                      <option value="g">gramos (g)</option>
+                      <option value="caps">cápsulas</option>
+                      <option value="scoops">scoops</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Enlace Recompra (WhatsApp / Tienda)</label>
+                  <input type="url" className="form-input" value={newSupLink} onChange={(e) => setNewSupLink(e.target.value)} placeholder="https://wa.me/..." />
+                </div>
+                <button type="submit" className="btn btn-primary" style={{ alignSelf: "flex-end" }}>
+                  Agregar al Stock
+                </button>
+              </form>
+            )}
+
+            {/* Inventory list */}
+            {supplements.length === 0 ? (
+              <div style={{ color: "var(--text-dark)", textAlign: "center", padding: "20px", fontStyle: "italic" }}>
+                No hay suplementos registrados en inventario.
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                {supplements.map((sup) => {
+                  const percent = Math.min(100, Math.round((sup.remainingQuantity / sup.totalCapacity) * 100));
+                  const isLow = sup.remainingQuantity <= (sup.totalCapacity * 0.15) || percent <= 15;
+
+                  return (
+                    <div key={sup.id} style={{ background: "rgba(255,255,255,0.01)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "12px", padding: "14px" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                        <div>
+                          <h5 style={{ fontWeight: 600, fontSize: "1rem" }}>{sup.name}</h5>
+                          <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>{sup.brand || "Genérico"}</span>
+                        </div>
+                        <div style={{ textAlign: "right" }}>
+                          <span style={{ fontWeight: 700, color: isLow ? "var(--error)" : "var(--primary)" }}>
+                            {sup.remainingQuantity} / {sup.totalCapacity} {sup.unit}
+                          </span>
+                          <div style={{ fontSize: "0.75rem", color: "var(--text-dark)" }}>{percent}% restante</div>
+                        </div>
+                      </div>
+
+                      {/* Stock progress bar */}
+                      <div style={{ height: "6px", width: "100%", background: "rgba(255,255,255,0.05)", borderRadius: "3px", overflow: "hidden", marginBottom: "8px" }}>
+                        <div style={{ height: "100%", width: `${percent}%`, background: isLow ? "var(--error)" : "var(--primary)", transition: "width 0.3s" }} />
+                      </div>
+
+                      {/* Stock alerts & Reorder */}
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "12px" }}>
+                        <button
+                          className="btn"
+                          style={{ padding: "4px 8px", fontSize: "0.75rem", background: "rgba(244,63,94,0.05)", color: "var(--error)" }}
+                          onClick={() => handleDeleteSupplement(sup.id)}
+                        >
+                          Eliminar
+                        </button>
+                        {isLow && sup.purchaseLink && (
+                          <a
+                            href={sup.purchaseLink}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="btn btn-danger"
+                            style={{ padding: "6px 12px", fontSize: "0.75rem", display: "inline-flex", gap: "4px" }}
+                          >
+                            ⚡ Recomprar
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+        </>
+      ) : (
+        <CalorieCounter patientId={patientId} />
+      )}
 
     </div>
   );

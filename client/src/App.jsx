@@ -5,6 +5,7 @@ import Somatochart from "./components/Somatochart";
 import CyclePlanner from "./components/CyclePlanner";
 import AthleteView from "./components/AthleteView";
 import PostureAnalyzer from "./components/PostureAnalyzer";
+import CalorieCounter from "./components/CalorieCounter";
 
 const API_BASE = "/api";
 
@@ -19,7 +20,7 @@ function App() {
   const [isAddingEvaluation, setIsAddingEvaluation] = useState(false);
   const [isAddingCycle, setIsAddingCycle] = useState(false);
   const [isAthleteView, setIsAthleteView] = useState(false);
-  const [activeTab, setActiveTab] = useState("anthropometry"); // "anthropometry", "supplementation"
+  const [activeTab, setActiveTab] = useState("anthropometry"); // "anthropometry", "supplementation", "posture", "nutrition"
   const [loading, setLoading] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -560,6 +561,12 @@ function App() {
                 >
                   Análisis Biomecánico
                 </button>
+                <button
+                  className={`tab-btn ${activeTab === "nutrition" ? "active" : ""}`}
+                  onClick={() => setActiveTab("nutrition")}
+                >
+                  Control de Nutrición
+                </button>
               </div>
 
               {/* Sub-section 1: Anthropometry */}
@@ -742,6 +749,11 @@ function App() {
               {/* Sub-section 3: Posture Biomechanics */}
               {activeTab === "posture" && (
                 <PostureAnalyzer patientId={selectedPatient.id} />
+              )}
+
+              {/* Sub-section 4: Nutrition Control */}
+              {activeTab === "nutrition" && (
+                <CalorieCounter patientId={selectedPatient.id} isAdminMode={true} />
               )}
 
             </div>

@@ -21,6 +21,7 @@ model Patient {
   cycles          SupplementCycle[]
   workoutSchedule WorkoutSchedule?
   postureJobs     PostureAnalysisJob[]
+  calorieLogs     CalorieLog[]
 }
 
 model Evaluation {
@@ -136,5 +137,21 @@ model PostureAnalysisJob {
   progress   Int      @default(0)
   resultJson String?  // text containing frame-by-frame landmarks, angles, and alerts
   createdAt  DateTime @default(now())
+}
+
+model CalorieLog {
+  id          Int      @id @default(autoincrement())
+  patientId   Int
+  patient     Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  date        String   // YYYY-MM-DD
+  foodName    String
+  calories    Int
+  protein     Float?
+  carbs       Float?
+  fat         Float?
+  ingredients String?
+  preparation String?
+  imagePath   String?
+  createdAt   DateTime @default(now())
 }
 
