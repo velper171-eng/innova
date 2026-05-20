@@ -39,43 +39,6 @@ app.use((req, res, next) => {
   next();
 });
 
-app.get("/api/debug", async (req, res) => {
-  try {
-    const dbUrl = process.env.DATABASE_URL;
-    const dbUrlDefined = !!dbUrl;
-    const dbUrlMasked = dbUrl ? dbUrl.replace(/:[^:@]+@/, ":****@") : null;
-    
-    let dbStatus = "unknown";
-    let dbError = null;
-    let patientCount = 0;
-    
-    try {
-      patientCount = await prisma.patient.count();
-      dbStatus = "connected";
-    } catch (err) {
-      dbStatus = "error";
-      dbError = err.message || String(err);
-    }
-    
-    res.json({
-      status: "ok",
-      env: {
-        DATABASE_URL_defined: dbUrlDefined,
-        DATABASE_URL_masked: dbUrlMasked,
-        VERCEL: process.env.VERCEL || null,
-        NODE_ENV: process.env.NODE_ENV || null,
-      },
-      database: {
-        status: dbStatus,
-        patientCount,
-        error: dbError
-      }
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message || String(error) });
-  }
-});
-
 // --- PATIENTS ROUTE ---
 
 // Get all patients
