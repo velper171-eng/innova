@@ -66,9 +66,13 @@ function App() {
         setIsAddingPatient(false);
         fetchPatients();
         fetchPatientDetail(newPatient.id);
+      } else {
+        const errorData = await res.json().catch(() => ({}));
+        alert(`Error al crear paciente: ${errorData.error || res.statusText}`);
       }
     } catch (err) {
       console.error("Error creating patient:", err);
+      alert("Error de conexión al crear el paciente");
     }
   };
 
@@ -83,9 +87,13 @@ function App() {
         setIsEditingPatient(false);
         fetchPatients();
         fetchPatientDetail(selectedPatient.id);
+      } else {
+        const errorData = await res.json().catch(() => ({}));
+        alert(`Error al actualizar paciente: ${errorData.error || res.statusText}`);
       }
     } catch (err) {
       console.error("Error updating patient:", err);
+      alert("Error de conexión al actualizar el paciente");
     }
   };
 
@@ -100,9 +108,13 @@ function App() {
       if (res.ok) {
         setSelectedPatient(null);
         fetchPatients();
+      } else {
+        const errorData = await res.json().catch(() => ({}));
+        alert(`Error al eliminar paciente: ${errorData.error || res.statusText}`);
       }
     } catch (err) {
       console.error("Error deleting patient:", err);
+      alert("Error de conexión al eliminar el paciente");
     }
   };
 
@@ -117,9 +129,13 @@ function App() {
         setIsAddingEvaluation(false);
         fetchPatientDetail(selectedPatient.id);
         fetchPatients();
+      } else {
+        const errorData = await res.json().catch(() => ({}));
+        alert(`Error al guardar evaluación: ${errorData.error || res.statusText}`);
       }
     } catch (err) {
       console.error("Error creating evaluation:", err);
+      alert("Error de conexión al guardar la evaluación");
     }
   };
 
@@ -134,9 +150,13 @@ function App() {
       if (res.ok) {
         fetchPatientDetail(selectedPatient.id);
         fetchPatients();
+      } else {
+        const errorData = await res.json().catch(() => ({}));
+        alert(`Error al eliminar evaluación: ${errorData.error || res.statusText}`);
       }
     } catch (err) {
       console.error("Error deleting evaluation:", err);
+      alert("Error de conexión al eliminar la evaluación");
     }
   };
 
@@ -150,9 +170,13 @@ function App() {
       if (res.ok) {
         setIsAddingCycle(false);
         fetchPatientDetail(selectedPatient.id);
+      } else {
+        const errorData = await res.json().catch(() => ({}));
+        alert(`Error al crear el ciclo: ${errorData.error || res.statusText}`);
       }
     } catch (err) {
       console.error("Error creating cycle:", err);
+      alert("Error de conexión al crear el ciclo");
     }
   };
 
