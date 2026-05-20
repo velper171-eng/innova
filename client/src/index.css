@@ -494,4 +494,20 @@ p {
   }
 }
 
+/* History Toggle Button Micro-interactions */
+.history-toggle-btn {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.history-toggle-btn:hover {
+  background: rgba(0, 242, 254, 0.05) !important;
+  border-color: rgba(0, 242, 254, 0.6) !important;
+  box-shadow: 0 0 15px rgba(0, 242, 254, 0.12);
+  transform: translateY(-2px);
+}
+
+.history-toggle-btn:active {
+  transform: translateY(0);
+}
+
 

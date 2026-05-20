@@ -21,6 +21,7 @@ function App() {
   const [isAthleteView, setIsAthleteView] = useState(false);
   const [activeTab, setActiveTab] = useState("anthropometry"); // "anthropometry", "supplementation"
   const [loading, setLoading] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
 
   // Fetch all patients on mount
   useEffect(() => {
@@ -277,49 +278,109 @@ function App() {
             </button>
           </div>
 
-          {/* Patient Scroll List */}
-          <div style={{ flex: 1, overflowY: "auto", padding: "10px" }}>
-            {filteredPatients.length === 0 ? (
-              <div style={{ color: "var(--text-dark)", textAlign: "center", padding: "20px", fontSize: "0.9rem" }}>
-                No se encontraron pacientes
-              </div>
-            ) : (
-              filteredPatients.map((p) => (
-                <div
-                  key={p.id}
-                  onClick={() => {
-                    fetchPatientDetail(p.id);
-                    setIsAddingPatient(false);
-                    setIsEditingPatient(false);
-                    setIsAddingEvaluation(false);
-                    setIsAddingCycle(false);
-                  }}
-                  style={{
-                    padding: "16px",
-                    borderRadius: "12px",
-                    cursor: "pointer",
-                    transition: "all var(--transition-fast)",
-                    background: selectedPatient?.id === p.id ? "rgba(0, 242, 254, 0.08)" : "transparent",
-                    border: `1px solid ${selectedPatient?.id === p.id ? "rgba(0, 242, 254, 0.3)" : "transparent"}`,
-                    marginBottom: "8px",
-                  }}
-                  className="patient-item"
-                >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <h4 style={{ color: selectedPatient?.id === p.id ? "var(--primary)" : "var(--text-main)", fontSize: "1rem" }}>
-                      {p.name}
-                    </h4>
-                    <span style={{ fontSize: "0.75rem", color: "var(--text-dark)", background: "rgba(255,255,255,0.05)", padding: "2px 6px", borderRadius: "4px" }}>
-                      {p.gender === "male" ? "M" : "F"}
-                    </span>
-                  </div>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginTop: "4px", fontSize: "0.8rem", color: "var(--text-muted)" }}>
-                    <span>{p.sport || "General"}</span>
-                  </div>
+          {/* Patient Scroll List or Section Trigger */}
+          {!(showHistory || searchQuery.trim() !== "") ? (
+            <div style={{ padding: "10px", marginTop: "10px" }}>
+              <button
+                type="button"
+                onClick={() => setShowHistory(true)}
+                style={{
+                  width: "100%",
+                  padding: "20px 16px",
+                  borderRadius: "12px",
+                  background: "rgba(255, 255, 255, 0.03)",
+                  border: "1px dashed rgba(0, 242, 254, 0.25)",
+                  color: "var(--text-main)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  cursor: "pointer",
+                  transition: "all var(--transition-fast)",
+                }}
+                className="history-toggle-btn"
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  <span style={{ fontSize: "1.2rem" }}>📁</span>
+                  <span style={{ fontWeight: "600", fontSize: "0.95rem" }}>Historial de Pacientes</span>
                 </div>
-              ))
-            )}
-          </div>
+                <span style={{ fontSize: "0.8rem", color: "var(--accent)", fontWeight: "600" }}>Ver Historial</span>
+              </button>
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden" }}>
+              <div
+                style={{
+                  padding: "10px 20px 0 20px",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <span style={{ fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: "600" }}>
+                  {searchQuery.trim() !== "" ? "Resultados de Búsqueda" : "Historial de Pacientes"}
+                </span>
+                {searchQuery.trim() === "" && (
+                  <button
+                    type="button"
+                    onClick={() => setShowHistory(false)}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: "var(--accent)",
+                      cursor: "pointer",
+                      fontSize: "0.8rem",
+                    }}
+                  >
+                    Ocultar
+                  </button>
+                )}
+              </div>
+
+              {/* Patient Scroll List */}
+              <div style={{ flex: 1, overflowY: "auto", padding: "10px" }}>
+                {filteredPatients.length === 0 ? (
+                  <div style={{ color: "var(--text-dark)", textAlign: "center", padding: "20px", fontSize: "0.9rem" }}>
+                    No se encontraron pacientes
+                  </div>
+                ) : (
+                  filteredPatients.map((p) => (
+                    <div
+                      key={p.id}
+                      onClick={() => {
+                        fetchPatientDetail(p.id);
+                        setIsAddingPatient(false);
+                        setIsEditingPatient(false);
+                        setIsAddingEvaluation(false);
+                        setIsAddingCycle(false);
+                      }}
+                      style={{
+                        padding: "16px",
+                        borderRadius: "12px",
+                        cursor: "pointer",
+                        transition: "all var(--transition-fast)",
+                        background: selectedPatient?.id === p.id ? "rgba(0, 242, 254, 0.08)" : "transparent",
+                        border: `1px solid ${selectedPatient?.id === p.id ? "rgba(0, 242, 254, 0.3)" : "transparent"}`,
+                        marginBottom: "8px",
+                      }}
+                      className="patient-item"
+                    >
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <h4 style={{ color: selectedPatient?.id === p.id ? "var(--primary)" : "var(--text-main)", fontSize: "1rem" }}>
+                          {p.name}
+                        </h4>
+                        <span style={{ fontSize: "0.75rem", color: "var(--text-dark)", background: "rgba(255,255,255,0.05)", padding: "2px 6px", borderRadius: "4px" }}>
+                          {p.gender === "male" ? "M" : "F"}
+                        </span>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginTop: "4px", fontSize: "0.8rem", color: "var(--text-muted)" }}>
+                        <span>{p.sport || "General"}</span>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
         </aside>
 
         {/* Content Area */}
