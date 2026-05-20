@@ -757,14 +757,6 @@ function App() {
                 <p style={{ fontSize: "1.1rem", marginBottom: "24px" }}>
                   Bienvenido a la consola logística de rendimiento físico. Abre el panel desplegable con el botón de menú arriba a la izquierda para seleccionar un atleta, buscar o crear uno nuevo.
                 </p>
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  onClick={() => setIsSidebarOpen(true)}
-                  style={{ display: "inline-flex", alignItems: "center", gap: "8px", marginTop: "8px" }}
-                >
-                  📁 Abrir Panel de Pacientes
-                </button>
               </div>
 
               {/* KPI cards */}
