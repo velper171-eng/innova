@@ -1155,7 +1155,7 @@ app.post("/api/training-days/:dayId/exercises", async (req, res) => {
         name,
         sets: sets || 3,
         reps: reps || "8-12",
-        weight: weight || null,
+        weight: (weight !== undefined && weight !== null && !isNaN(parseFloat(weight))) ? parseFloat(weight) : null,
         muscleGroup: muscleGroup || "full_body",
         order: order !== undefined ? order : countExisting,
       },
@@ -1226,7 +1226,7 @@ app.post("/api/exercise-logs", async (req, res) => {
         completed: completed !== undefined ? completed : true,
         actualSets: actualSets || null,
         actualReps: actualReps || null,
-        actualWeight: actualWeight || null,
+        actualWeight: (actualWeight !== undefined && actualWeight !== null && !isNaN(parseFloat(actualWeight))) ? parseFloat(actualWeight) : null,
       },
     });
 
@@ -1247,7 +1247,7 @@ app.patch("/api/exercise-logs/:id", async (req, res) => {
       where: { id },
       data: {
         ...(completed !== undefined && { completed }),
-        ...(actualWeight !== undefined && { actualWeight }),
+        ...(actualWeight !== undefined && { actualWeight: (actualWeight !== null && !isNaN(parseFloat(actualWeight))) ? parseFloat(actualWeight) : null }),
         ...(actualSets !== undefined && { actualSets }),
         ...(actualReps !== undefined && { actualReps }),
       },
