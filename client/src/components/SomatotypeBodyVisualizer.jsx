@@ -792,142 +792,14 @@ const SomatotypeBodyVisualizer = ({ evaluations = [], activeTab = "anthropometry
             <ellipse cx="250" cy="485" rx="38" ry="7" fill="none" stroke="rgba(35, 127, 148, 0.15)" strokeWidth="0.8" />
             <ellipse cx="250" cy="485" rx="22" ry="4" fill="none" stroke="#31bed8" strokeOpacity="0.25" strokeWidth="0.8" />
 
-            {/* Glowing back-layer highlight */}
-            <path
-              d={bodySilhouettePath}
-              fill="none"
-              stroke="#31bed8"
-              strokeWidth="8"
-              opacity="0.18"
-              filter="url(#bodyOutlineGlow)"
+            {/* Exact 3D Athletic Model cropped from mockup */}
+            <image
+              href="/athletic_body.png"
+              x="145.8"
+              y="64"
+              width="208.4"
+              height="424"
             />
-
-            {/* Solid chrome metallic-shaded muscle silhouette */}
-            <path
-              d={bodySilhouettePath}
-              fill="url(#bodyChromeGrad)"
-              stroke="#31bed8"
-              strokeWidth="1.5"
-              strokeLinejoin="round"
-            />
-
-            {/* Muscular Head Globe (3D Shaded) */}
-            <g>
-              <ellipse cx="250" cy="74" rx="14" ry="19" fill="url(#headGrad)" stroke="#31bed8" strokeWidth="1.5" />
-              {/* Ear details */}
-              <ellipse cx="235" cy="74" rx="2" ry="5.5" fill="#175b6d" stroke="#31bed8" strokeWidth="0.8" />
-              <ellipse cx="265" cy="74" rx="2" ry="5.5" fill="#175b6d" stroke="#31bed8" strokeWidth="0.8" />
-              {/* Jawline definition */}
-              <path d="M 238,78 C 240,88 245,90 250,90 C 255,90 260,88 262,78" fill="none" stroke="#a5f3fc" strokeWidth="1" opacity="0.6" />
-              {/* Neck contours */}
-              <path d="M 243,90 L 241,114" stroke="#31bed8" strokeWidth="1" opacity="0.6" />
-              <path d="M 257,90 L 259,114" stroke="#31bed8" strokeWidth="1" opacity="0.6" />
-            </g>
-
-            {/* 3D Volumetric Muscle Overlays */}
-            <g strokeLinecap="round" strokeLinejoin="round">
-              {/* 1. Trapezius */}
-              <path d="M 236,94 C 232,106 226,118 218,122 L 228,122 C 234,116 238,106 238,94 Z" fill="url(#deltoidGradLeft)" stroke="#31bed8" strokeWidth="0.8" />
-              <path d="M 264,94 C 268,106 274,118 282,122 L 272,122 C 266,116 262,106 262,94 Z" fill="url(#deltoidGradRight)" stroke="#31bed8" strokeWidth="0.8" />
-
-              {/* 2. Deltoids (Shoulders) */}
-              <path d="M 218,122 C 210,126 200,136 200,148 C 200,160 208,166 215,166 C 218,154 220,136 218,122 Z" fill="url(#deltoidGradLeft)" stroke="#31bed8" strokeWidth="1" />
-              <path d="M 282,122 C 290,126 300,136 300,148 C 300,160 292,166 285,166 C 282,154 280,136 282,122 Z" fill="url(#deltoidGradRight)" stroke="#31bed8" strokeWidth="1" />
-
-              {/* 3. Pectorals (Chest Plates) */}
-              <path d="M 250,136 L 222,142 C 216,145 214,166 218,176 C 228,180 246,180 250,176 Z" fill="url(#pecGradLeft)" stroke="#31bed8" strokeWidth="1.2" />
-              <path d="M 250,136 L 278,142 C 284,145 286,166 282,176 C 272,180 254,180 250,176 Z" fill="url(#pecGradRight)" stroke="#31bed8" strokeWidth="1.2" />
-              {/* Sternal division line */}
-              <line x1="250" y1="136" x2="250" y2="176" stroke="#061d24" strokeWidth="1.5" opacity="0.8" />
-              {/* Clavicle borders */}
-              <path d="M 218,124 C 230,132 242,132 250,130 C 258,132 270,132 282,124" fill="none" stroke="#31bed8" strokeWidth="1.2" opacity="0.6" />
-
-              {/* 4. Upper Arms (Biceps & Triceps) */}
-              {/* Left Bicep */}
-              <path d="M 212,166 C 206,176 202,188 202,202 C 202,212 208,216 212,214 C 214,202 214,182 212,166 Z" fill="url(#bicepGradLeft)" stroke="#31bed8" strokeWidth="0.8" />
-              {/* Right Bicep */}
-              <path d="M 288,166 C 294,176 298,188 298,202 C 298,212 292,216 288,214 C 286,202 286,182 288,166 Z" fill="url(#bicepGradRight)" stroke="#31bed8" strokeWidth="0.8" />
-              {/* Left Tricep (outer sweep) */}
-              <path d="M 200,154 C 196,168 194,184 193,200 C 193,212 199,214 202,204 C 201,190 200,168 200,154 Z" fill="url(#tricepGradLeft)" stroke="#31bed8" strokeWidth="0.8" />
-              {/* Right Tricep (outer sweep) */}
-              <path d="M 300,154 C 304,168 306,184 307,200 C 307,212 301,214 298,204 C 299,190 300,168 300,154 Z" fill="url(#tricepGradRight)" stroke="#31bed8" strokeWidth="0.8" />
-
-              {/* 5. Forearms (Muscular Bulge) */}
-              <path d="M 212,214 C 208,226 198,246 191,264 C 187,272 189,274 192,274 C 198,274 209,248 212,214 Z" fill="url(#forearmGradLeft)" stroke="#31bed8" strokeWidth="0.8" />
-              <path d="M 288,214 C 292,226 302,246 309,264 C 313,272 311,274 308,274 C 302,274 291,248 288,214 Z" fill="url(#forearmGradRight)" stroke="#31bed8" strokeWidth="0.8" />
-
-              {/* 6. Hands */}
-              <path d="M 188,274 C 185,280 180,288 178,296 C 180,296 184,288 192,274 Z" fill="url(#forearmGradLeft)" stroke="#31bed8" strokeWidth="0.8" />
-              <path d="M 312,274 C 315,280 320,288 322,296 C 320,296 316,288 308,274 Z" fill="url(#forearmGradRight)" stroke="#31bed8" strokeWidth="0.8" />
-
-              {/* 7. Abdominals (Individually Sculpted Blocks) */}
-              <rect x="235" y="184" width="13" height="15" rx="3" fill="url(#abGrad)" stroke="#061d24" strokeWidth="0.6" />
-              <rect x="252" y="184" width="13" height="15" rx="3" fill="url(#abGrad)" stroke="#061d24" strokeWidth="0.6" />
-
-              <rect x="233" y="202" width="15" height="17" rx="3" fill="url(#abGrad)" stroke="#061d24" strokeWidth="0.6" />
-              <rect x="252" y="202" width="15" height="17" rx="3" fill="url(#abGrad)" stroke="#061d24" strokeWidth="0.6" />
-
-              <rect x="233" y="222" width="15" height="17" rx="3" fill="url(#abGrad)" stroke="#061d24" strokeWidth="0.6" />
-              <rect x="252" y="222" width="15" height="17" rx="3" fill="url(#abGrad)" stroke="#061d24" strokeWidth="0.6" />
-
-              <rect x="235" y="242" width="13" height="18" rx="3" fill="url(#abGrad)" stroke="#061d24" strokeWidth="0.6" />
-              <rect x="252" y="242" width="13" height="18" rx="3" fill="url(#abGrad)" stroke="#061d24" strokeWidth="0.6" />
-
-              {/* Linea Alba (deep vertical line) */}
-              <line x1="250" y1="180" x2="250" y2="265" stroke="#061d24" strokeWidth="1.5" opacity="0.8" />
-
-              {/* Ribs / Serratus Anterior Details */}
-              <g stroke="#31bed8" strokeWidth="0.8" fill="none" opacity="0.5">
-                <path d="M 215,182 L 225,186" />
-                <path d="M 213,194 L 223,198" />
-                <path d="M 212,206 L 222,210" />
-
-                <path d="M 285,182 L 275,186" />
-                <path d="M 287,194 L 277,198" />
-                <path d="M 288,206 L 278,210" />
-              </g>
-
-              {/* 8. Obliques & Lower V-Cut (Inguinal Ligament) */}
-              <path d="M 218,248 C 228,260 242,272 250,275 L 250,277 C 241,274 227,262 218,248 Z" fill="url(#obliqueGradLeft)" stroke="#31bed8" strokeWidth="0.8" />
-              <path d="M 282,248 C 272,260 258,272 250,275 L 250,277 C 259,274 273,262 282,248 Z" fill="url(#obliqueGradRight)" stroke="#31bed8" strokeWidth="0.8" />
-
-              <path d="M 226,252 C 234,264 246,275 250,276" stroke="#a5f3fc" strokeWidth="1.5" fill="none" opacity="0.85" />
-              <path d="M 274,252 C 266,264 254,275 250,276" stroke="#a5f3fc" strokeWidth="1.5" fill="none" opacity="0.85" />
-
-              {/* 9. Thighs (Quadriceps - 3 heads per thigh) */}
-              {/* Rectus Femoris (Center) */}
-              <path d="M 224,290 C 226,310 228,332 230,356 C 227,356 221,332 220,310 Z" fill="url(#quadCenterGradLeft)" stroke="#31bed8" strokeWidth="0.8" />
-              <path d="M 276,290 C 274,310 272,332 270,356 C 273,356 279,332 280,310 Z" fill="url(#quadCenterGradRight)" stroke="#31bed8" strokeWidth="0.8" />
-
-              {/* Vastus Lateralis (Outer sweep) */}
-              <path d="M 220,290 C 212,312 214,338 222,360 C 224,338 224,312 220,290 Z" fill="url(#quadOuterGradLeft)" stroke="#31bed8" strokeWidth="0.8" />
-              <path d="M 280,290 C 288,312 286,338 278,360 C 276,338 276,312 280,290 Z" fill="url(#quadOuterGradRight)" stroke="#31bed8" strokeWidth="0.8" />
-
-              {/* Vastus Medialis (Teardrop muscle above knee) */}
-              <path d="M 230,312 C 235,328 239,342 239,352 C 237,358 231,358 228,348 Z" fill="url(#teardropGradLeft)" stroke="#31bed8" strokeWidth="0.8" />
-              <path d="M 270,312 C 265,328 261,342 261,352 C 263,358 269,358 272,348 Z" fill="url(#teardropGradRight)" stroke="#31bed8" strokeWidth="0.8" />
-
-              {/* 10. Kneecaps (Patella) */}
-              <ellipse cx="230" cy="368" rx="4.5" ry="6.5" fill="url(#patellaGrad)" stroke="#31bed8" strokeWidth="1" />
-              <ellipse cx="270" cy="368" rx="4.5" ry="6.5" fill="url(#patellaGrad)" stroke="#31bed8" strokeWidth="1" />
-
-              {/* 11. Calves & Lower Legs */}
-              {/* Outer Calf Gastrocnemius */}
-              <path d="M 224,378 C 217,394 217,416 222,438 C 224,438 225,408 224,378 Z" fill="url(#calfOuterGradLeft)" stroke="#31bed8" strokeWidth="0.8" />
-              <path d="M 276,378 C 283,394 283,416 278,438 C 276,438 275,408 276,378 Z" fill="url(#calfOuterGradRight)" stroke="#31bed8" strokeWidth="0.8" />
-
-              {/* Inner Calf Gastrocnemius */}
-              <path d="M 228,378 C 235,394 235,416 230,438 C 228,438 227,408 228,378 Z" fill="url(#calfInnerGradLeft)" stroke="#31bed8" strokeWidth="0.8" />
-              <path d="M 272,378 C 265,394 265,416 270,438 C 272,438 271,408 272,378 Z" fill="url(#calfInnerGradRight)" stroke="#31bed8" strokeWidth="0.8" />
-
-              {/* Shin Highlights */}
-              <path d="M 226,380 L 226,448" stroke="#a5f3fc" strokeWidth="1" opacity="0.3" />
-              <path d="M 274,380 L 274,448" stroke="#a5f3fc" strokeWidth="1" opacity="0.3" />
-
-              {/* 12. Feet */}
-              <path d="M 220,468 C 218,482 220,486 228,486 C 230,478 228,468 220,468 Z" fill="url(#forearmGradLeft)" stroke="#31bed8" strokeWidth="0.8" />
-              <path d="M 280,468 C 282,482 280,486 272,486 C 270,478 272,468 280,468 Z" fill="url(#forearmGradRight)" stroke="#31bed8" strokeWidth="0.8" />
-            </g>
           </g>
 
           {/* Real-time laser scan horizontal bar */}
