@@ -1,6 +1,8 @@
 import React from "react";
 
 const SomatotypeBodyVisualizer = ({ evaluations = [], activeTab = "anthropometry", setActiveTab }) => {
+  const [selectedMetric, setSelectedMetric] = React.useState("fat"); // "fat" or "lean"
+
   // Sort evaluations chronologically to get the latest
   const sortedEvals = [...evaluations].sort(
     (a, b) => new Date(a.date) - new Date(b.date)
@@ -146,29 +148,27 @@ const SomatotypeBodyVisualizer = ({ evaluations = [], activeTab = "anthropometry
     return { x, y, value: d.weight };
   });
 
-  const fatCoords = chartData.map((d, i) => {
+  // Right axis range is 0-60 for body fat, 0-100 for lean mass %
+  const rightAxisMax = selectedMetric === "fat" ? 60 : 100;
+
+  const rightCoords = chartData.map((d, i) => {
     const x = chartXStart + (i / 5) * chartWidth;
-    // Scale Body Fat: 0 to 60 %
-    const y = chartYEnd - (d.bodyFat / 60) * chartHeight;
-    return { x, y, value: d.bodyFat };
+    const val = selectedMetric === "fat" ? d.bodyFat : (100 - d.bodyFat);
+    const y = chartYEnd - (val / rightAxisMax) * chartHeight;
+    return { x, y, value: val };
   });
 
   // SVG Area Paths
-  const weightAreaPath =
-    `M ${weightCoords[0].x},${chartYEnd} ` +
-    weightCoords.map((c) => `L ${c.x},${c.y}`).join(" ") +
-    ` L ${weightCoords[weightCoords.length - 1].x},${chartYEnd} Z`;
-
   const weightLinePath =
     "M " + weightCoords.map((c) => `${c.x},${c.y}`).join(" L ");
 
-  const fatAreaPath =
-    `M ${fatCoords[0].x},${chartYEnd} ` +
-    fatCoords.map((c) => `L ${c.x},${c.y}`).join(" ") +
-    ` L ${fatCoords[fatCoords.length - 1].x},${chartYEnd} Z`;
+  const rightAreaPath =
+    `M ${rightCoords[0].x},${chartYEnd} ` +
+    rightCoords.map((c) => `L ${c.x},${c.y}`).join(" ") +
+    ` L ${rightCoords[rightCoords.length - 1].x},${chartYEnd} Z`;
 
-  const fatLinePath =
-    "M " + fatCoords.map((c) => `${c.x},${c.y}`).join(" L ");
+  const rightLinePath =
+    "M " + rightCoords.map((c) => `${c.x},${c.y}`).join(" L ");
 
   // Muscular Body Silhouette path
   const bodySilhouettePath = `
@@ -276,6 +276,62 @@ const SomatotypeBodyVisualizer = ({ evaluations = [], activeTab = "anthropometry
 
 
 
+      {/* Selector at the top of the chart */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          gap: "12px",
+          margin: "-5px 0 10px 0",
+          zIndex: 10,
+        }}
+      >
+        <button
+          onClick={() => setSelectedMetric("fat")}
+          style={{
+            padding: "8px 16px",
+            borderRadius: "20px",
+            border: "1px solid",
+            borderColor: selectedMetric === "fat" ? "#237f94" : "rgba(35, 127, 148, 0.2)",
+            background: selectedMetric === "fat" ? "linear-gradient(135deg, #237f94 0%, #1a5f6f 100%)" : "rgba(255, 255, 255, 0.6)",
+            color: selectedMetric === "fat" ? "#ffffff" : "#237f94",
+            fontWeight: "700",
+            fontSize: "0.85rem",
+            cursor: "pointer",
+            boxShadow: selectedMetric === "fat" ? "0 4px 10px rgba(35, 127, 148, 0.15)" : "none",
+            transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
+            outline: "none",
+          }}
+        >
+          <span style={{ fontSize: "1rem" }}>🥑</span> % Grasa Corporal
+        </button>
+        <button
+          onClick={() => setSelectedMetric("lean")}
+          style={{
+            padding: "8px 16px",
+            borderRadius: "20px",
+            border: "1px solid",
+            borderColor: selectedMetric === "lean" ? "#237f94" : "rgba(35, 127, 148, 0.2)",
+            background: selectedMetric === "lean" ? "linear-gradient(135deg, #237f94 0%, #1a5f6f 100%)" : "rgba(255, 255, 255, 0.6)",
+            color: selectedMetric === "lean" ? "#ffffff" : "#237f94",
+            fontWeight: "700",
+            fontSize: "0.85rem",
+            cursor: "pointer",
+            boxShadow: selectedMetric === "lean" ? "0 4px 10px rgba(35, 127, 148, 0.15)" : "none",
+            transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
+            outline: "none",
+          }}
+        >
+          <span style={{ fontSize: "1rem" }}>💪</span> % Masa Magra
+        </button>
+      </div>
+
       {/* Main Dual Axis Chart + Body Model Container */}
       <div
         style={{
@@ -317,15 +373,28 @@ const SomatotypeBodyVisualizer = ({ evaluations = [], activeTab = "anthropometry
               <stop offset="100%" stopColor="#1a3d45" />
             </linearGradient>
 
+            {/* Gradient mask for the curves in the background */}
+            <linearGradient id="maskGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="white" />
+              <stop offset="22%" stopColor="white" />
+              <stop offset="27%" stopColor="black" />
+              <stop offset="73%" stopColor="black" />
+              <stop offset="78%" stopColor="white" />
+              <stop offset="100%" stopColor="white" />
+            </linearGradient>
+            <mask id="bodyMask">
+              <rect x="0" y="0" width="500" height="500" fill="url(#maskGrad)" />
+            </mask>
+
             {/* Area chart gradients */}
             <linearGradient id="weightAreaFillGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#237f94" stopOpacity="0.45" />
+              <stop offset="0%" stopColor="#237f94" stopOpacity="0.15" />
               <stop offset="100%" stopColor="#237f94" stopOpacity="0.0" />
             </linearGradient>
 
-            <linearGradient id="fatAreaFillGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#688089" stopOpacity="0.45" />
-              <stop offset="100%" stopColor="#688089" stopOpacity="0.0" />
+            <linearGradient id="rightAreaFillGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor={selectedMetric === "fat" ? "#e07a5f" : "#10b981"} stopOpacity="0.22" />
+              <stop offset="100%" stopColor={selectedMetric === "fat" ? "#e07a5f" : "#10b981"} stopOpacity="0.0" />
             </linearGradient>
 
             {/* Head/Face Radial Gradient */}
@@ -530,21 +599,41 @@ const SomatotypeBodyVisualizer = ({ evaluations = [], activeTab = "anthropometry
           </defs>
 
           {/* Grid Background */}
-          <rect x={chartXStart} y={chartYStart} width={chartWidth} height={chartHeight} fill="url(#lightGraphGrid)" rx="6" />
+          <rect x={chartXStart} y={chartYStart} width={chartWidth} height={chartHeight} fill="rgba(35, 127, 148, 0.02)" rx="8" stroke="rgba(35, 127, 148, 0.1)" strokeWidth="1" />
+
+          {/* Vertical dotted gridlines */}
+          {chartData.map((d, i) => {
+            const x = chartXStart + (i / 5) * chartWidth;
+            return (
+              <line
+                key={`v-grid-${i}`}
+                x1={x}
+                y1={chartYStart}
+                x2={x}
+                y2={chartYEnd}
+                stroke="rgba(35, 127, 148, 0.08)"
+                strokeDasharray="3,3"
+                strokeWidth="1"
+                mask="url(#bodyMask)"
+              />
+            );
+          })}
 
           {/* Horizontal dotted gridlines matching y-axis numbers */}
           {[100, 180, 260, 340, 420].map((yVal, i) => (
             <line
-              key={i}
+              key={`h-grid-${i}`}
               x1={chartXStart}
               y1={yVal}
               x2={chartXEnd}
               y2={yVal}
-              stroke="rgba(35, 127, 148, 0.15)"
-              strokeDasharray="4,4"
+              stroke="rgba(35, 127, 148, 0.08)"
+              strokeDasharray="3,3"
               strokeWidth="1"
+              mask="url(#bodyMask)"
             />
           ))}
+
           {/* --- LEFT Y-AXIS (Weight: 0 - 200 kg) --- */}
           <line
             x1={chartXStart}
@@ -553,19 +642,19 @@ const SomatotypeBodyVisualizer = ({ evaluations = [], activeTab = "anthropometry
             y2={chartYEnd}
             stroke="#237f94"
             strokeWidth="1.5"
-            opacity="0.8"
+            opacity="0.6"
           />
           {/* Tick marks on left axis */}
           {[100, 180, 260, 340, 420].map((yVal, i) => (
             <line
-              key={i}
+              key={`l-tick-${i}`}
               x1={chartXStart - 5}
               y1={yVal}
               x2={chartXStart}
               y2={yVal}
               stroke="#237f94"
               strokeWidth="1.5"
-              opacity="0.8"
+              opacity="0.6"
             />
           ))}
           {/* Left Y-axis labels (200, 150, 100, 50, 0) */}
@@ -577,7 +666,7 @@ const SomatotypeBodyVisualizer = ({ evaluations = [], activeTab = "anthropometry
             { val: 0, y: 420 },
           ].map((item, i) => (
             <text
-              key={i}
+              key={`l-lbl-${i}`}
               x={chartXStart - 10}
               y={item.y + 4}
               textAnchor="end"
@@ -604,7 +693,7 @@ const SomatotypeBodyVisualizer = ({ evaluations = [], activeTab = "anthropometry
             Weight (kg)
           </text>
 
-          {/* --- RIGHT Y-AXIS (Body Fat: 0 - 60 %) --- */}
+          {/* --- RIGHT Y-AXIS (Body Fat or Lean Mass %) --- */}
           <line
             x1={chartXEnd}
             y1={chartYStart}
@@ -612,31 +701,31 @@ const SomatotypeBodyVisualizer = ({ evaluations = [], activeTab = "anthropometry
             y2={chartYEnd}
             stroke="#237f94"
             strokeWidth="1.5"
-            opacity="0.8"
+            opacity="0.6"
           />
           {/* Tick marks on right axis */}
           {[100, 180, 260, 340, 420].map((yVal, i) => (
             <line
-              key={i}
+              key={`r-tick-${i}`}
               x1={chartXEnd}
               y1={yVal}
               x2={chartXEnd + 5}
               y2={yVal}
               stroke="#237f94"
               strokeWidth="1.5"
-              opacity="0.8"
+              opacity="0.6"
             />
           ))}
-          {/* Right Y-axis labels (60, 45, 30, 15, 0) */}
+          {/* Right Y-axis labels dynamically updating */}
           {[
-            { val: 60, y: 100 },
-            { val: 45, y: 180 },
-            { val: 30, y: 260 },
-            { val: 15, y: 340 },
-            { val: 0, y: 420 },
+            { val: selectedMetric === "fat" ? 60 : 100, y: 100 },
+            { val: selectedMetric === "fat" ? 45 : 75, y: 180 },
+            { val: selectedMetric === "fat" ? 30 : 50, y: 260 },
+            { val: selectedMetric === "fat" ? 15 : 25, y: 340 },
+            { val: selectedMetric === "fat" ? 0 : 0, y: 420 },
           ].map((item, i) => (
             <text
-              key={i}
+              key={`r-lbl-${i}`}
               x={chartXEnd + 10}
               y={item.y + 4}
               textAnchor="start"
@@ -645,10 +734,10 @@ const SomatotypeBodyVisualizer = ({ evaluations = [], activeTab = "anthropometry
               fill="#0f2d37"
               opacity="0.8"
             >
-              {item.val}
+              {item.val}%
             </text>
           ))}
-          {/* Right Vertical Label: Body Fat (%) */}
+          {/* Right Vertical Label: Body Fat (%) or Lean Mass (%) */}
           <text
             transform={`rotate(90, ${chartXEnd + 38}, ${chartYStart + chartHeight / 2})`}
             x={chartXEnd + 38}
@@ -660,7 +749,7 @@ const SomatotypeBodyVisualizer = ({ evaluations = [], activeTab = "anthropometry
             fill="#237f94"
             opacity="0.9"
           >
-            Body Fat (%)
+            {selectedMetric === "fat" ? "Grasa Corporal (%)" : "Masa Magra (%)"}
           </text>
 
           {/* Timeline labels at the bottom of the chart */}
@@ -681,6 +770,64 @@ const SomatotypeBodyVisualizer = ({ evaluations = [], activeTab = "anthropometry
             );
           })}
 
+          {/* --- BACKGROUND AREA CHARTS & TREND LINES (drawn behind body model, masked in center) --- */}
+          
+          {/* 1. Weight Trend (faint dashed line) */}
+          <path
+            d={weightLinePath}
+            fill="none"
+            stroke="#237f94"
+            strokeWidth="1.5"
+            strokeDasharray="4,4"
+            opacity="0.4"
+            mask="url(#bodyMask)"
+          />
+
+          {/* 2. Selected Percentage Trend (solid line with area fill) */}
+          <path
+            d={rightAreaPath}
+            fill="url(#rightAreaFillGrad)"
+            opacity="1.0"
+            mask="url(#bodyMask)"
+          />
+          <path
+            d={rightLinePath}
+            fill="none"
+            stroke={selectedMetric === "fat" ? "#e07a5f" : "#10b981"}
+            strokeWidth="3.5"
+            opacity="0.95"
+            mask="url(#bodyMask)"
+            style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.05))" }}
+          />
+
+          {/* Interactive Chart Nodes & Tooltips (masked in center) */}
+          {rightCoords.map((c, idx) => (
+            <g key={`r-node-${idx}`} mask="url(#bodyMask)">
+              <circle cx={c.x} cy={c.y} r="5" fill={selectedMetric === "fat" ? "#e07a5f" : "#10b981"} stroke="#ffffff" strokeWidth="2.5" />
+              <circle cx={c.x} cy={c.y} r="10" fill={selectedMetric === "fat" ? "#e07a5f" : "#10b981"} fillOpacity="0.15" />
+              <rect
+                x={c.x - 22}
+                y={c.y - 30}
+                width="44"
+                height="18"
+                rx="5"
+                fill="#0f2d37"
+                stroke={selectedMetric === "fat" ? "#e07a5f" : "#10b981"}
+                strokeWidth="1"
+              />
+              <text
+                x={c.x}
+                y={c.y - 18}
+                textAnchor="middle"
+                fontSize="9"
+                fontWeight="800"
+                fill="#ffffff"
+              >
+                {c.value.toFixed(1)}%
+              </text>
+            </g>
+          ))}
+
           {/* --- HIGH-FIDELITY 3D METALLIC BODY MODEL (Centered, Layered) --- */}
           <g transform={transformStr} style={{ transition: "transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)" }}>
             {/* Floor reflection rings */}
@@ -696,37 +843,6 @@ const SomatotypeBodyVisualizer = ({ evaluations = [], activeTab = "anthropometry
               height={bodyModel.height}
             />
           </g>
-
-          {/* Real-time laser scan horizontal bar */}
-          <line
-            x1={chartXStart}
-            y1="100"
-            x2={chartXEnd}
-            y2="100"
-            stroke="#31bed8"
-            strokeWidth="2.5"
-            opacity="0.8"
-            style={{ filter: "drop-shadow(0 0 4px #31bed8)" }}
-          >
-            <animate
-              attributeName="y1"
-              values="100;420;100"
-              dur="5s"
-              repeatCount="indefinite"
-            />
-            <animate
-              attributeName="y2"
-              values="100;420;100"
-              dur="5s"
-              repeatCount="indefinite"
-            />
-            <animate
-              attributeName="opacity"
-              values="0.3;0.9;0.3"
-              dur="5s"
-              repeatCount="indefinite"
-            />
-          </line>
         </svg>
 
         {/* Floating somatotype badge */}
@@ -814,7 +930,7 @@ const SomatotypeBodyVisualizer = ({ evaluations = [], activeTab = "anthropometry
           }}
         />
 
-        {/* Right Column (GRASA CORPORAL (BF%)) */}
+        {/* Right Column (GRASA CORPORAL (BF%) / MASA MAGRA (%)) */}
         <div style={{ paddingLeft: "12px" }}>
           <h4
             style={{
@@ -826,7 +942,7 @@ const SomatotypeBodyVisualizer = ({ evaluations = [], activeTab = "anthropometry
               textTransform: "uppercase",
             }}
           >
-            Grasa Corporal (BF%)
+            {selectedMetric === "fat" ? "Grasa Corporal (BF%)" : "Masa Magra (%)"}
           </h4>
           <div
             style={{
@@ -837,7 +953,7 @@ const SomatotypeBodyVisualizer = ({ evaluations = [], activeTab = "anthropometry
               lineHeight: "1",
             }}
           >
-            {bodyFat.toFixed(1)}%
+            {selectedMetric === "fat" ? `${bodyFat.toFixed(1)}%` : `${(100 - bodyFat).toFixed(1)}%`}
           </div>
           <p
             style={{
@@ -847,7 +963,7 @@ const SomatotypeBodyVisualizer = ({ evaluations = [], activeTab = "anthropometry
               fontStyle: "italic",
             }}
           >
-            Porcentaje de grasa corporal estimado
+            {selectedMetric === "fat" ? "Porcentaje de grasa corporal estimado" : "Porcentaje de masa magra estimado"}
           </p>
         </div>
       </div>
