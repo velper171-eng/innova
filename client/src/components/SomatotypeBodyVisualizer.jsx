@@ -1,8 +1,6 @@
-import React, { useState } from "react";
+import React from "react";
 
 const SomatotypeBodyVisualizer = ({ evaluations = [], activeTab = "anthropometry", setActiveTab }) => {
-  const [activeMetric, setActiveMetric] = useState("weight"); // "weight" or "fat"
-
   // Sort evaluations chronologically to get the latest
   const sortedEvals = [...evaluations].sort(
     (a, b) => new Date(a.date) - new Date(b.date)
@@ -39,16 +37,51 @@ const SomatotypeBodyVisualizer = ({ evaluations = [], activeTab = "anthropometry
     dominant = "mesomorph";
   }
 
-  // Morph scale factor depending on dominant somatotype
-  // Center is X=250, Y=260. Formula: translate(250, 260) scale(Sx, Sy) translate(-250, -260)
-  let transformStr = "";
-  if (dominant === "ectomorph") {
-    transformStr = "translate(250, 260) scale(0.82, 1.04) translate(-250, -260)";
-  } else if (dominant === "endomorph") {
-    transformStr = "translate(250, 260) scale(1.18, 0.95) translate(-250, -260)";
-  } else {
-    transformStr = "translate(250, 260) scale(1.0, 1.0) translate(-250, -260)";
-  }
+  // Morph scale factor dynamically depending on endo, meso, and ecto coordinates
+  // Baseline is endo=3.0, meso=4.0, ecto=3.0.
+  const dEndo = endo - 3.0;
+  const dMeso = meso - 4.0;
+  const dEcto = ecto - 3.0;
+
+  // scaleX: endomorphy increases width, ectomorphy decreases it, mesomorphy increases it moderately
+  let scaleX = 1.0 + (dEndo * 0.06) + (dMeso * 0.02) - (dEcto * 0.06);
+  // scaleY: ectomorphy increases height/linearity, endomorphy decreases it slightly
+  let scaleY = 1.0 + (dEcto * 0.015) - (dEndo * 0.01);
+
+  // Keep scaling within realistic, aesthetic bounds
+  scaleX = Math.max(0.78, Math.min(1.22, scaleX));
+  scaleY = Math.max(0.94, Math.min(1.06, scaleY));
+
+  const transformStr = `translate(250, 260) scale(${scaleX.toFixed(3)}, ${scaleY.toFixed(3)}) translate(-250, -260)`;
+
+  // Get body image path and layout parameters based on dominant somatotype
+  const getBodyModelParams = () => {
+    if (dominant === "ectomorph") {
+      return {
+        href: "/ectomorph_body.png",
+        width: 189.6,
+        x: 155.2,
+        height: 424,
+      };
+    } else if (dominant === "endomorph") {
+      return {
+        href: "/endomorph_body.png",
+        width: 231.4,
+        x: 134.3,
+        height: 424,
+      };
+    } else {
+      // mesomorph / default
+      return {
+        href: "/athletic_body.png",
+        width: 208.4,
+        x: 145.8,
+        height: 424,
+      };
+    }
+  };
+
+  const bodyModel = getBodyModelParams();
 
   // Prepare trend data for 6 points
   const getChartData = () => {
@@ -241,53 +274,7 @@ const SomatotypeBodyVisualizer = ({ evaluations = [], activeTab = "anthropometry
         </svg>
       </div>
 
-      {/* Toggle Pill Selector (Weight vs Body Fat %) */}
-      <div
-        style={{
-          background: "rgba(200, 220, 222, 0.7)",
-          borderRadius: "30px",
-          padding: "4px",
-          display: "flex",
-          width: "fit-content",
-          margin: "4px auto 0 auto",
-          border: "1px solid rgba(35, 127, 148, 0.15)",
-        }}
-      >
-        <button
-          onClick={() => setActiveMetric("weight")}
-          style={{
-            background: activeMetric === "weight" ? "#237f94" : "transparent",
-            color: activeMetric === "weight" ? "#ffffff" : "#4e6a73",
-            border: "none",
-            borderRadius: "24px",
-            padding: "8px 24px",
-            fontSize: "0.95rem",
-            fontWeight: "700",
-            cursor: "pointer",
-            transition: "all 0.3s ease",
-            outline: "none",
-          }}
-        >
-          Weight
-        </button>
-        <button
-          onClick={() => setActiveMetric("fat")}
-          style={{
-            background: activeMetric === "fat" ? "#237f94" : "transparent",
-            color: activeMetric === "fat" ? "#ffffff" : "#4e6a73",
-            border: "none",
-            borderRadius: "24px",
-            padding: "8px 24px",
-            fontSize: "0.95rem",
-            fontWeight: "700",
-            cursor: "pointer",
-            transition: "all 0.3s ease",
-            outline: "none",
-          }}
-        >
-          Body Fat %
-        </button>
-      </div>
+
 
       {/* Main Dual Axis Chart + Body Model Container */}
       <div
@@ -558,16 +545,15 @@ const SomatotypeBodyVisualizer = ({ evaluations = [], activeTab = "anthropometry
               strokeWidth="1"
             />
           ))}
-
           {/* --- LEFT Y-AXIS (Weight: 0 - 200 kg) --- */}
           <line
             x1={chartXStart}
             y1={chartYStart}
             x2={chartXStart}
             y2={chartYEnd}
-            stroke={activeMetric === "weight" ? "#237f94" : "#7c98a0"}
-            strokeWidth={activeMetric === "weight" ? "2" : "1.2"}
-            opacity={activeMetric === "weight" ? "1.0" : "0.5"}
+            stroke="#237f94"
+            strokeWidth="1.5"
+            opacity="0.8"
           />
           {/* Tick marks on left axis */}
           {[100, 180, 260, 340, 420].map((yVal, i) => (
@@ -577,9 +563,9 @@ const SomatotypeBodyVisualizer = ({ evaluations = [], activeTab = "anthropometry
               y1={yVal}
               x2={chartXStart}
               y2={yVal}
-              stroke={activeMetric === "weight" ? "#237f94" : "#7c98a0"}
+              stroke="#237f94"
               strokeWidth="1.5"
-              opacity={activeMetric === "weight" ? "1.0" : "0.5"}
+              opacity="0.8"
             />
           ))}
           {/* Left Y-axis labels (200, 150, 100, 50, 0) */}
@@ -597,8 +583,8 @@ const SomatotypeBodyVisualizer = ({ evaluations = [], activeTab = "anthropometry
               textAnchor="end"
               fontSize="11"
               fontWeight="700"
-              fill={activeMetric === "weight" ? "#0f2d37" : "#688089"}
-              opacity={activeMetric === "weight" ? "1.0" : "0.6"}
+              fill="#0f2d37"
+              opacity="0.8"
             >
               {item.val}
             </text>
@@ -612,8 +598,8 @@ const SomatotypeBodyVisualizer = ({ evaluations = [], activeTab = "anthropometry
             fontSize="12"
             fontWeight="800"
             letterSpacing="0.05em"
-            fill={activeMetric === "weight" ? "#237f94" : "#688089"}
-            opacity={activeMetric === "weight" ? "1.0" : "0.6"}
+            fill="#237f94"
+            opacity="0.9"
           >
             Weight (kg)
           </text>
@@ -624,9 +610,9 @@ const SomatotypeBodyVisualizer = ({ evaluations = [], activeTab = "anthropometry
             y1={chartYStart}
             x2={chartXEnd}
             y2={chartYEnd}
-            stroke={activeMetric === "fat" ? "#237f94" : "#7c98a0"}
-            strokeWidth={activeMetric === "fat" ? "2" : "1.2"}
-            opacity={activeMetric === "fat" ? "1.0" : "0.5"}
+            stroke="#237f94"
+            strokeWidth="1.5"
+            opacity="0.8"
           />
           {/* Tick marks on right axis */}
           {[100, 180, 260, 340, 420].map((yVal, i) => (
@@ -636,9 +622,9 @@ const SomatotypeBodyVisualizer = ({ evaluations = [], activeTab = "anthropometry
               y1={yVal}
               x2={chartXEnd + 5}
               y2={yVal}
-              stroke={activeMetric === "fat" ? "#237f94" : "#7c98a0"}
+              stroke="#237f94"
               strokeWidth="1.5"
-              opacity={activeMetric === "fat" ? "1.0" : "0.5"}
+              opacity="0.8"
             />
           ))}
           {/* Right Y-axis labels (60, 45, 30, 15, 0) */}
@@ -656,8 +642,8 @@ const SomatotypeBodyVisualizer = ({ evaluations = [], activeTab = "anthropometry
               textAnchor="start"
               fontSize="11"
               fontWeight="700"
-              fill={activeMetric === "fat" ? "#0f2d37" : "#688089"}
-              opacity={activeMetric === "fat" ? "1.0" : "0.6"}
+              fill="#0f2d37"
+              opacity="0.8"
             >
               {item.val}
             </text>
@@ -671,102 +657,11 @@ const SomatotypeBodyVisualizer = ({ evaluations = [], activeTab = "anthropometry
             fontSize="12"
             fontWeight="800"
             letterSpacing="0.05em"
-            fill={activeMetric === "fat" ? "#237f94" : "#688089"}
-            opacity={activeMetric === "fat" ? "1.0" : "0.6"}
+            fill="#237f94"
+            opacity="0.9"
           >
             Body Fat (%)
           </text>
-
-          {/* --- BACKGROUND AREA CHARTS & TREND LINES (drawn behind body model) --- */}
-
-          {/* 1. Weight Trend (Left Area) */}
-          <path
-            d={weightAreaPath}
-            fill="url(#weightAreaFillGrad)"
-            opacity={activeMetric === "weight" ? "0.45" : "0.08"}
-            style={{ transition: "opacity 0.4s ease" }}
-          />
-          <path
-            d={weightLinePath}
-            fill="none"
-            stroke="#1c788c"
-            strokeWidth={activeMetric === "weight" ? "3.5" : "1.5"}
-            opacity={activeMetric === "weight" ? "0.95" : "0.2"}
-            style={{ transition: "stroke-width 0.4s ease, opacity 0.4s ease" }}
-          />
-
-          {/* 2. Body Fat Trend (Right Area) */}
-          <path
-            d={fatAreaPath}
-            fill="url(#fatAreaFillGrad)"
-            opacity={activeMetric === "fat" ? "0.45" : "0.08"}
-            style={{ transition: "opacity 0.4s ease" }}
-          />
-          <path
-            d={fatLinePath}
-            fill="none"
-            stroke="#5c757f"
-            strokeWidth={activeMetric === "fat" ? "3.5" : "1.5"}
-            opacity={activeMetric === "fat" ? "0.95" : "0.2"}
-            style={{ transition: "stroke-width 0.4s ease, opacity 0.4s ease" }}
-          />
-
-          {/* Interactive Chart Nodes & Tooltips */}
-          {activeMetric === "weight" &&
-            weightCoords.map((c, idx) => (
-              <g key={`w-node-${idx}`}>
-                <circle cx={c.x} cy={c.y} r="6" fill="#1c788c" stroke="#ffffff" strokeWidth="2.5" />
-                <circle cx={c.x} cy={c.y} r="12" fill="#1c788c" fillOpacity="0.15" />
-                <rect
-                  x={c.x - 22}
-                  y={c.y - 32}
-                  width="44"
-                  height="20"
-                  rx="6"
-                  fill="#0f2d37"
-                  stroke="#31bed8"
-                  strokeWidth="1"
-                />
-                <text
-                  x={c.x}
-                  y={c.y - 18}
-                  textAnchor="middle"
-                  fontSize="10"
-                  fontWeight="800"
-                  fill="#ffffff"
-                >
-                  {c.value.toFixed(0)}k
-                </text>
-              </g>
-            ))}
-
-          {activeMetric === "fat" &&
-            fatCoords.map((c, idx) => (
-              <g key={`f-node-${idx}`}>
-                <circle cx={c.x} cy={c.y} r="6" fill="#5c757f" stroke="#ffffff" strokeWidth="2.5" />
-                <circle cx={c.x} cy={c.y} r="12" fill="#5c757f" fillOpacity="0.15" />
-                <rect
-                  x={c.x - 22}
-                  y={c.y - 32}
-                  width="44"
-                  height="20"
-                  rx="6"
-                  fill="#0f2d37"
-                  stroke="#7c98a0"
-                  strokeWidth="1"
-                />
-                <text
-                  x={c.x}
-                  y={c.y - 18}
-                  textAnchor="middle"
-                  fontSize="10"
-                  fontWeight="800"
-                  fill="#ffffff"
-                >
-                  {c.value.toFixed(1)}%
-                </text>
-              </g>
-            ))}
 
           {/* Timeline labels at the bottom of the chart */}
           {chartData.map((d, i) => {
@@ -786,19 +681,19 @@ const SomatotypeBodyVisualizer = ({ evaluations = [], activeTab = "anthropometry
             );
           })}
 
-          {/* --- HIGH-FIDELITY 3D METALLIC ATHLETIC BODY MODEL (Centered, Layered) --- */}
+          {/* --- HIGH-FIDELITY 3D METALLIC BODY MODEL (Centered, Layered) --- */}
           <g transform={transformStr} style={{ transition: "transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)" }}>
             {/* Floor reflection rings */}
             <ellipse cx="250" cy="485" rx="38" ry="7" fill="none" stroke="rgba(35, 127, 148, 0.15)" strokeWidth="0.8" />
             <ellipse cx="250" cy="485" rx="22" ry="4" fill="none" stroke="#31bed8" strokeOpacity="0.25" strokeWidth="0.8" />
 
-            {/* Exact 3D Athletic Model cropped from mockup */}
+            {/* 3D Body Model dynamically selected by dominant somatotype */}
             <image
-              href="/athletic_body.png"
-              x="145.8"
+              href={bodyModel.href}
+              x={bodyModel.x}
               y="64"
-              width="208.4"
-              height="424"
+              width={bodyModel.width}
+              height={bodyModel.height}
             />
           </g>
 
