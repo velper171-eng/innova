@@ -28,6 +28,7 @@ import { calculateSomatotype, calculateBodyFat } from "./calculator.js";
 import { getSupplementPresetPhases, checkInventoryAlert } from "./supplementEngine.js";
 import { enqueuePostureJob, getQueueStatus } from "./queue.js";
 import { analyzeCalories } from "./calorieEngine.js";
+import { generateTrainingPlanWithAI } from "./trainingEngine.js";
 
 
 const app = express();
@@ -1024,21 +1025,77 @@ app.post("/api/patients/:id/training-plans", async (req, res) => {
 
     if (!name || !goal) return res.status(400).json({ error: "Nombre y objetivo son requeridos" });
 
+    // Fetch patient info
+    const patient = await prisma.patient.findUnique({
+      where: { id: patientId }
+    });
+
+    const latestEval = await prisma.evaluation.findFirst({
+      where: { patientId },
+      orderBy: { date: "desc" }
+    });
+
+    const patientInfo = {
+      name: patient?.name || "Athlete",
+      gender: patient?.gender || "Not specified",
+      sport: patient?.sport || "General fitness",
+      weight: latestEval ? latestEval.weight : 70,
+      bodyFat: latestEval ? latestEval.bodyFat : 15
+    };
+
+    // Generate training plan via AI (or fallback to simulator)
+    const generatedDays = await generateTrainingPlanWithAI({ goal, planName: name, patientInfo });
+
     // Deactivate previous plans
     await prisma.trainingPlan.updateMany({
       where: { patientId },
       data: { isActive: false },
     });
 
+    // Prepare nested create day objects
+    const daysCreateInput = (generatedDays || []).map((day) => ({
+      dayIndex: day.dayIndex,
+      name: day.name,
+      muscleGroup: day.muscleGroup,
+      exercises: {
+        create: (day.exercises || []).map((ex, idx) => ({
+          name: ex.name,
+          sets: ex.sets || 3,
+          reps: String(ex.reps || "8-12"),
+          weight: ex.weight !== undefined && ex.weight !== null ? parseFloat(ex.weight) : null,
+          muscleGroup: ex.muscleGroup || day.muscleGroup,
+          order: idx
+        }))
+      }
+    }));
+
     const plan = await prisma.trainingPlan.create({
-      data: { patientId, name, goal, daysPerWeek: daysPerWeek || 4, isActive: true },
-      include: { days: { include: { exercises: true } } },
+      data: {
+        patientId,
+        name,
+        goal,
+        daysPerWeek: daysPerWeek || 4,
+        isActive: true,
+        days: {
+          create: daysCreateInput
+        }
+      },
+      include: {
+        days: {
+          include: {
+            exercises: {
+              orderBy: { order: "asc" }
+            }
+          },
+          orderBy: { dayIndex: "asc" }
+        }
+      },
     });
 
     res.status(201).json(plan);
   } catch (error) {
     console.error("Error creating training plan:", error);
-    res.status(500).json({ error: "Error al crear el plan" });
+    res.status(500).json({ error: "Error al crear el plan con generación automática" });
   }
 });
 
