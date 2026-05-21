@@ -653,7 +653,11 @@ function App() {
                 <div style={{ display: "flex", flexDirection: "column", gap: "20px" }} className="animate-fade-in">
                   
                   {/* Dynamic Somatotype Body Shape Visualizer */}
-                  <SomatotypeBodyVisualizer evaluations={selectedPatient.evaluations} />
+                  <SomatotypeBodyVisualizer
+                    evaluations={selectedPatient.evaluations}
+                    activeTab={activeTab}
+                    setActiveTab={setActiveTab}
+                  />
 
                   {/* Body Trend Chart */}
                   {selectedPatient.evaluations?.length >= 2 && (
