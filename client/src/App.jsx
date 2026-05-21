@@ -8,10 +8,30 @@ import AthleteView from "./components/AthleteView";
 import PostureAnalyzer from "./components/PostureAnalyzer";
 import CalorieCounter from "./components/CalorieCounter";
 import TrainingPlanner from "./components/TrainingPlanner";
+import Login from "./components/Login";
 
 const API_BASE = "/api";
 
 function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return localStorage.getItem("innova_auth") === "true" || sessionStorage.getItem("innova_auth") === "true";
+  });
+
+  const handleLoginSuccess = (rememberMe) => {
+    setIsAuthenticated(true);
+    if (rememberMe) {
+      localStorage.setItem("innova_auth", "true");
+    } else {
+      sessionStorage.setItem("innova_auth", "true");
+    }
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    localStorage.removeItem("innova_auth");
+    sessionStorage.removeItem("innova_auth");
+  };
+
   const [patients, setPatients] = useState([]);
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -27,10 +47,12 @@ function App() {
   const [showHistory, setShowHistory] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  // Fetch all patients on mount
+  // Fetch all patients on mount when authenticated
   useEffect(() => {
-    fetchPatients();
-  }, []);
+    if (isAuthenticated) {
+      fetchPatients();
+    }
+  }, [isAuthenticated]);
 
   const fetchPatients = async () => {
     try {
@@ -202,6 +224,10 @@ function App() {
     p.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  if (!isAuthenticated) {
+    return <Login onLogin={handleLoginSuccess} />;
+  }
+
   // If in Mobile PWA simulation, render fullscreen AthleteView
   if (isAthleteView && selectedPatient) {
     return (
@@ -285,8 +311,34 @@ function App() {
             </span>
           </div>
         </div>
-        <div style={{ fontSize: "0.9rem", color: "var(--text-muted)" }}>
-          Modo Administrador
+        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+          <div style={{ fontSize: "0.9rem", color: "var(--text-muted)" }}>
+            Modo Administrador
+          </div>
+          <button
+            onClick={handleLogout}
+            onMouseEnter={(e) => {
+              e.target.style.background = "rgba(255, 69, 0, 0.08)";
+              e.target.style.borderColor = "rgba(255, 69, 0, 0.2)";
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.background = "none";
+              e.target.style.borderColor = "var(--border-color)";
+            }}
+            style={{
+              background: "none",
+              border: "1px solid var(--border-color)",
+              color: "var(--error)",
+              padding: "6px 14px",
+              borderRadius: "20px",
+              fontSize: "0.85rem",
+              fontWeight: "600",
+              cursor: "pointer",
+              transition: "all var(--transition-fast)",
+            }}
+          >
+            Cerrar Sesión
+          </button>
         </div>
       </header>
 
