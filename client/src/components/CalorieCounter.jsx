@@ -173,13 +173,37 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
   const totalCarbsToday = filteredLogs.reduce((sum, log) => sum + (log.carbs || 0), 0);
   const totalFatToday = filteredLogs.reduce((sum, log) => sum + (log.fat || 0), 0);
 
-  // Math for Ring Progress
-  const percentCompleted = Math.min(100, Math.round((totalCaloriesToday / calorieGoal) * 100));
-  const radius = 60;
-  const stroke = 10;
-  const normalizedRadius = radius - stroke * 2;
-  const circumference = normalizedRadius * 2 * Math.PI;
-  const strokeDashoffset = circumference - (percentCompleted / 100) * circumference;
+  // Math for Concentric Rings
+  const pctCalories = Math.min(100, Math.round((totalCaloriesToday / calorieGoal) * 100));
+  const pctProtein = Math.min(100, Math.round((totalProteinToday / 150) * 100));
+  const pctCarbs = Math.min(100, Math.round((totalCarbsToday / 250) * 100));
+  const pctFat = Math.min(100, Math.round((totalFatToday / 80) * 100));
+
+  const getRingOffset = (pct, r) => {
+    const circ = 2 * Math.PI * r;
+    return circ - (pct / 100) * circ;
+  };
+
+  // Helper to build past 7 days calorie compliance
+  const getWeeklyData = () => {
+    const dates = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      dates.push(d.toISOString().split("T")[0]);
+    }
+    return dates.map(d => {
+      const dayLogs = logs.filter(log => log.date === d);
+      const dayCalories = dayLogs.reduce((sum, log) => sum + log.calories, 0);
+      const dayName = new Date(d + "T00:00:00").toLocaleDateString("es-ES", { weekday: "short" });
+      return {
+        date: d,
+        dayName: dayName.charAt(0).toUpperCase() + dayName.slice(1, 3),
+        calories: dayCalories
+      };
+    });
+  };
+  const weeklyData = getWeeklyData();
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "24px" }} className="animate-fade-in">
@@ -187,28 +211,36 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
       {/* 1. Nutrition Dashboard Card */}
       <div className="glass-card calorie-dashboard-grid">
         
-        {/* Left Side: Summary ring progress */}
-        <div className="calorie-summary-left">
-          <div style={{ position: "relative", width: "120px", height: "120px" }}>
-            <svg height="120" width="120" style={{ transform: "rotate(-90deg)" }}>
+        {/* Left Side: Concentric ring progress */}
+        <div className="calorie-summary-left" style={{ flexDirection: "column", gap: "12px", alignItems: "center" }}>
+          <div style={{ position: "relative", width: "140px", height: "140px" }}>
+            <svg height="140" width="140" style={{ transform: "rotate(-90deg)" }}>
+              {/* Background rings */}
+              <circle stroke="rgba(0, 0, 0, 0.05)" fill="transparent" strokeWidth="6" r="58" cx="70" cy="70" />
+              <circle stroke="rgba(0, 0, 0, 0.05)" fill="transparent" strokeWidth="6" r="48" cx="70" cy="70" />
+              <circle stroke="rgba(0, 0, 0, 0.05)" fill="transparent" strokeWidth="6" r="38" cx="70" cy="70" />
+              <circle stroke="rgba(0, 0, 0, 0.05)" fill="transparent" strokeWidth="6" r="28" cx="70" cy="70" />
+
+              {/* Progress rings */}
               <circle
-                stroke="var(--border-color)"
-                fill="transparent"
-                strokeWidth={stroke}
-                r={normalizedRadius}
-                cx={60}
-                cy={60}
+                stroke="#00f2fe" fill="transparent" strokeWidth="6" r="58" cx="70" cy="70"
+                strokeLinecap="round" strokeDasharray={2 * Math.PI * 58}
+                style={{ strokeDashoffset: getRingOffset(pctCalories, 58), transition: "stroke-dashoffset 0.5s ease", filter: "drop-shadow(0 0 4px #00f2fe)" }}
               />
               <circle
-                stroke="var(--primary)"
-                fill="transparent"
-                strokeWidth={stroke}
-                strokeDasharray={circumference + " " + circumference}
-                style={{ strokeDashoffset, transition: "stroke-dashoffset 0.5s ease-in-out" }}
-                r={normalizedRadius}
-                cx={60}
-                cy={60}
-                strokeLinecap="round"
+                stroke="#f43f5e" fill="transparent" strokeWidth="6" r="48" cx="70" cy="70"
+                strokeLinecap="round" strokeDasharray={2 * Math.PI * 48}
+                style={{ strokeDashoffset: getRingOffset(pctProtein, 48), transition: "stroke-dashoffset 0.5s ease", filter: "drop-shadow(0 0 4px #f43f5e)" }}
+              />
+              <circle
+                stroke="#10b981" fill="transparent" strokeWidth="6" r="38" cx="70" cy="70"
+                strokeLinecap="round" strokeDasharray={2 * Math.PI * 38}
+                style={{ strokeDashoffset: getRingOffset(pctCarbs, 38), transition: "stroke-dashoffset 0.5s ease", filter: "drop-shadow(0 0 4px #10b981)" }}
+              />
+              <circle
+                stroke="#fbbf24" fill="transparent" strokeWidth="6" r="28" cx="70" cy="70"
+                strokeLinecap="round" strokeDasharray={2 * Math.PI * 28}
+                style={{ strokeDashoffset: getRingOffset(pctFat, 28), transition: "stroke-dashoffset 0.5s ease", filter: "drop-shadow(0 0 4px #fbbf24)" }}
               />
             </svg>
             <div style={{
@@ -222,65 +254,81 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
               alignItems: "center",
               justifyContent: "center"
             }}>
-              <span style={{ fontSize: "1.3rem", fontWeight: 800, color: "var(--text-main)" }}>
+              <span style={{ fontSize: "1.2rem", fontWeight: 800, color: "var(--text-main)" }}>
                 {totalCaloriesToday}
               </span>
-              <span style={{ fontSize: "0.7rem", color: "var(--text-muted)", textTransform: "uppercase" }}>
+              <span style={{ fontSize: "0.6rem", color: "var(--text-muted)", textTransform: "uppercase" }}>
                 kcal
               </span>
             </div>
           </div>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: "6px", flex: 1 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <h3 className="glow-text" style={{ fontSize: "1.3rem", margin: 0 }}>Consumo Diario</h3>
-              <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>{selectedDate}</span>
-            </div>
+          {/* Micro Legend */}
+          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", justifyContent: "center" }}>
+            <span style={{ fontSize: "0.65rem", display: "flex", alignItems: "center", gap: "4px", color: "var(--text-muted)" }}>
+              <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#00f2fe" }} /> kcal
+            </span>
+            <span style={{ fontSize: "0.65rem", display: "flex", alignItems: "center", gap: "4px", color: "var(--text-muted)" }}>
+              <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#f43f5e" }} /> Prot
+            </span>
+            <span style={{ fontSize: "0.65rem", display: "flex", alignItems: "center", gap: "4px", color: "var(--text-muted)" }}>
+              <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#10b981" }} /> Carb
+            </span>
+            <span style={{ fontSize: "0.65rem", display: "flex", alignItems: "center", gap: "4px", color: "var(--text-muted)" }}>
+              <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#fbbf24" }} /> Gras
+            </span>
+          </div>
+        </div>
 
-            {/* Calories limit controller */}
-            {isEditingGoal ? (
-              <form onSubmit={handleGoalSave} style={{ display: "flex", gap: "8px", marginTop: "4px" }}>
-                <input
-                  type="number"
-                  className="form-input"
-                  value={goalInput}
-                  onChange={(e) => setGoalInput(parseInt(e.target.value) || "")}
-                  style={{ padding: "6px 10px", fontSize: "0.85rem", maxWidth: "100px" }}
-                  required
-                />
-                <button type="submit" className="btn btn-primary" style={{ padding: "6px 12px", fontSize: "0.8rem" }}>
-                  Listo
-                </button>
-              </form>
-            ) : (
-              <div style={{ fontSize: "0.9rem", color: "var(--text-muted)", display: "flex", alignItems: "center", gap: "8px" }}>
-                <span>Meta diaria: <strong>{calorieGoal} kcal</strong> ({percentCompleted}%)</span>
-                {!isAdminMode && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setGoalInput(calorieGoal);
-                      setIsEditingGoal(true);
-                    }}
-                    style={{ background: "none", border: "none", color: "var(--primary)", cursor: "pointer", fontSize: "0.85rem" }}
-                  >
-                    ✏️
-                  </button>
-                )}
-              </div>
-            )}
+        <div style={{ display: "flex", flexDirection: "column", gap: "6px", flex: 1, justifyContent: "center" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <h3 className="glow-text" style={{ fontSize: "1.3rem", margin: 0 }}>Consumo Diario</h3>
+            <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>{selectedDate}</span>
+          </div>
 
-            {/* Selected Date Navigation */}
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "8px" }}>
-              <label className="form-label" style={{ margin: 0, fontSize: "0.75rem" }}>Ver fecha:</label>
+          {/* Calories limit controller */}
+          {isEditingGoal ? (
+            <form onSubmit={handleGoalSave} style={{ display: "flex", gap: "8px", marginTop: "4px" }}>
               <input
-                type="date"
+                type="number"
                 className="form-input"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                style={{ padding: "4px 8px", fontSize: "0.8rem", maxWidth: "140px", height: "auto" }}
+                value={goalInput}
+                onChange={(e) => setGoalInput(parseInt(e.target.value) || "")}
+                style={{ padding: "6px 10px", fontSize: "0.85rem", maxWidth: "100px" }}
+                required
               />
+              <button type="submit" className="btn btn-primary" style={{ padding: "6px 12px", fontSize: "0.8rem" }}>
+                Listo
+              </button>
+            </form>
+          ) : (
+            <div style={{ fontSize: "0.9rem", color: "var(--text-muted)", display: "flex", alignItems: "center", gap: "8px" }}>
+              <span>Meta diaria: <strong>{calorieGoal} kcal</strong> ({pctCalories}%)</span>
+              {!isAdminMode && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setGoalInput(calorieGoal);
+                    setIsEditingGoal(true);
+                  }}
+                  style={{ background: "none", border: "none", color: "var(--primary)", cursor: "pointer", fontSize: "0.85rem" }}
+                >
+                  ✏️
+                </button>
+              )}
             </div>
+          )}
+
+          {/* Selected Date Navigation */}
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "8px" }}>
+            <label className="form-label" style={{ margin: 0, fontSize: "0.75rem" }}>Ver fecha:</label>
+            <input
+              type="date"
+              className="form-input"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              style={{ padding: "4px 8px", fontSize: "0.8rem", maxWidth: "140px", height: "auto" }}
+            />
           </div>
         </div>
 
@@ -290,35 +338,80 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
           <div>
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem", marginBottom: "4px" }}>
               <span style={{ color: "var(--text-muted)" }}>Proteínas (4 kcal/g)</span>
-              <span style={{ color: "var(--primary)", fontWeight: 700 }}>{totalProteinToday.toFixed(1)}g</span>
+              <span style={{ color: "#f43f5e", fontWeight: 700 }}>{totalProteinToday.toFixed(1)}g / 150g</span>
             </div>
             <div style={{ height: "6px", width: "100%", background: "var(--border-color)", borderRadius: "3px", overflow: "hidden" }}>
-              <div style={{ height: "100%", width: `${Math.min(100, (totalProteinToday / 150) * 100)}%`, background: "var(--primary)", transition: "width 0.3s" }} />
+              <div style={{ height: "100%", width: `${Math.min(100, (totalProteinToday / 150) * 100)}%`, background: "#f43f5e", transition: "width 0.3s" }} />
             </div>
           </div>
           {/* Carbs */}
           <div>
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem", marginBottom: "4px" }}>
               <span style={{ color: "var(--text-muted)" }}>Carbohidratos (4 kcal/g)</span>
-              <span style={{ color: "var(--success)", fontWeight: 700 }}>{totalCarbsToday.toFixed(1)}g</span>
+              <span style={{ color: "#10b981", fontWeight: 700 }}>{totalCarbsToday.toFixed(1)}g / 250g</span>
             </div>
             <div style={{ height: "6px", width: "100%", background: "var(--border-color)", borderRadius: "3px", overflow: "hidden" }}>
-              <div style={{ height: "100%", width: `${Math.min(100, (totalCarbsToday / 250) * 100)}%`, background: "var(--success)", transition: "width 0.3s" }} />
+              <div style={{ height: "100%", width: `${Math.min(100, (totalCarbsToday / 250) * 100)}%`, background: "#10b981", transition: "width 0.3s" }} />
             </div>
           </div>
           {/* Fat */}
           <div>
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem", marginBottom: "4px" }}>
               <span style={{ color: "var(--text-muted)" }}>Grasas (9 kcal/g)</span>
-              <span style={{ color: "var(--warning)", fontWeight: 700 }}>{totalFatToday.toFixed(1)}g</span>
+              <span style={{ color: "#fbbf24", fontWeight: 700 }}>{totalFatToday.toFixed(1)}g / 80g</span>
             </div>
             <div style={{ height: "6px", width: "100%", background: "var(--border-color)", borderRadius: "3px", overflow: "hidden" }}>
-              <div style={{ height: "100%", width: `${Math.min(100, (totalFatToday / 80) * 100)}%`, background: "var(--warning)", transition: "width 0.3s" }} />
+              <div style={{ height: "100%", width: `${Math.min(100, (totalFatToday / 80) * 100)}%`, background: "#fbbf24", transition: "width 0.3s" }} />
             </div>
           </div>
         </div>
 
       </div>
+
+      {/* 1b. Weekly Compliance Bar Chart */}
+      <div className="glass-card" style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+        <h4 className="glow-text" style={{ fontSize: "1.15rem", margin: 0 }}>Cumplimiento Semanal de Calorías</h4>
+        <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", margin: 0 }}>
+          Consumo calórico de los últimos 7 días. La línea punteada horizontal marca la meta diaria.
+        </p>
+        <div style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-end",
+          height: "150px",
+          padding: "16px 0 10px 0",
+          position: "relative",
+          marginTop: "10px"
+        }}>
+          {/* Dotted target line at 100% height (represented as 80px above baseline) */}
+          <div style={{ position: "absolute", bottom: "90px", left: 0, right: 0, borderBottom: "1px dashed #00f2fe", opacity: 0.6, zIndex: 1 }} />
+          <span style={{ position: "absolute", bottom: "95px", right: 0, fontSize: "0.65rem", color: "#00f2fe", fontWeight: 600, zIndex: 1 }}>Meta</span>
+
+          {weeklyData.map((wd, idx) => {
+            const ratio = wd.calories / calorieGoal;
+            const barHeight = Math.min(110, Math.round(ratio * 80)); // 80px represents 100%
+            const isGoalMet = wd.calories >= calorieGoal;
+            
+            return (
+              <div key={idx} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "6px", flex: 1, zIndex: 2 }}>
+                <div style={{ height: "110px", width: "18px", background: "rgba(0, 0, 0, 0.03)", border: "1px solid var(--border-color)", borderRadius: "9px", display: "flex", alignItems: "flex-end", overflow: "hidden", position: "relative" }}>
+                  <div style={{
+                    height: `${barHeight}px`,
+                    width: "100%",
+                    background: isGoalMet ? "#10b981" : "#00f2fe",
+                    borderRadius: "8px",
+                    boxShadow: `0 0 8px ${isGoalMet ? "#10b981" : "#00f2fe"}`,
+                    transition: "height 0.5s ease"
+                  }} />
+                </div>
+                <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", fontWeight: wd.date === selectedDate ? "bold" : "normal" }}>{wd.dayName}</span>
+                <span style={{ fontSize: "0.65rem", color: wd.date === selectedDate ? "var(--text-main)" : "var(--text-muted)", fontWeight: "bold" }}>{wd.calories}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
 
       {/* 2. Interactive Analyzer (Only in Athlete mode, or Coach mock view) */}
       {!isAdminMode && (

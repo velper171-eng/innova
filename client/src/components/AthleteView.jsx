@@ -326,77 +326,174 @@ const AthleteView = ({ patientId, onBack }) => {
                 No hay ciclos de suplementación activos hoy.
               </div>
             ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                {reminders.map((rem, idx) => (
-                  <div
-                    key={idx}
-                    style={{
-                      background: rem.status === "taken" ? "rgba(0, 191, 255, 0.08)" : rem.status === "skipped" ? "rgba(255, 69, 0, 0.08)" : "var(--bg-main)",
-                      border: `1px solid ${rem.status === "taken" ? "var(--success)" : rem.status === "skipped" ? "var(--error)" : "var(--border-color)"}`,
-                      borderRadius: "12px",
-                      padding: "16px",
-                    }}
-                  >
-                    <div style={{ display: "flex", justifycontent: "space-between", alignItems: "flex-start" }}>
-                      <div>
-                        <h5 style={{ fontSize: "1.05rem", color: "var(--text-main)", fontWeight: 600 }}>{rem.cycleName}</h5>
-                        <div style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginTop: "4px" }}>
-                          Dosis: <strong>{rem.dailyDose} {rem.stock?.unit || "g"}</strong> | Hora: <strong>{rem.scheduledTime}</strong> ({rem.timingType})
+              <div style={{ display: "flex", flexDirection: "column", position: "relative", paddingLeft: "16px", gap: "2px" }}>
+                {/* Vertical line track */}
+                <div style={{
+                  position: "absolute",
+                  left: "25px",
+                  top: "10px",
+                  bottom: "30px",
+                  width: "2px",
+                  background: "linear-gradient(180deg, var(--primary) 0%, var(--accent) 50%, var(--border-color) 100%)",
+                  opacity: 0.4,
+                  zIndex: 0
+                }} />
+
+                {[...reminders].sort((a, b) => a.scheduledTime.localeCompare(b.scheduledTime)).map((rem, idx) => {
+                  const isTaken = rem.status === "taken";
+                  const isSkipped = rem.status === "skipped";
+                  const isPending = rem.status === "pending";
+
+                  let statusColor = "var(--border-color)";
+                  let statusShadow = "none";
+                  let nodeContent = "🕒";
+                  
+                  if (isTaken) {
+                    statusColor = "var(--success)";
+                    statusShadow = "0 0 8px var(--success)";
+                    nodeContent = "✓";
+                  } else if (isSkipped) {
+                    statusColor = "var(--error)";
+                    statusShadow = "0 0 8px var(--error)";
+                    nodeContent = "✕";
+                  } else {
+                    statusColor = "var(--primary)";
+                    statusShadow = "0 0 8px var(--primary)";
+                  }
+
+                  const timingLabels = {
+                    "morning": "Mañana 🌅",
+                    "pre-workout": "Pre-Entreno ⚡",
+                    "post-workout": "Post-Entreno 🥤",
+                    "night": "Noche 🌙",
+                    "custom": "Personalizado ⚙️"
+                  };
+                  const timingText = timingLabels[rem.timingType] || rem.timingType;
+
+                  return (
+                    <div key={idx} style={{ display: "flex", gap: "16px", marginBottom: "18px", position: "relative", zIndex: 1 }}>
+                      {/* Left timeline indicator node */}
+                      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "20px", flexShrink: 0 }}>
+                        <div style={{
+                          width: "20px",
+                          height: "20px",
+                          borderRadius: "50%",
+                          background: isPending ? "var(--bg-card)" : statusColor,
+                          border: `2px solid ${statusColor}`,
+                          boxShadow: statusShadow,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: "10px",
+                          fontWeight: "bold",
+                          color: isPending ? "var(--text-main)" : "white",
+                          zIndex: 2,
+                          transition: "all 0.3s ease"
+                        }}>
+                          {nodeContent}
                         </div>
+                        <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "4px", fontWeight: "bold" }}>
+                          {rem.scheduledTime}
+                        </span>
                       </div>
-                      <span
+
+                      {/* Right content card */}
+                      <div
                         style={{
-                          fontSize: "0.75rem",
-                          padding: "2px 8px",
-                          borderRadius: "6px",
-                          fontWeight: 600,
-                          background: rem.status === "taken" ? "rgba(0,191,255,0.15)" : rem.status === "skipped" ? "rgba(255,69,0,0.15)" : "var(--bg-main)",
-                          color: rem.status === "taken" ? "var(--success)" : rem.status === "skipped" ? "var(--error)" : "var(--text-muted)"
+                          flex: 1,
+                          background: isTaken ? "rgba(16, 185, 129, 0.04)" : isSkipped ? "rgba(244, 63, 94, 0.04)" : "var(--bg-main)",
+                          border: `1px solid ${isTaken ? "rgba(16, 185, 129, 0.3)" : isSkipped ? "rgba(244, 63, 94, 0.3)" : "var(--border-color)"}`,
+                          borderRadius: "12px",
+                          padding: "14px 16px",
+                          transition: "all 0.3s ease"
                         }}
                       >
-                        {rem.status === "taken" ? "Tomado" : rem.status === "skipped" ? "Omitido" : "Pendiente"}
-                      </span>
-                    </div>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "8px" }}>
+                          <div>
+                            <span style={{
+                              fontSize: "0.7rem",
+                              textTransform: "uppercase",
+                              letterSpacing: "1px",
+                              color: isTaken ? "var(--success)" : isSkipped ? "var(--error)" : "var(--primary)",
+                              fontWeight: "bold"
+                            }}>
+                              {timingText}
+                            </span>
+                            <h5 style={{ fontSize: "1.05rem", color: "var(--text-main)", fontWeight: 700, margin: "2px 0 4px 0" }}>
+                              {rem.cycleName}
+                            </h5>
+                            <div style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
+                              Dosis: <strong style={{ color: "var(--text-main)" }}>{rem.dailyDose} {rem.stock?.unit || "g"}</strong>
+                            </div>
+                          </div>
 
-                    {/* Low Stock Warning */}
-                    {rem.stock?.isLowStock && (
-                      <div style={{ marginTop: "12px", padding: "8px 12px", background: "rgba(255, 69, 0, 0.08)", border: "1px solid rgba(255, 69, 0, 0.2)", borderRadius: "8px", fontSize: "0.8rem", color: "var(--error)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <span>⚠️ ¡Quedan aprox. <strong>{rem.stock.daysRemaining} días</strong> ({rem.stock.remainingQuantity.toFixed(1)} {rem.stock.unit})!</span>
-                        {rem.stock.purchaseLink && (
-                          <a
-                            href={rem.stock.purchaseLink}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="btn"
-                            style={{ padding: "4px 8px", fontSize: "0.75rem", background: "var(--error)", color: "white" }}
+                          <span
+                            style={{
+                              fontSize: "0.7rem",
+                              padding: "2px 8px",
+                              borderRadius: "6px",
+                              fontWeight: 600,
+                              background: isTaken ? "rgba(16,185,129,0.15)" : isSkipped ? "rgba(244,63,94,0.15)" : "rgba(255,255,255,0.05)",
+                              color: isTaken ? "var(--success)" : isSkipped ? "var(--error)" : "var(--text-muted)",
+                              border: `1px solid ${isTaken ? "rgba(16,185,129,0.3)" : isSkipped ? "rgba(244,63,94,0.3)" : "transparent"}`
+                            }}
                           >
-                            Recomprar
-                          </a>
+                            {isTaken ? "Tomado" : isSkipped ? "Omitido" : "Pendiente"}
+                          </span>
+                        </div>
+
+                        {/* Low Stock Warning */}
+                        {rem.stock?.isLowStock && (
+                          <div style={{
+                            marginTop: "10px",
+                            padding: "8px 12px",
+                            background: "rgba(244, 63, 94, 0.06)",
+                            border: "1px solid rgba(244, 63, 94, 0.15)",
+                            borderRadius: "8px",
+                            fontSize: "0.8rem",
+                            color: "var(--error)",
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center"
+                          }}>
+                            <span>⚠️ Reponer: <strong>{rem.stock.daysRemaining} días</strong> ({rem.stock.remainingQuantity.toFixed(1)} {rem.stock.unit})</span>
+                            {rem.stock.purchaseLink && (
+                              <a
+                                href={rem.stock.purchaseLink}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="btn"
+                                style={{ padding: "4px 8px", fontSize: "0.75rem", background: "var(--error)", color: "white", borderRadius: "6px" }}
+                              >
+                                Recomprar
+                              </a>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Gym-friendly toggle action checkoffs */}
+                        {isPending && (
+                          <div style={{ display: "flex", gap: "10px", marginTop: "12px" }}>
+                            <button
+                              className="btn btn-secondary"
+                              style={{ padding: "8px 14px", fontSize: "0.8rem", color: "var(--error)", borderColor: "rgba(244,63,94,0.2)", background: "rgba(244,63,94,0.02)", flex: 1 }}
+                              onClick={() => handleLogIntake(rem.cycleId, rem.dailyDose, "skipped")}
+                            >
+                              Omitir
+                            </button>
+                            <button
+                              className="btn btn-primary"
+                              style={{ padding: "8px 14px", fontSize: "0.8rem", flex: 2 }}
+                              onClick={() => handleLogIntake(rem.cycleId, rem.dailyDose, "taken")}
+                            >
+                              ✓ Tomar
+                            </button>
+                          </div>
                         )}
                       </div>
-                    )}
-
-                    {/* Big Action Checkboxes for gym use */}
-                    {rem.status === "pending" && (
-                      <div className="grid-2-cols" style={{ gap: "12px", marginTop: "14px" }}>
-                        <button
-                          className="btn btn-secondary"
-                          style={{ padding: "10px", fontSize: "0.85rem", color: "var(--error)" }}
-                          onClick={() => handleLogIntake(rem.cycleId, rem.dailyDose, "skipped")}
-                        >
-                          Omitir
-                        </button>
-                        <button
-                          className="btn btn-primary"
-                          style={{ padding: "10px", fontSize: "0.85rem" }}
-                          onClick={() => handleLogIntake(rem.cycleId, rem.dailyDose, "taken")}
-                        >
-                          ✓ Tomar
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                ))}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </section>
@@ -547,47 +644,82 @@ const AthleteView = ({ patientId, onBack }) => {
                 No hay suplementos registrados en inventario.
               </div>
             ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))", gap: "12px" }}>
                 {supplements.map((sup) => {
                   const percent = Math.min(100, Math.round((sup.remainingQuantity / sup.totalCapacity) * 100));
                   const isLow = sup.remainingQuantity <= (sup.totalCapacity * 0.15) || percent <= 15;
+                  const r = 20;
+                  const strokeWidth = 4;
+                  const circ = 2 * Math.PI * r;
+                  const offset = circ - (percent / 100) * circ;
 
                   return (
-                    <div key={sup.id} style={{ background: "var(--bg-main)", border: "1px solid var(--border-color)", borderRadius: "12px", padding: "14px" }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-                        <div>
-                          <h5 style={{ fontWeight: 600, fontSize: "1rem" }}>{sup.name}</h5>
-                          <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>{sup.brand || "Genérico"}</span>
-                        </div>
-                        <div style={{ textAlign: "right" }}>
-                          <span style={{ fontWeight: 700, color: isLow ? "var(--error)" : "var(--primary)" }}>
-                            {sup.remainingQuantity} / {sup.totalCapacity} {sup.unit}
-                          </span>
-                          <div style={{ fontSize: "0.75rem", color: "var(--text-dark)" }}>{percent}% restante</div>
+                    <div
+                      key={sup.id}
+                      style={{
+                        background: "var(--bg-main)",
+                        border: `1px solid ${isLow ? "rgba(255, 69, 0, 0.2)" : "var(--border-color)"}`,
+                        borderRadius: "12px",
+                        padding: "12px",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        textAlign: "center"
+                      }}
+                    >
+                      {/* Circular Stock Ring */}
+                      <div style={{ position: "relative", width: "50px", height: "50px", marginBottom: "8px" }}>
+                        <svg width="50" height="50" style={{ transform: "rotate(-90deg)" }}>
+                          <circle cx="25" cy="25" r={r} stroke="rgba(0, 0, 0, 0.05)" strokeWidth={strokeWidth} fill="transparent" />
+                          <circle
+                            cx="25"
+                            cy="25"
+                            r={r}
+                            stroke={isLow ? "var(--error)" : "var(--primary)"}
+                            strokeWidth={strokeWidth}
+                            fill="transparent"
+                            strokeDasharray={circ}
+                            strokeDashoffset={offset}
+                            strokeLinecap="round"
+                            style={{
+                              transition: "stroke-dashoffset 0.5s ease",
+                              filter: `drop-shadow(0 0 3px ${isLow ? "var(--error)" : "var(--primary)"})`
+                            }}
+                          />
+                        </svg>
+                        <div style={{
+                          position: "absolute", top: 0, left: 0, width: "100%", height: "100%",
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          fontSize: "0.8rem", fontWeight: "bold", color: isLow ? "var(--error)" : "var(--text-main)"
+                        }}>
+                          {percent}%
                         </div>
                       </div>
 
-                      {/* Stock progress bar */}
-                      <div style={{ height: "6px", width: "100%", background: "rgba(112, 128, 144, 0.15)", borderRadius: "3px", overflow: "hidden", marginBottom: "8px" }}>
-                        <div style={{ height: "100%", width: `${percent}%`, background: isLow ? "var(--error)" : "var(--primary)", transition: "width 0.3s" }} />
-                      </div>
+                      <span style={{ fontWeight: 600, fontSize: "0.85rem", color: "var(--text-main)", display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical", overflow: "hidden" }} title={sup.name}>
+                        {sup.name}
+                      </span>
+                      <span style={{ fontSize: "0.7rem", color: "var(--text-muted)", marginTop: "2px" }}>
+                        {sup.remainingQuantity} / {sup.totalCapacity} {sup.unit}
+                      </span>
 
-                      {/* Stock alerts & Reorder */}
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "12px" }}>
+                      {/* Stock alerts & Actions */}
+                      <div style={{ display: "flex", gap: "6px", width: "100%", marginTop: "10px", justifyContent: "center" }}>
                         <button
+                          type="button"
                           className="btn"
-                          style={{ padding: "4px 8px", fontSize: "0.75rem", background: "rgba(255, 69, 0, 0.08)", color: "var(--error)" }}
+                          style={{ padding: "4px 8px", fontSize: "0.7rem", background: "rgba(255, 69, 0, 0.05)", color: "var(--error)", borderRadius: "6px" }}
                           onClick={() => handleDeleteSupplement(sup.id)}
                         >
-                          Eliminar
+                          🗑️
                         </button>
                         {isLow && sup.purchaseLink && (
                           <a
                             href={sup.purchaseLink}
                             target="_blank"
                             rel="noreferrer"
-                            className="btn btn-danger"
-                            style={{ padding: "6px 12px", fontSize: "0.75rem", display: "inline-flex", gap: "4px" }}
+                            className="btn"
+                            style={{ padding: "4px 8px", fontSize: "0.7rem", background: "var(--error)", color: "white", borderRadius: "6px", display: "flex", alignItems: "center" }}
                           >
                             ⚡ Recomprar
                           </a>

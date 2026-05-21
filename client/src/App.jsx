@@ -9,6 +9,7 @@ import PostureAnalyzer from "./components/PostureAnalyzer";
 import CalorieCounter from "./components/CalorieCounter";
 import TrainingPlanner from "./components/TrainingPlanner";
 import Login from "./components/Login";
+import SomatotypeBodyVisualizer from "./components/SomatotypeBodyVisualizer";
 
 const API_BASE = "/api";
 
@@ -650,6 +651,10 @@ function App() {
               {/* Sub-section 1: Anthropometry */}
               {activeTab === "anthropometry" && (
                 <div style={{ display: "flex", flexDirection: "column", gap: "20px" }} className="animate-fade-in">
+                  
+                  {/* Dynamic Somatotype Body Shape Visualizer */}
+                  <SomatotypeBodyVisualizer evaluations={selectedPatient.evaluations} />
+
                   {/* Body Trend Chart */}
                   {selectedPatient.evaluations?.length >= 2 && (
                     <div className="glass-card">
@@ -809,26 +814,76 @@ function App() {
                       Stock actual registrado del atleta. Los avisos de reposición automática se generan al quedar 5 días de consumo.
                     </p>
 
-                    <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "8px" }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))", gap: "12px", marginTop: "8px" }}>
                       {selectedPatient.supplements?.length === 0 ? (
-                        <div style={{ color: "var(--text-dark)", textAlign: "center", padding: "20px", fontStyle: "italic" }}>
+                        <div style={{ color: "var(--text-dark)", textAlign: "center", padding: "20px", fontStyle: "italic", gridColumn: "1 / -1" }}>
                           No hay suplementos registrados en inventario.
                         </div>
                       ) : (
                         selectedPatient.supplements.map((sup) => {
-                          const percent = Math.round((sup.remainingQuantity / sup.totalCapacity) * 100);
+                          const percent = Math.min(100, Math.round((sup.remainingQuantity / sup.totalCapacity) * 100));
                           const isLow = sup.remainingQuantity <= (sup.totalCapacity * 0.15) || percent <= 15;
+                          const r = 20;
+                          const strokeWidth = 4;
+                          const circ = 2 * Math.PI * r;
+                          const offset = circ - (percent / 100) * circ;
                           return (
-                            <div key={sup.id} style={{ border: "1px solid rgba(255,255,255,0.06)", borderRadius: "8px", padding: "12px" }}>
-                              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.9rem" }}>
-                                <span style={{ fontWeight: 600, color: "var(--text-main)" }}>{sup.name}</span>
-                                <span style={{ color: isLow ? "var(--error)" : "var(--primary)", fontWeight: 700 }}>
-                                  {sup.remainingQuantity} / {sup.totalCapacity} {sup.unit}
+                            <div
+                              key={sup.id}
+                              style={{
+                                border: `1px solid ${isLow ? "rgba(255, 69, 0, 0.2)" : "var(--border-color)"}`,
+                                borderRadius: "12px",
+                                padding: "12px",
+                                background: isLow ? "rgba(255, 69, 0, 0.02)" : "rgba(255,255,255,0.01)",
+                                display: "flex",
+                                flexDirection: "column",
+                                alignItems: "center",
+                                textAlign: "center"
+                              }}
+                            >
+                              <div style={{ position: "relative", width: "50px", height: "50px", marginBottom: "8px" }}>
+                                <svg width="50" height="50" style={{ transform: "rotate(-90deg)" }}>
+                                  <circle cx="25" cy="25" r={r} stroke="rgba(0, 0, 0, 0.05)" strokeWidth={strokeWidth} fill="transparent" />
+                                  <circle
+                                    cx="25"
+                                    cy="25"
+                                    r={r}
+                                    stroke={isLow ? "var(--error)" : "var(--primary)"}
+                                    strokeWidth={strokeWidth}
+                                    fill="transparent"
+                                    strokeDasharray={circ}
+                                    strokeDashoffset={offset}
+                                    strokeLinecap="round"
+                                    style={{
+                                      transition: "stroke-dashoffset 0.5s ease",
+                                      filter: `drop-shadow(0 0 3px ${isLow ? "var(--error)" : "var(--primary)"})`
+                                    }}
+                                  />
+                                </svg>
+                                <div style={{
+                                  position: "absolute", top: 0, left: 0, width: "100%", height: "100%",
+                                  display: "flex", alignItems: "center", justifyContent: "center",
+                                  fontSize: "0.8rem", fontWeight: "bold", color: isLow ? "var(--error)" : "var(--text-main)"
+                                }}>
+                                  {percent}%
+                                </div>
+                              </div>
+                              <span style={{ fontWeight: 600, fontSize: "0.85rem", color: "var(--text-main)", display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical", overflow: "hidden" }} title={sup.name}>
+                                {sup.name}
+                              </span>
+                              <span style={{ fontSize: "0.7rem", color: "var(--text-muted)", marginTop: "2px" }}>
+                                {sup.remainingQuantity} / {sup.totalCapacity} {sup.unit}
+                              </span>
+                              {isLow && (
+                                <span style={{
+                                  marginTop: "6px", fontSize: "0.6rem", padding: "1px 4px",
+                                  background: "rgba(255, 69, 0, 0.08)", color: "var(--error)",
+                                  borderRadius: "4px", border: "1px solid rgba(255, 69, 0, 0.15)",
+                                  fontWeight: 600
+                                }}>
+                                  STOCK BAJO
                                 </span>
-                              </div>
-                              <div style={{ height: "4px", width: "100%", background: "rgba(255,255,255,0.05)", borderRadius: "2px", overflow: "hidden", marginTop: "8px" }}>
-                                <div style={{ height: "100%", width: `${percent}%`, background: isLow ? "var(--error)" : "var(--primary)" }} />
-                              </div>
+                              )}
                             </div>
                           );
                         })

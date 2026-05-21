@@ -14,53 +14,190 @@ const MUSCLE_COLORS = {
   rest: "#aaa",
 };
 
-const MuscleSilhouette = ({ highlight = "legs" }) => {
-  const color = MUSCLE_COLORS[highlight] || "#008080";
-  const dimmed = "rgba(112,128,144,0.15)";
+const MuscleSilhouette = ({ highlight = "legs", view = "front" }) => {
+  const isHighlighted = (muscles) => muscles.includes(highlight) || highlight === "full_body";
+  
+  // Neon colors
+  const activeColor = "#10b981"; // Glowing green
+  const inactiveColor = "rgba(255, 255, 255, 0.06)";
+  const strokeColor = "rgba(255, 255, 255, 0.15)";
 
-  // Simple front-facing body silhouette with colored muscle regions
-  return (
-    <svg viewBox="0 0 120 240" width="90" height="180" style={{ display: "block", margin: "0 auto" }}>
-      {/* Head */}
-      <ellipse cx="60" cy="22" rx="16" ry="18" fill={dimmed} />
-      {/* Neck */}
-      <rect x="54" y="38" width="12" height="10" rx="4" fill={dimmed} />
-      {/* Chest */}
-      <path d="M32 48 Q60 44 88 48 L92 80 Q60 84 28 80 Z"
-        fill={["chest", "full_body"].includes(highlight) ? color : dimmed}
-        opacity={["chest", "full_body"].includes(highlight) ? 0.9 : 1}
-      />
-      {/* Shoulders */}
-      <ellipse cx="24" cy="58" rx="14" ry="10"
-        fill={["shoulders", "full_body"].includes(highlight) ? color : dimmed} />
-      <ellipse cx="96" cy="58" rx="14" ry="10"
-        fill={["shoulders", "full_body"].includes(highlight) ? color : dimmed} />
-      {/* Arms */}
-      <rect x="8" y="62" width="14" height="48" rx="7"
-        fill={["arms", "shoulders", "full_body"].includes(highlight) ? color : dimmed} />
-      <rect x="98" y="62" width="14" height="48" rx="7"
-        fill={["arms", "shoulders", "full_body"].includes(highlight) ? color : dimmed} />
-      {/* Forearms */}
-      <rect x="10" y="112" width="10" height="34" rx="5" fill={dimmed} />
-      <rect x="100" y="112" width="10" height="34" rx="5" fill={dimmed} />
-      {/* Core / abs */}
-      <path d="M38 80 Q60 84 82 80 L84 116 Q60 120 36 116 Z"
-        fill={["core", "back", "full_body"].includes(highlight) ? color : dimmed} />
-      {/* Legs */}
-      <rect x="36" y="116" width="20" height="64" rx="8"
-        fill={["legs", "full_body"].includes(highlight) ? color : dimmed} />
-      <rect x="64" y="116" width="20" height="64" rx="8"
-        fill={["legs", "full_body"].includes(highlight) ? color : dimmed} />
-      {/* Calves */}
-      <rect x="38" y="180" width="16" height="34" rx="6" fill={dimmed} />
-      <rect x="66" y="180" width="16" height="34" rx="6" fill={dimmed} />
-      {/* Back highlight overlay */}
-      {highlight === "back" && (
-        <path d="M32 48 Q60 44 88 48 L92 116 Q60 120 28 116 Z"
-          fill={color} opacity="0.6" />
-      )}
-    </svg>
-  );
+  if (view === "front") {
+    return (
+      <svg viewBox="0 0 120 240" width="80" height="160" style={{ display: "block", margin: "0 auto", overflow: "visible" }}>
+        <defs>
+          <filter id="neonGlowFront" x="-25%" y="-25%" width="150%" height="150%">
+            <feGaussianBlur stdDeviation="3.5" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+        
+        {/* Head */}
+        <ellipse cx="60" cy="22" rx="14" ry="16" fill={inactiveColor} stroke={strokeColor} strokeWidth="1" />
+        {/* Neck */}
+        <rect x="55" y="38" width="10" height="8" rx="2" fill={inactiveColor} stroke={strokeColor} strokeWidth="1" />
+        
+        {/* Chest */}
+        <path d="M 36,46 C 45,43 55,43 60,43 C 65,43 75,43 84,46 L 81,75 C 60,78 60,78 39,75 Z"
+          fill={isHighlighted(["chest"]) ? activeColor : inactiveColor}
+          stroke={isHighlighted(["chest"]) ? activeColor : strokeColor}
+          strokeWidth="1.2"
+          filter={isHighlighted(["chest"]) ? "url(#neonGlowFront)" : ""}
+          style={{ transition: "all 0.3s" }}
+        />
+        
+        {/* Shoulders */}
+        <path d="M 36,46 C 28,48 26,56 30,62 C 32,58 35,50 36,46 Z"
+          fill={isHighlighted(["shoulders"]) ? activeColor : inactiveColor}
+          stroke={isHighlighted(["shoulders"]) ? activeColor : strokeColor}
+          strokeWidth="1.2"
+          filter={isHighlighted(["shoulders"]) ? "url(#neonGlowFront)" : ""}
+          style={{ transition: "all 0.3s" }}
+        />
+        <path d="M 84,46 C 92,48 94,56 90,62 C 88,58 85,50 84,46 Z"
+          fill={isHighlighted(["shoulders"]) ? activeColor : inactiveColor}
+          stroke={isHighlighted(["shoulders"]) ? activeColor : strokeColor}
+          strokeWidth="1.2"
+          filter={isHighlighted(["shoulders"]) ? "url(#neonGlowFront)" : ""}
+          style={{ transition: "all 0.3s" }}
+        />
+
+        {/* Arms */}
+        <path d="M 30,62 C 27,80 25,98 28,120 C 31,98 33,80 34,70 Z"
+          fill={isHighlighted(["arms"]) ? activeColor : inactiveColor}
+          stroke={isHighlighted(["arms"]) ? activeColor : strokeColor}
+          strokeWidth="1.2"
+          filter={isHighlighted(["arms"]) ? "url(#neonGlowFront)" : ""}
+          style={{ transition: "all 0.3s" }}
+        />
+        <path d="M 90,62 C 93,80 95,98 92,120 C 89,98 87,80 86,70 Z"
+          fill={isHighlighted(["arms"]) ? activeColor : inactiveColor}
+          stroke={isHighlighted(["arms"]) ? activeColor : strokeColor}
+          strokeWidth="1.2"
+          filter={isHighlighted(["arms"]) ? "url(#neonGlowFront)" : ""}
+          style={{ transition: "all 0.3s" }}
+        />
+
+        {/* Core/Abs */}
+        <path d="M 39,75 C 60,78 60,78 81,75 L 76,125 L 44,125 Z"
+          fill={isHighlighted(["core"]) ? activeColor : inactiveColor}
+          stroke={isHighlighted(["core"]) ? activeColor : strokeColor}
+          strokeWidth="1.2"
+          filter={isHighlighted(["core"]) ? "url(#neonGlowFront)" : ""}
+          style={{ transition: "all 0.3s" }}
+        />
+
+        {/* Legs (Quads) */}
+        <path d="M 44,125 L 58,125 L 56,190 L 42,190 Z"
+          fill={isHighlighted(["legs"]) ? activeColor : inactiveColor}
+          stroke={isHighlighted(["legs"]) ? activeColor : strokeColor}
+          strokeWidth="1.2"
+          filter={isHighlighted(["legs"]) ? "url(#neonGlowFront)" : ""}
+          style={{ transition: "all 0.3s" }}
+        />
+        <path d="M 62,125 L 76,125 L 78,190 L 64,190 Z"
+          fill={isHighlighted(["legs"]) ? activeColor : inactiveColor}
+          stroke={isHighlighted(["legs"]) ? activeColor : strokeColor}
+          strokeWidth="1.2"
+          filter={isHighlighted(["legs"]) ? "url(#neonGlowFront)" : ""}
+          style={{ transition: "all 0.3s" }}
+        />
+
+        {/* Calves (Front) */}
+        <rect x="44" y="195" width="10" height="30" rx="4" fill={inactiveColor} stroke={strokeColor} strokeWidth="1" />
+        <rect x="66" y="195" width="10" height="30" rx="4" fill={inactiveColor} stroke={strokeColor} strokeWidth="1" />
+      </svg>
+    );
+  } else {
+    // Back view
+    return (
+      <svg viewBox="0 0 120 240" width="80" height="160" style={{ display: "block", margin: "0 auto", overflow: "visible" }}>
+        <defs>
+          <filter id="neonGlowBack" x="-25%" y="-25%" width="150%" height="150%">
+            <feGaussianBlur stdDeviation="3.5" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+
+        {/* Head */}
+        <ellipse cx="60" cy="22" rx="14" ry="16" fill={inactiveColor} stroke={strokeColor} strokeWidth="1" />
+        {/* Neck */}
+        <rect x="55" y="38" width="10" height="8" rx="2" fill={inactiveColor} stroke={strokeColor} strokeWidth="1" />
+
+        {/* Upper Back */}
+        <path d="M 36,46 C 45,42 55,42 60,42 C 65,42 75,42 84,46 L 81,75 C 60,78 60,78 39,75 Z"
+          fill={isHighlighted(["back"]) ? activeColor : inactiveColor}
+          stroke={isHighlighted(["back"]) ? activeColor : strokeColor}
+          strokeWidth="1.2"
+          filter={isHighlighted(["back"]) ? "url(#neonGlowBack)" : ""}
+          style={{ transition: "all 0.3s" }}
+        />
+
+        {/* Shoulders */}
+        <path d="M 36,46 C 28,48 26,56 30,62 C 32,58 35,50 36,46 Z"
+          fill={isHighlighted(["shoulders"]) ? activeColor : inactiveColor}
+          stroke={isHighlighted(["shoulders"]) ? activeColor : strokeColor}
+          strokeWidth="1.2"
+          filter={isHighlighted(["shoulders"]) ? "url(#neonGlowBack)" : ""}
+          style={{ transition: "all 0.3s" }}
+        />
+        <path d="M 84,46 C 92,48 94,56 90,62 C 88,58 85,50 84,46 Z"
+          fill={isHighlighted(["shoulders"]) ? activeColor : inactiveColor}
+          stroke={isHighlighted(["shoulders"]) ? activeColor : strokeColor}
+          strokeWidth="1.2"
+          filter={isHighlighted(["shoulders"]) ? "url(#neonGlowBack)" : ""}
+          style={{ transition: "all 0.3s" }}
+        />
+
+        {/* Lower Back */}
+        <path d="M 39,75 C 60,78 60,78 81,75 L 76,125 L 44,125 Z"
+          fill={isHighlighted(["back", "core"]) ? activeColor : inactiveColor}
+          stroke={isHighlighted(["back", "core"]) ? activeColor : strokeColor}
+          strokeWidth="1.2"
+          filter={isHighlighted(["back", "core"]) ? "url(#neonGlowBack)" : ""}
+          style={{ transition: "all 0.3s" }}
+        />
+
+        {/* Hamstrings / Glutes */}
+        <path d="M 44,125 L 58,125 L 56,190 L 42,190 Z"
+          fill={isHighlighted(["legs"]) ? activeColor : inactiveColor}
+          stroke={isHighlighted(["legs"]) ? activeColor : strokeColor}
+          strokeWidth="1.2"
+          filter={isHighlighted(["legs"]) ? "url(#neonGlowBack)" : ""}
+          style={{ transition: "all 0.3s" }}
+        />
+        <path d="M 62,125 L 76,125 L 78,190 L 64,190 Z"
+          fill={isHighlighted(["legs"]) ? activeColor : inactiveColor}
+          stroke={isHighlighted(["legs"]) ? activeColor : strokeColor}
+          strokeWidth="1.2"
+          filter={isHighlighted(["legs"]) ? "url(#neonGlowBack)" : ""}
+          style={{ transition: "all 0.3s" }}
+        />
+
+        {/* Calves */}
+        <path d="M 44,195 L 54,195 L 52,225 L 44,225 Z"
+          fill={isHighlighted(["legs"]) ? activeColor : inactiveColor}
+          stroke={isHighlighted(["legs"]) ? activeColor : strokeColor}
+          strokeWidth="1.2"
+          filter={isHighlighted(["legs"]) ? "url(#neonGlowBack)" : ""}
+          style={{ transition: "all 0.3s" }}
+        />
+        <path d="M 66,195 L 76,195 L 76,225 L 68,225 Z"
+          fill={isHighlighted(["legs"]) ? activeColor : inactiveColor}
+          stroke={isHighlighted(["legs"]) ? activeColor : strokeColor}
+          strokeWidth="1.2"
+          filter={isHighlighted(["legs"]) ? "url(#neonGlowBack)" : ""}
+          style={{ transition: "all 0.3s" }}
+        />
+      </svg>
+    );
+  }
 };
 
 // ─── Weekly Volume Bar Chart ─────────────────────────────────────────────────
@@ -641,36 +778,80 @@ const TrainingPlanner = ({ patientId, isAdminMode = false }) => {
             </div>
           )}
 
-          {/* ─── Exercise List ───────────────────────────────── */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-            {exercises.length === 0 ? (
-              <div className="glass-card" style={{ textAlign: "center", padding: "40px", color: "var(--text-muted)" }}>
-                <span style={{ fontSize: "2rem", display: "block", marginBottom: "12px" }}>🏋️</span>
-                {isAdminMode
-                  ? "No hay ejercicios en este día. Usa el botón '+' para añadir."
-                  : "No hay ejercicios programados para hoy. Tu entrenador los configurará pronto."}
+          {/* ─── Main Grid: Muscle Map & Exercises ────────────────── */}
+          <div className="training-grid-layout" style={{ display: "grid", gridTemplateColumns: "1fr 1.5fr", gap: "20px" }}>
+            
+            {/* Left side: High-tech Muscle Map & Volume Progress */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+              
+              <div className="glass-card" style={{ display: "flex", flexDirection: "column", gap: "16px", alignItems: "center" }}>
+                <h4 className="glow-text" style={{ fontSize: "1.15rem", margin: 0, alignSelf: "flex-start" }}>
+                  Mapa Muscular Activo
+                </h4>
+                <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "-8px", alignSelf: "flex-start" }}>
+                  Músculos objetivo de la sesión seleccionada.
+                </p>
+                
+                <div style={{ display: "flex", gap: "20px", justifyContent: "center", alignItems: "center", width: "100%", padding: "10px 0" }}>
+                  {/* Front View */}
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                    <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginBottom: "6px" }}>Vista Frontal</span>
+                    <div style={{ background: "rgba(0,0,0,0.2)", padding: "12px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.05)" }}>
+                      <MuscleSilhouette highlight={selectedDay?.muscleGroup} view="front" />
+                    </div>
+                  </div>
+                  {/* Back View */}
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                    <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginBottom: "6px" }}>Vista Posterior</span>
+                    <div style={{ background: "rgba(0,0,0,0.2)", padding: "12px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.05)" }}>
+                      <MuscleSilhouette highlight={selectedDay?.muscleGroup} view="back" />
+                    </div>
+                  </div>
+                </div>
               </div>
-            ) : (
-              exercises.map((ex) => {
-                const log = exerciseLogs.find((l) => l.exerciseId === ex.id && l.date === today);
-                return (
-                  <ExerciseCard
-                    key={ex.id}
-                    exercise={ex}
-                    log={log}
-                    isAdminMode={isAdminMode}
-                    onToggle={() => handleToggleExercise(ex.id)}
-                    onUpdateLog={(weight) => handleUpdateLogWeight(ex.id, weight)}
-                  />
-                );
-              })
-            )}
+
+              <div className="glass-card">
+                <VolumeBarChart logs={exerciseLogs} />
+              </div>
+            </div>
+
+            {/* Right side: Exercises list */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              <h4 className="glow-text" style={{ fontSize: "1.15rem", margin: "0 0 4px 0" }}>Ejercicios Programados</h4>
+              
+              {exercises.length === 0 ? (
+                <div className="glass-card" style={{ textAlign: "center", padding: "40px", color: "var(--text-muted)" }}>
+                  <span style={{ fontSize: "2rem", display: "block", marginBottom: "12px" }}>🏋️</span>
+                  {isAdminMode
+                    ? "No hay ejercicios en este día. Usa el botón '+' para añadir."
+                    : "No hay ejercicios programados para este día de entrenamiento."}
+                </div>
+              ) : (
+                exercises.map((ex) => {
+                  const log = exerciseLogs.find((l) => l.exerciseId === ex.id && l.date === today);
+                  return (
+                    <ExerciseCard
+                      key={ex.id}
+                      exercise={ex}
+                      log={log}
+                      isAdminMode={isAdminMode}
+                      onToggle={() => handleToggleExercise(ex.id)}
+                      onUpdateLog={(weight) => handleUpdateLogWeight(ex.id, weight)}
+                    />
+                  );
+                })
+              )}
+            </div>
+
           </div>
 
-          {/* ─── Volume Chart ────────────────────────────────── */}
-          <div className="glass-card">
-            <VolumeBarChart logs={exerciseLogs} />
-          </div>
+          <style>{`
+            @media (max-width: 768px) {
+              .training-grid-layout {
+                grid-template-columns: 1fr !important;
+              }
+            }
+          `}</style>
         </>
       )}
 
