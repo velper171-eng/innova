@@ -1062,7 +1062,7 @@ app.post("/api/patients/:id/training-plans", async (req, res) => {
           name: ex.name,
           sets: ex.sets || 3,
           reps: String(ex.reps || "8-12"),
-          weight: ex.weight !== undefined && ex.weight !== null ? parseFloat(ex.weight) : null,
+          weight: (ex.weight !== undefined && ex.weight !== null && !isNaN(parseFloat(ex.weight))) ? parseFloat(ex.weight) : null,
           muscleGroup: ex.muscleGroup || day.muscleGroup,
           order: idx
         }))

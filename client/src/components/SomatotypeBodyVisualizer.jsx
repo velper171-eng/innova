@@ -614,7 +614,6 @@ const SomatotypeBodyVisualizer = ({ evaluations = [], activeTab = "anthropometry
                 stroke="rgba(35, 127, 148, 0.08)"
                 strokeDasharray="3,3"
                 strokeWidth="1"
-                mask="url(#bodyMask)"
               />
             );
           })}
@@ -630,7 +629,6 @@ const SomatotypeBodyVisualizer = ({ evaluations = [], activeTab = "anthropometry
               stroke="rgba(35, 127, 148, 0.08)"
               strokeDasharray="3,3"
               strokeWidth="1"
-              mask="url(#bodyMask)"
             />
           ))}
 
@@ -780,7 +778,6 @@ const SomatotypeBodyVisualizer = ({ evaluations = [], activeTab = "anthropometry
             strokeWidth="1.5"
             strokeDasharray="4,4"
             opacity="0.4"
-            mask="url(#bodyMask)"
           />
 
           {/* 2. Selected Percentage Trend (solid line with area fill) */}
@@ -788,7 +785,6 @@ const SomatotypeBodyVisualizer = ({ evaluations = [], activeTab = "anthropometry
             d={rightAreaPath}
             fill="url(#rightAreaFillGrad)"
             opacity="1.0"
-            mask="url(#bodyMask)"
           />
           <path
             d={rightLinePath}
@@ -796,13 +792,12 @@ const SomatotypeBodyVisualizer = ({ evaluations = [], activeTab = "anthropometry
             stroke={selectedMetric === "fat" ? "#e07a5f" : "#10b981"}
             strokeWidth="3.5"
             opacity="0.95"
-            mask="url(#bodyMask)"
             style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.05))" }}
           />
 
-          {/* Interactive Chart Nodes & Tooltips (masked in center) */}
+          {/* Interactive Chart Nodes & Tooltips */}
           {rightCoords.map((c, idx) => (
-            <g key={`r-node-${idx}`} mask="url(#bodyMask)">
+            <g key={`r-node-${idx}`}>
               <circle cx={c.x} cy={c.y} r="5" fill={selectedMetric === "fat" ? "#e07a5f" : "#10b981"} stroke="#ffffff" strokeWidth="2.5" />
               <circle cx={c.x} cy={c.y} r="10" fill={selectedMetric === "fat" ? "#e07a5f" : "#10b981"} fillOpacity="0.15" />
               <rect

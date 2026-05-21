@@ -423,6 +423,8 @@ const TrainingPlanner = ({ patientId, isAdminMode = false }) => {
   const [loading, setLoading] = useState(false);
   const [showNewPlan, setShowNewPlan] = useState(false);
   const [showAddExercise, setShowAddExercise] = useState(false);
+  const [creatingPlan, setCreatingPlan] = useState(false);
+  const [planError, setPlanError] = useState("");
 
   // Form states
   const [newPlanName, setNewPlanName] = useState("");
@@ -489,6 +491,8 @@ const TrainingPlanner = ({ patientId, isAdminMode = false }) => {
   const handleCreatePlan = async () => {
     if (!newPlanName.trim()) return;
     try {
+      setCreatingPlan(true);
+      setPlanError("");
       const res = await fetch(`${API_BASE}/patients/${patientId}/training-plans`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -502,9 +506,15 @@ const TrainingPlanner = ({ patientId, isAdminMode = false }) => {
         setNewPlanName("");
         setShowNewPlan(false);
         fetchPlans();
+      } else {
+        const errorData = await res.json();
+        setPlanError(errorData.error || "Error al crear el plan");
       }
     } catch (err) {
       console.error("Error creating plan:", err);
+      setPlanError("Error de conexión al servidor");
+    } finally {
+      setCreatingPlan(false);
     }
   };
 
@@ -697,9 +707,16 @@ const TrainingPlanner = ({ patientId, isAdminMode = false }) => {
               </select>
             </div>
           </div>
+          {planError && (
+            <div style={{ color: "#f43f5e", fontSize: "0.85rem", background: "rgba(244,63,94,0.08)", border: "1px solid rgba(244,63,94,0.2)", borderRadius: "8px", padding: "8px 12px" }}>
+              ⚠️ {planError}
+            </div>
+          )}
           <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
-            <button className="btn btn-secondary" onClick={() => setShowNewPlan(false)}>Cancelar</button>
-            <button className="btn btn-primary" onClick={handleCreatePlan}>Crear Plan</button>
+            <button className="btn btn-secondary" onClick={() => setShowNewPlan(false)} disabled={creatingPlan}>Cancelar</button>
+            <button className="btn btn-primary" onClick={handleCreatePlan} disabled={creatingPlan}>
+              {creatingPlan ? "⏳ Generando plan..." : "Crear Plan con IA"}
+            </button>
           </div>
         </div>
       )}
