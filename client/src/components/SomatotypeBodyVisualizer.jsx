@@ -139,69 +139,57 @@ const SomatotypeBodyVisualizer = ({ evaluations = [], activeTab = "anthropometry
 
   // Muscular Body Silhouette path
   const bodySilhouettePath = `
-    M 250,94 
-    C 244,94 238,102 238,110 
-    C 238,122 228,128 218,132 
-    C 204,138 194,152 188,172 
-    C 182,192 176,218 170,248 
-    C 167,262 164,272 161,280 
-    C 159,285 156,289 158,292 
-    C 160,295 166,294 170,290 
-    C 176,284 180,270 182,254 
-    C 185,234 189,204 196,184 
-    C 198,178 201,182 201,188 
-    C 203,202 204,226 201,248 
-    C 198,266 194,281 190,294 
-    C 187,300 185,304 187,307 
-    C 189,309 193,304 196,298 
-    C 201,288 206,274 210,258 
-    C 218,224 224,186 228,158 
-    C 228,156 229,156 229,158 
-    C 230,181 232,211 228,238 
-    C 225,256 220,271 218,286 
-    C 215,298 215,310 220,310 
-    C 224,310 226,302 228,292 
-    C 232,278 236,258 238,238 
-    C 240,256 240,278 238,301 
-    C 235,331 231,354 234,384 
-    C 236,406 233,434 236,456 
-    C 237,466 232,476 232,481 
-    C 232,484 237,486 243,486 
-    C 250,486 252,480 252,472 
-    C 252,456 251,436 252,416 
-    C 253,394 253,371 254,348 
-    C 255,326 257,308 260,296 
-    C 263,308 265,326 266,348 
-    C 267,371 267,394 268,416 
-    C 269,436 268,456 268,472 
-    C 268,480 270,486 277,486 
-    C 283,486 288,484 288,481 
-    C 288,476 283,476 284,456 
-    C 287,434 284,406 286,384 
-    C 289,354 285,331 282,301 
-    C 280,278 280,256 282,238 
-    C 284,258 288,278 292,292 
-    C 294,302 296,310 300,310 
-    C 305,310 305,298 302,286 
-    C 300,271 295,256 292,238 
-    C 288,211 290,181 291,158 
-    C 291,156 292,156 292,158 
-    C 296,186 302,224 310,258 
-    C 314,274 319,288 324,298 
-    C 327,304 331,309 333,307 
-    C 335,304 333,300 330,294 
-    C 326,281 322,266 319,248 
-    C 316,226 317,202 319,188 
-    C 319,182 322,178 324,184 
-    C 331,204 335,234 338,254 
-    C 340,270 344,284 350,290 
-    C 354,294 360,295 362,292 
-    C 364,289 361,285 359,280 
-    C 356,272 353,262 350,248 
-    C 344,218 338,192 332,172 
-    C 326,152 316,138 302,132 
-    C 292,128 282,122 282,110 
-    C 282,102 276,94 270,94 
+    M 250,64
+    C 243,64 236,68 236,78
+    C 236,88 234,88 234,92
+    C 234,96 238,98 241,102
+    C 241,108 236,114 228,122
+    C 220,126 214,128 206,132
+    C 198,136 198,146 200,160
+    C 202,170 196,182 191,196
+    C 186,210 180,228 177,246
+    C 174,258 172,266 174,272
+    C 176,276 182,274 184,268
+    C 188,256 192,238 198,218
+    C 202,204 204,196 206,188
+    C 208,206 211,228 214,248
+    C 217,262 216,274 218,284
+    C 220,290 224,290 226,284
+    C 228,274 228,260 228,248
+    C 228,256 226,278 224,302
+    C 220,332 216,364 218,394
+    C 220,412 216,442 222,468
+    C 224,474 220,480 220,483
+    C 220,486 226,488 234,488
+    C 242,488 244,484 244,476
+    C 244,460 243,438 244,416
+    C 245,394 246,370 248,348
+    C 249,326 250,308 250,296
+    C 250,308 251,326 252,348
+    C 254,370 255,394 256,416
+    C 256,438 256,460 256,476
+    C 256,484 258,488 266,488
+    C 274,488 280,486 280,483
+    C 280,480 276,474 278,468
+    C 284,412 280,442 282,394
+    C 284,364 280,332 276,302
+    C 274,278 272,256 272,248
+    C 272,260 272,274 274,284
+    C 276,290 280,290 282,284
+    C 284,274 283,262 286,248
+    C 289,228 292,206 294,188
+    C 296,196 298,204 302,218
+    C 308,238 312,256 316,268
+    C 318,274 324,276 326,272
+    C 328,266 326,258 323,246
+    C 320,228 314,210 309,196
+    C 304,182 298,170 300,160
+    C 302,146 302,136 294,132
+    C 286,128 280,126 272,122
+    C 264,114 259,108 259,102
+    C 262,98 266,96 266,92
+    C 266,88 264,88 264,78
+    C 264,68 257,64 250,64
     Z
   `;
 
@@ -352,6 +340,206 @@ const SomatotypeBodyVisualizer = ({ evaluations = [], activeTab = "anthropometry
               <stop offset="0%" stopColor="#688089" stopOpacity="0.45" />
               <stop offset="100%" stopColor="#688089" stopOpacity="0.0" />
             </linearGradient>
+
+            {/* Head/Face Radial Gradient */}
+            <radialGradient id="headGrad" cx="250" cy="70" r="18" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#e6fdff" />
+              <stop offset="45%" stopColor="#37d5f2" />
+              <stop offset="85%" stopColor="#175b6d" />
+              <stop offset="100%" stopColor="#061d24" />
+            </radialGradient>
+
+            {/* Left Pectoral Radial Gradient */}
+            <radialGradient id="pecGradLeft" cx="236" cy="158" r="26" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#e6fdff" />
+              <stop offset="45%" stopColor="#37d5f2" />
+              <stop offset="85%" stopColor="#175b6d" />
+              <stop offset="100%" stopColor="#061d24" />
+            </radialGradient>
+
+            {/* Right Pectoral Radial Gradient */}
+            <radialGradient id="pecGradRight" cx="264" cy="158" r="26" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#e6fdff" />
+              <stop offset="45%" stopColor="#37d5f2" />
+              <stop offset="85%" stopColor="#175b6d" />
+              <stop offset="100%" stopColor="#061d24" />
+            </radialGradient>
+
+            {/* Left Deltoid Radial Gradient */}
+            <radialGradient id="deltoidGradLeft" cx="208" cy="145" r="20" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#e6fdff" />
+              <stop offset="50%" stopColor="#37d5f2" />
+              <stop offset="85%" stopColor="#175b6d" />
+              <stop offset="100%" stopColor="#061d24" />
+            </radialGradient>
+
+            {/* Right Deltoid Radial Gradient */}
+            <radialGradient id="deltoidGradRight" cx="292" cy="145" r="20" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#e6fdff" />
+              <stop offset="50%" stopColor="#37d5f2" />
+              <stop offset="85%" stopColor="#175b6d" />
+              <stop offset="100%" stopColor="#061d24" />
+            </radialGradient>
+
+            {/* Left Bicep Radial Gradient */}
+            <radialGradient id="bicepGradLeft" cx="207" cy="190" r="14" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#e6fdff" />
+              <stop offset="50%" stopColor="#37d5f2" />
+              <stop offset="85%" stopColor="#175b6d" />
+              <stop offset="100%" stopColor="#061d24" />
+            </radialGradient>
+
+            {/* Right Bicep Radial Gradient */}
+            <radialGradient id="bicepGradRight" cx="293" cy="190" r="14" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#e6fdff" />
+              <stop offset="50%" stopColor="#37d5f2" />
+              <stop offset="85%" stopColor="#175b6d" />
+              <stop offset="100%" stopColor="#061d24" />
+            </radialGradient>
+
+            {/* Left Tricep Radial Gradient */}
+            <radialGradient id="tricepGradLeft" cx="196" cy="184" r="12" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#e6fdff" />
+              <stop offset="50%" stopColor="#37d5f2" />
+              <stop offset="85%" stopColor="#175b6d" />
+              <stop offset="100%" stopColor="#061d24" />
+            </radialGradient>
+
+            {/* Right Tricep Radial Gradient */}
+            <radialGradient id="tricepGradRight" cx="304" cy="184" r="12" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#e6fdff" />
+              <stop offset="50%" stopColor="#37d5f2" />
+              <stop offset="85%" stopColor="#175b6d" />
+              <stop offset="100%" stopColor="#061d24" />
+            </radialGradient>
+
+            {/* Left Forearm Radial Gradient */}
+            <radialGradient id="forearmGradLeft" cx="200" cy="244" r="18" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#e6fdff" />
+              <stop offset="50%" stopColor="#37d5f2" />
+              <stop offset="85%" stopColor="#175b6d" />
+              <stop offset="100%" stopColor="#061d24" />
+            </radialGradient>
+
+            {/* Right Forearm Radial Gradient */}
+            <radialGradient id="forearmGradRight" cx="300" cy="244" r="18" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#e6fdff" />
+              <stop offset="50%" stopColor="#37d5f2" />
+              <stop offset="85%" stopColor="#175b6d" />
+              <stop offset="100%" stopColor="#061d24" />
+            </radialGradient>
+
+            {/* Abdominals Radial Gradient */}
+            <radialGradient id="abGrad" cx="50%" cy="40%" r="60%">
+              <stop offset="0%" stopColor="#e6fdff" />
+              <stop offset="50%" stopColor="#37d5f2" />
+              <stop offset="85%" stopColor="#175b6d" />
+              <stop offset="100%" stopColor="#061d24" />
+            </radialGradient>
+
+            {/* Left Oblique Radial Gradient */}
+            <radialGradient id="obliqueGradLeft" cx="232" cy="262" r="15" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#e6fdff" />
+              <stop offset="50%" stopColor="#37d5f2" />
+              <stop offset="85%" stopColor="#175b6d" />
+              <stop offset="100%" stopColor="#061d24" />
+            </radialGradient>
+
+            {/* Right Oblique Radial Gradient */}
+            <radialGradient id="obliqueGradRight" cx="268" cy="262" r="15" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#e6fdff" />
+              <stop offset="50%" stopColor="#37d5f2" />
+              <stop offset="85%" stopColor="#175b6d" />
+              <stop offset="100%" stopColor="#061d24" />
+            </radialGradient>
+
+            {/* Left Thigh (Center Quad) Radial Gradient */}
+            <radialGradient id="quadCenterGradLeft" cx="225" cy="322" r="20" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#e6fdff" />
+              <stop offset="50%" stopColor="#37d5f2" />
+              <stop offset="85%" stopColor="#175b6d" />
+              <stop offset="100%" stopColor="#061d24" />
+            </radialGradient>
+
+            {/* Right Thigh (Center Quad) Radial Gradient */}
+            <radialGradient id="quadCenterGradRight" cx="275" cy="322" r="20" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#e6fdff" />
+              <stop offset="50%" stopColor="#37d5f2" />
+              <stop offset="85%" stopColor="#175b6d" />
+              <stop offset="100%" stopColor="#061d24" />
+            </radialGradient>
+
+            {/* Left Thigh (Outer Quad) Radial Gradient */}
+            <radialGradient id="quadOuterGradLeft" cx="217" cy="325" r="16" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#e6fdff" />
+              <stop offset="50%" stopColor="#37d5f2" />
+              <stop offset="85%" stopColor="#175b6d" />
+              <stop offset="100%" stopColor="#061d24" />
+            </radialGradient>
+
+            {/* Right Thigh (Outer Quad) Radial Gradient */}
+            <radialGradient id="quadOuterGradRight" cx="283" cy="325" r="16" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#e6fdff" />
+              <stop offset="50%" stopColor="#37d5f2" />
+              <stop offset="85%" stopColor="#175b6d" />
+              <stop offset="100%" stopColor="#061d24" />
+            </radialGradient>
+
+            {/* Left Thigh (Teardrop Quad) Radial Gradient */}
+            <radialGradient id="teardropGradLeft" cx="234" cy="342" r="12" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#e6fdff" />
+              <stop offset="50%" stopColor="#37d5f2" />
+              <stop offset="85%" stopColor="#175b6d" />
+              <stop offset="100%" stopColor="#061d24" />
+            </radialGradient>
+
+            {/* Right Thigh (Teardrop Quad) Radial Gradient */}
+            <radialGradient id="teardropGradRight" cx="266" cy="342" r="12" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#e6fdff" />
+              <stop offset="50%" stopColor="#37d5f2" />
+              <stop offset="85%" stopColor="#175b6d" />
+              <stop offset="100%" stopColor="#061d24" />
+            </radialGradient>
+
+            {/* Kneecaps Radial Gradient */}
+            <radialGradient id="patellaGrad" cx="50%" cy="40%" r="50%">
+              <stop offset="0%" stopColor="#e6fdff" />
+              <stop offset="50%" stopColor="#37d5f2" />
+              <stop offset="85%" stopColor="#175b6d" />
+              <stop offset="100%" stopColor="#061d24" />
+            </radialGradient>
+
+            {/* Calves Outer Left Radial Gradient */}
+            <radialGradient id="calfOuterGradLeft" cx="220" cy="408" r="12" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#e6fdff" />
+              <stop offset="50%" stopColor="#37d5f2" />
+              <stop offset="85%" stopColor="#175b6d" />
+              <stop offset="100%" stopColor="#061d24" />
+            </radialGradient>
+
+            {/* Calves Outer Right Radial Gradient */}
+            <radialGradient id="calfOuterGradRight" cx="280" cy="408" r="12" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#e6fdff" />
+              <stop offset="50%" stopColor="#37d5f2" />
+              <stop offset="85%" stopColor="#175b6d" />
+              <stop offset="100%" stopColor="#061d24" />
+            </radialGradient>
+
+            {/* Calves Inner Left Radial Gradient */}
+            <radialGradient id="calfInnerGradLeft" cx="232" cy="408" r="12" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#e6fdff" />
+              <stop offset="50%" stopColor="#37d5f2" />
+              <stop offset="85%" stopColor="#175b6d" />
+              <stop offset="100%" stopColor="#061d24" />
+            </radialGradient>
+
+            {/* Calves Inner Right Radial Gradient */}
+            <radialGradient id="calfInnerGradRight" cx="268" cy="408" r="12" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#e6fdff" />
+              <stop offset="50%" stopColor="#37d5f2" />
+              <stop offset="85%" stopColor="#175b6d" />
+              <stop offset="100%" stopColor="#061d24" />
+            </radialGradient>
           </defs>
 
           {/* Grid Background */}
@@ -623,58 +811,122 @@ const SomatotypeBodyVisualizer = ({ evaluations = [], activeTab = "anthropometry
               strokeLinejoin="round"
             />
 
-            {/* Muscular Head Globe */}
-            <ellipse cx="250" cy="74" rx="14" ry="19" fill="url(#bodyChromeGrad)" stroke="#31bed8" strokeWidth="1.5" />
-            <path d="M 242,75 C 245,77 248,77 250,77 C 252,77 255,77 258,75" fill="none" stroke="#a5f3fc" strokeWidth="1" opacity="0.6" />
+            {/* Muscular Head Globe (3D Shaded) */}
+            <g>
+              <ellipse cx="250" cy="74" rx="14" ry="19" fill="url(#headGrad)" stroke="#31bed8" strokeWidth="1.5" />
+              {/* Ear details */}
+              <ellipse cx="235" cy="74" rx="2" ry="5.5" fill="#175b6d" stroke="#31bed8" strokeWidth="0.8" />
+              <ellipse cx="265" cy="74" rx="2" ry="5.5" fill="#175b6d" stroke="#31bed8" strokeWidth="0.8" />
+              {/* Jawline definition */}
+              <path d="M 238,78 C 240,88 245,90 250,90 C 255,90 260,88 262,78" fill="none" stroke="#a5f3fc" strokeWidth="1" opacity="0.6" />
+              {/* Neck contours */}
+              <path d="M 243,90 L 241,114" stroke="#31bed8" strokeWidth="1" opacity="0.6" />
+              <path d="M 257,90 L 259,114" stroke="#31bed8" strokeWidth="1" opacity="0.6" />
+            </g>
 
-            {/* Muscle definition contour overlays (Neon/cyan lighting) */}
-            <g stroke="#a5f3fc" strokeWidth="1.1" fill="none" opacity="0.75" strokeLinecap="round">
-              {/* Deltoids (Shoulders) */}
-              <path d="M 218,132 C 212,142 208,158 212,168" />
-              <path d="M 282,132 C 288,142 292,158 288,168" />
+            {/* 3D Volumetric Muscle Overlays */}
+            <g strokeLinecap="round" strokeLinejoin="round">
+              {/* 1. Trapezius */}
+              <path d="M 236,94 C 232,106 226,118 218,122 L 228,122 C 234,116 238,106 238,94 Z" fill="url(#deltoidGradLeft)" stroke="#31bed8" strokeWidth="0.8" />
+              <path d="M 264,94 C 268,106 274,118 282,122 L 272,122 C 266,116 262,106 262,94 Z" fill="url(#deltoidGradRight)" stroke="#31bed8" strokeWidth="0.8" />
 
-              {/* Pectorals (Chest) */}
-              <path d="M 218,158 C 225,172 238,176 250,176 C 262,176 275,172 282,158" strokeWidth="1.3" />
-              <path d="M 250,148 L 250,176" strokeWidth="1.3" />
-              <path d="M 219,148 C 230,150 242,150 250,148 C 258,150 270,150 281,148" opacity="0.5" />
+              {/* 2. Deltoids (Shoulders) */}
+              <path d="M 218,122 C 210,126 200,136 200,148 C 200,160 208,166 215,166 C 218,154 220,136 218,122 Z" fill="url(#deltoidGradLeft)" stroke="#31bed8" strokeWidth="1" />
+              <path d="M 282,122 C 290,126 300,136 300,148 C 300,160 292,166 285,166 C 282,154 280,136 282,122 Z" fill="url(#deltoidGradRight)" stroke="#31bed8" strokeWidth="1" />
 
-              {/* Abdominals (Six-pack grid & line alba) */}
-              <path d="M 250,176 L 250,277" strokeWidth="1.3" />
-              <path d="M 235,195 C 245,197 255,197 265,195" />
-              <path d="M 233,218 C 245,220 255,220 267,218" />
-              <path d="M 233,242 C 245,244 255,244 267,242" />
-              <path d="M 235,176 C 232,205 233,240 235,260" opacity="0.4" />
-              <path d="M 265,176 C 268,205 267,240 265,260" opacity="0.4" />
+              {/* 3. Pectorals (Chest Plates) */}
+              <path d="M 250,136 L 222,142 C 216,145 214,166 218,176 C 228,180 246,180 250,176 Z" fill="url(#pecGradLeft)" stroke="#31bed8" strokeWidth="1.2" />
+              <path d="M 250,136 L 278,142 C 284,145 286,166 282,176 C 272,180 254,180 250,176 Z" fill="url(#pecGradRight)" stroke="#31bed8" strokeWidth="1.2" />
+              {/* Sternal division line */}
+              <line x1="250" y1="136" x2="250" y2="176" stroke="#061d24" strokeWidth="1.5" opacity="0.8" />
+              {/* Clavicle borders */}
+              <path d="M 218,124 C 230,132 242,132 250,130 C 258,132 270,132 282,124" fill="none" stroke="#31bed8" strokeWidth="1.2" opacity="0.6" />
 
-              {/* Serratus lateral ribs */}
-              <path d="M 215,185 L 225,190" opacity="0.4" />
-              <path d="M 213,195 L 223,200" opacity="0.4" />
-              <path d="M 285,185 L 275,190" opacity="0.4" />
-              <path d="M 287,195 L 277,200" opacity="0.4" />
+              {/* 4. Upper Arms (Biceps & Triceps) */}
+              {/* Left Bicep */}
+              <path d="M 212,166 C 206,176 202,188 202,202 C 202,212 208,216 212,214 C 214,202 214,182 212,166 Z" fill="url(#bicepGradLeft)" stroke="#31bed8" strokeWidth="0.8" />
+              {/* Right Bicep */}
+              <path d="M 288,166 C 294,176 298,188 298,202 C 298,212 292,216 288,214 C 286,202 286,182 288,166 Z" fill="url(#bicepGradRight)" stroke="#31bed8" strokeWidth="0.8" />
+              {/* Left Tricep (outer sweep) */}
+              <path d="M 200,154 C 196,168 194,184 193,200 C 193,212 199,214 202,204 C 201,190 200,168 200,154 Z" fill="url(#tricepGradLeft)" stroke="#31bed8" strokeWidth="0.8" />
+              {/* Right Tricep (outer sweep) */}
+              <path d="M 300,154 C 304,168 306,184 307,200 C 307,212 301,214 298,204 C 299,190 300,168 300,154 Z" fill="url(#tricepGradRight)" stroke="#31bed8" strokeWidth="0.8" />
 
-              {/* Obliques / V-Cut Hips */}
-              <path d="M 218,248 C 228,262 242,274 250,277" strokeWidth="1.3" />
-              <path d="M 282,248 C 272,262 258,274 250,277" strokeWidth="1.3" />
+              {/* 5. Forearms (Muscular Bulge) */}
+              <path d="M 212,214 C 208,226 198,246 191,264 C 187,272 189,274 192,274 C 198,274 209,248 212,214 Z" fill="url(#forearmGradLeft)" stroke="#31bed8" strokeWidth="0.8" />
+              <path d="M 288,214 C 292,226 302,246 309,264 C 313,272 311,274 308,274 C 302,274 291,248 288,214 Z" fill="url(#forearmGradRight)" stroke="#31bed8" strokeWidth="0.8" />
 
-              {/* Arms (Biceps & Forearms contours) */}
-              <path d="M 201,188 C 196,202 191,216 189,226" opacity="0.5" />
-              <path d="M 299,188 C 304,202 309,216 311,226" opacity="0.5" />
-              <path d="M 190,240 C 185,255 180,268 178,278" opacity="0.5" />
-              <path d="M 310,240 C 315,255 320,268 322,278" opacity="0.5" />
+              {/* 6. Hands */}
+              <path d="M 188,274 C 185,280 180,288 178,296 C 180,296 184,288 192,274 Z" fill="url(#forearmGradLeft)" stroke="#31bed8" strokeWidth="0.8" />
+              <path d="M 312,274 C 315,280 320,288 322,296 C 320,296 316,288 308,274 Z" fill="url(#forearmGradRight)" stroke="#31bed8" strokeWidth="0.8" />
 
-              {/* Thighs (Quadriceps structure) */}
-              <path d="M 228,292 C 234,320 238,340 240,358" opacity="0.5" />
-              <path d="M 272,292 C 266,320 262,340 260,358" opacity="0.5" />
-              <path d="M 224,310 C 228,332 232,352 238,358" opacity="0.5" />
-              <path d="M 276,310 C 272,332 268,352 262,358" opacity="0.5" />
+              {/* 7. Abdominals (Individually Sculpted Blocks) */}
+              <rect x="235" y="184" width="13" height="15" rx="3" fill="url(#abGrad)" stroke="#061d24" strokeWidth="0.6" />
+              <rect x="252" y="184" width="13" height="15" rx="3" fill="url(#abGrad)" stroke="#061d24" strokeWidth="0.6" />
 
-              {/* Kneecaps (Patella) */}
-              <ellipse cx="230" cy="370" rx="4" ry="6" opacity="0.6" />
-              <ellipse cx="270" cy="370" rx="4" ry="6" opacity="0.6" />
+              <rect x="233" y="202" width="15" height="17" rx="3" fill="url(#abGrad)" stroke="#061d24" strokeWidth="0.6" />
+              <rect x="252" y="202" width="15" height="17" rx="3" fill="url(#abGrad)" stroke="#061d24" strokeWidth="0.6" />
 
-              {/* Calves / Shin bone contours */}
-              <path d="M 226,384 C 223,405 220,425 226,445" opacity="0.5" />
-              <path d="M 274,384 C 277,405 280,425 274,445" opacity="0.5" />
+              <rect x="233" y="222" width="15" height="17" rx="3" fill="url(#abGrad)" stroke="#061d24" strokeWidth="0.6" />
+              <rect x="252" y="222" width="15" height="17" rx="3" fill="url(#abGrad)" stroke="#061d24" strokeWidth="0.6" />
+
+              <rect x="235" y="242" width="13" height="18" rx="3" fill="url(#abGrad)" stroke="#061d24" strokeWidth="0.6" />
+              <rect x="252" y="242" width="13" height="18" rx="3" fill="url(#abGrad)" stroke="#061d24" strokeWidth="0.6" />
+
+              {/* Linea Alba (deep vertical line) */}
+              <line x1="250" y1="180" x2="250" y2="265" stroke="#061d24" strokeWidth="1.5" opacity="0.8" />
+
+              {/* Ribs / Serratus Anterior Details */}
+              <g stroke="#31bed8" strokeWidth="0.8" fill="none" opacity="0.5">
+                <path d="M 215,182 L 225,186" />
+                <path d="M 213,194 L 223,198" />
+                <path d="M 212,206 L 222,210" />
+
+                <path d="M 285,182 L 275,186" />
+                <path d="M 287,194 L 277,198" />
+                <path d="M 288,206 L 278,210" />
+              </g>
+
+              {/* 8. Obliques & Lower V-Cut (Inguinal Ligament) */}
+              <path d="M 218,248 C 228,260 242,272 250,275 L 250,277 C 241,274 227,262 218,248 Z" fill="url(#obliqueGradLeft)" stroke="#31bed8" strokeWidth="0.8" />
+              <path d="M 282,248 C 272,260 258,272 250,275 L 250,277 C 259,274 273,262 282,248 Z" fill="url(#obliqueGradRight)" stroke="#31bed8" strokeWidth="0.8" />
+
+              <path d="M 226,252 C 234,264 246,275 250,276" stroke="#a5f3fc" strokeWidth="1.5" fill="none" opacity="0.85" />
+              <path d="M 274,252 C 266,264 254,275 250,276" stroke="#a5f3fc" strokeWidth="1.5" fill="none" opacity="0.85" />
+
+              {/* 9. Thighs (Quadriceps - 3 heads per thigh) */}
+              {/* Rectus Femoris (Center) */}
+              <path d="M 224,290 C 226,310 228,332 230,356 C 227,356 221,332 220,310 Z" fill="url(#quadCenterGradLeft)" stroke="#31bed8" strokeWidth="0.8" />
+              <path d="M 276,290 C 274,310 272,332 270,356 C 273,356 279,332 280,310 Z" fill="url(#quadCenterGradRight)" stroke="#31bed8" strokeWidth="0.8" />
+
+              {/* Vastus Lateralis (Outer sweep) */}
+              <path d="M 220,290 C 212,312 214,338 222,360 C 224,338 224,312 220,290 Z" fill="url(#quadOuterGradLeft)" stroke="#31bed8" strokeWidth="0.8" />
+              <path d="M 280,290 C 288,312 286,338 278,360 C 276,338 276,312 280,290 Z" fill="url(#quadOuterGradRight)" stroke="#31bed8" strokeWidth="0.8" />
+
+              {/* Vastus Medialis (Teardrop muscle above knee) */}
+              <path d="M 230,312 C 235,328 239,342 239,352 C 237,358 231,358 228,348 Z" fill="url(#teardropGradLeft)" stroke="#31bed8" strokeWidth="0.8" />
+              <path d="M 270,312 C 265,328 261,342 261,352 C 263,358 269,358 272,348 Z" fill="url(#teardropGradRight)" stroke="#31bed8" strokeWidth="0.8" />
+
+              {/* 10. Kneecaps (Patella) */}
+              <ellipse cx="230" cy="368" rx="4.5" ry="6.5" fill="url(#patellaGrad)" stroke="#31bed8" strokeWidth="1" />
+              <ellipse cx="270" cy="368" rx="4.5" ry="6.5" fill="url(#patellaGrad)" stroke="#31bed8" strokeWidth="1" />
+
+              {/* 11. Calves & Lower Legs */}
+              {/* Outer Calf Gastrocnemius */}
+              <path d="M 224,378 C 217,394 217,416 222,438 C 224,438 225,408 224,378 Z" fill="url(#calfOuterGradLeft)" stroke="#31bed8" strokeWidth="0.8" />
+              <path d="M 276,378 C 283,394 283,416 278,438 C 276,438 275,408 276,378 Z" fill="url(#calfOuterGradRight)" stroke="#31bed8" strokeWidth="0.8" />
+
+              {/* Inner Calf Gastrocnemius */}
+              <path d="M 228,378 C 235,394 235,416 230,438 C 228,438 227,408 228,378 Z" fill="url(#calfInnerGradLeft)" stroke="#31bed8" strokeWidth="0.8" />
+              <path d="M 272,378 C 265,394 265,416 270,438 C 272,438 271,408 272,378 Z" fill="url(#calfInnerGradRight)" stroke="#31bed8" strokeWidth="0.8" />
+
+              {/* Shin Highlights */}
+              <path d="M 226,380 L 226,448" stroke="#a5f3fc" strokeWidth="1" opacity="0.3" />
+              <path d="M 274,380 L 274,448" stroke="#a5f3fc" strokeWidth="1" opacity="0.3" />
+
+              {/* 12. Feet */}
+              <path d="M 220,468 C 218,482 220,486 228,486 C 230,478 228,468 220,468 Z" fill="url(#forearmGradLeft)" stroke="#31bed8" strokeWidth="0.8" />
+              <path d="M 280,468 C 282,482 280,486 272,486 C 270,478 272,468 280,468 Z" fill="url(#forearmGradRight)" stroke="#31bed8" strokeWidth="0.8" />
             </g>
           </g>
 
