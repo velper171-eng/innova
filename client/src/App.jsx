@@ -13,23 +13,32 @@ import Login from "./components/Login";
 const API_BASE = "/api";
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return localStorage.getItem("innova_auth") === "true" || sessionStorage.getItem("innova_auth") === "true";
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem("innova_user") || sessionStorage.getItem("innova_user");
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
   });
 
-  const handleLoginSuccess = (rememberMe) => {
-    setIsAuthenticated(true);
-    if (rememberMe) {
-      localStorage.setItem("innova_auth", "true");
-    } else {
-      sessionStorage.setItem("innova_auth", "true");
-    }
+  const isAuthenticated = !!currentUser;
+
+  const handleLoginSuccess = (user, rememberMe) => {
+    setCurrentUser(user);
+    const storage = rememberMe ? localStorage : sessionStorage;
+    storage.setItem("innova_auth", "true");
+    storage.setItem("innova_user", JSON.stringify(user));
   };
 
   const handleLogout = () => {
-    setIsAuthenticated(false);
+    setCurrentUser(null);
     localStorage.removeItem("innova_auth");
+    localStorage.removeItem("innova_user");
     sessionStorage.removeItem("innova_auth");
+    sessionStorage.removeItem("innova_user");
+    setSelectedPatient(null);
+    setIsAthleteView(false);
   };
 
   const [patients, setPatients] = useState([]);
@@ -47,12 +56,15 @@ function App() {
   const [showHistory, setShowHistory] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  // Fetch all patients on mount when authenticated
   useEffect(() => {
-    if (isAuthenticated) {
-      fetchPatients();
+    if (isAuthenticated && currentUser) {
+      if (currentUser.role === "admin") {
+        fetchPatients();
+      } else {
+        fetchPatientDetail(currentUser.id);
+      }
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, currentUser]);
 
   const fetchPatients = async () => {
     try {
@@ -260,38 +272,40 @@ function App() {
       >
         <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
           {/* Toggle Sidebar Button */}
-          <button
-            type="button"
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            style={{
-              background: "none",
-              border: "none",
-              color: "var(--primary)",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              padding: "8px",
-              borderRadius: "8px",
-              transition: "all var(--transition-fast)",
-            }}
-            className="sidebar-toggle-btn"
-            title="Toggle Sidebar"
-          >
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+          {currentUser?.role === "admin" && (
+            <button
+              type="button"
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              style={{
+                background: "none",
+                border: "none",
+                color: "var(--primary)",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: "8px",
+                borderRadius: "8px",
+                transition: "all var(--transition-fast)",
+              }}
+              className="sidebar-toggle-btn"
+              title="Toggle Sidebar"
             >
-              <rect x="3" y="3" width="18" height="18" rx="2" />
-              <line x1="9" y1="3" x2="9" y2="21" />
-            </svg>
-          </button>
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+                <line x1="9" y1="3" x2="9" y2="21" />
+              </svg>
+            </button>
+          )}
 
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <div
@@ -313,7 +327,7 @@ function App() {
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
           <div style={{ fontSize: "0.9rem", color: "var(--text-muted)" }}>
-            Modo Administrador
+            {currentUser?.role === "admin" ? "Modo Administrador" : `Atleta: ${currentUser?.name}`}
           </div>
           <button
             onClick={handleLogout}
@@ -343,7 +357,7 @@ function App() {
       </header>
 
       {/* Drawer Backdrop */}
-      {isSidebarOpen && (
+      {currentUser?.role === "admin" && isSidebarOpen && (
         <div className="drawer-backdrop" onClick={() => setIsSidebarOpen(false)} />
       )}
 
@@ -351,7 +365,8 @@ function App() {
       <div className={`main-layout ${selectedPatient || isAddingPatient || isEditingPatient || isAddingEvaluation || isAddingCycle ? "has-active-content" : ""}`}>
         
         {/* Sidebar Drawer: Patient List & Search */}
-        <aside className={`sidebar-drawer ${isSidebarOpen ? "open" : ""}`}>
+        {currentUser?.role === "admin" && (
+          <aside className={`sidebar-drawer ${isSidebarOpen ? "open" : ""}`}>
           {/* Search bar & Add Button */}
           <div style={{ padding: "20px", borderBottom: "1px solid var(--border-color)", display: "flex", flexDirection: "column", gap: "12px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -498,11 +513,12 @@ function App() {
             </div>
           )}
         </aside>
+      )}
 
         {/* Content Area */}
         <main className="content-panel">
           {/* Mobile Back Button */}
-          {(selectedPatient || isAddingPatient || isEditingPatient || isAddingEvaluation || isAddingCycle) && (
+          {currentUser?.role === "admin" && (selectedPatient || isAddingPatient || isEditingPatient || isAddingEvaluation || isAddingCycle) && (
             <button
               className="btn btn-secondary mobile-back-btn"
               onClick={() => {
@@ -589,9 +605,11 @@ function App() {
                   <button className="btn btn-secondary" onClick={() => setIsEditingPatient(true)}>
                     Editar Perfil
                   </button>
-                  <button className="btn btn-danger" onClick={() => handleDeletePatient(selectedPatient.id)}>
-                    Eliminar Paciente
-                  </button>
+                  {currentUser?.role === "admin" && (
+                    <button className="btn btn-danger" onClick={() => handleDeletePatient(selectedPatient.id)}>
+                      Eliminar Paciente
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -823,7 +841,7 @@ function App() {
 
               {/* Sub-section 3: Training Plan */}
               {activeTab === "training" && (
-                <TrainingPlanner patientId={selectedPatient.id} isAdminMode={true} />
+                <TrainingPlanner patientId={selectedPatient.id} isAdminMode={currentUser?.role === "admin"} />
               )}
 
               {/* Sub-section 4: Posture Biomechanics */}
@@ -833,14 +851,22 @@ function App() {
 
               {/* Sub-section 5: Nutrition Control */}
               {activeTab === "nutrition" && (
-                <CalorieCounter patientId={selectedPatient.id} isAdminMode={true} />
+                <CalorieCounter patientId={selectedPatient.id} isAdminMode={currentUser?.role === "admin"} />
               )}
 
             </div>
           )}
 
+          {/* Patient loading view */}
+          {currentUser?.role !== "admin" && !selectedPatient && (
+            <div className="glass-card" style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "50vh", color: "var(--text-muted)", fontSize: "1.1rem" }}>
+              <div style={{ width: "20px", height: "20px", border: "3px solid rgba(0, 128, 128, 0.2)", borderTopColor: "var(--primary)", borderRadius: "50%", animation: "spin 0.8s linear infinite", marginRight: "10px" }}></div>
+              Cargando tu perfil de atleta...
+            </div>
+          )}
+
           {/* 6. Welcome Dashboard (When no patient is selected) */}
-          {!isAddingPatient && !isEditingPatient && !isAddingEvaluation && !isAddingCycle && !selectedPatient && (
+          {currentUser?.role === "admin" && !isAddingPatient && !isEditingPatient && !isAddingEvaluation && !isAddingCycle && !selectedPatient && (
             <div className="glass-card animate-fade-in" style={{ display: "flex", flexDirection: "column", gap: "24px", padding: "40px" }}>
               <div style={{ maxWidth: "600px" }}>
                 <h2 className="glow-text" style={{ fontSize: "2.5rem", marginBottom: "12px" }}>
@@ -869,7 +895,7 @@ function App() {
                   <span style={{ fontSize: "0.85rem", color: "var(--text-muted)", textTransform: "uppercase" }}>Consola Activa</span>
                   <div style={{ fontSize: "1.1rem", fontWeight: 600, color: "var(--success)", marginTop: "18px", display: "flex", alignItems: "center", gap: "8px" }}>
                     <div style={{ width: "8px", height: "8px", background: "var(--success)", borderRadius: "50%", boxShadow: "0 0 6px var(--success)" }} />
-                    Conectado a SQLite
+                    Conectado a Supabase (Postgres)
                   </div>
                 </div>
               </div>

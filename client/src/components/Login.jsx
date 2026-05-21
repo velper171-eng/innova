@@ -1,26 +1,143 @@
 import React, { useState } from "react";
 
 export default function Login({ onLogin }) {
-  const [username, setUsername] = useState("");
+  const [isLogin, setIsLogin] = useState(true);
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  // Register fields
+  const [name, setName] = useState("");
+  const [country, setCountry] = useState("");
+  const [phone, setPhone] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  const handleLoginSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
-    // Simulate small delay for premium feels
-    setTimeout(() => {
-      if (username.trim().toLowerCase() === "admin" && password === "innova2026") {
-        onLogin(rememberMe);
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        onLogin(data.user, rememberMe);
       } else {
-        setError("Usuario o contraseña incorrectos. (Prueba con 'admin' e 'innova2026')");
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || "Usuario o contraseña incorrectos");
         setLoading(false);
       }
-    }, 800);
+    } catch (err) {
+      console.error(err);
+      setError("Error de conexión con el servidor");
+      setLoading(false);
+    }
+  };
+
+  const handleRegisterSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+    setLoading(true);
+
+    if (password !== confirmPassword) {
+      setError("Las contraseñas no coinciden");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          email,
+          password,
+          country,
+          phone
+        })
+      });
+
+      if (res.ok) {
+        setSuccess("¡Registro exitoso! Iniciando sesión...");
+        const loginRes = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password })
+        });
+        
+        if (loginRes.ok) {
+          const data = await loginRes.json();
+          onLogin(data.user, rememberMe);
+        } else {
+          setIsLogin(true);
+          setError("Registro completado. Por favor inicia sesión.");
+          setLoading(false);
+        }
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || "Error en el registro");
+        setLoading(false);
+      }
+    } catch (err) {
+      console.error(err);
+      setError("Error de red al registrarse");
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleAuth = async () => {
+    setError("");
+    setLoading(true);
+    
+    setTimeout(async () => {
+      try {
+        const googleUser = {
+          name: "Atleta Google",
+          email: "atleta.google@gmail.com",
+          password: "google_mock_password_2026",
+          country: "Colombia",
+          phone: "+57 300 123 4567"
+        };
+        
+        await fetch("/api/auth/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(googleUser)
+        }).catch(() => {});
+        
+        const loginRes = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: googleUser.email,
+            password: googleUser.password
+          })
+        });
+        
+        if (loginRes.ok) {
+          const data = await loginRes.json();
+          onLogin(data.user, rememberMe);
+        } else {
+          const errData = await loginRes.json().catch(() => ({}));
+          setError(errData.error || "Error al autenticar con Google");
+          setLoading(false);
+        }
+      } catch (err) {
+        console.error(err);
+        setError("Error de red al autenticar con Google");
+        setLoading(false);
+      }
+    }, 1000);
   };
 
   const scrollToLogin = () => {
@@ -702,6 +819,68 @@ export default function Login({ onLogin }) {
           animation: spin 0.8s linear infinite;
         }
 
+        .login-tabs {
+          display: flex;
+          border-bottom: 1px solid var(--sano-glass-border);
+          margin-bottom: 24px;
+        }
+        .login-tab {
+          flex: 1;
+          padding: 12px;
+          text-align: center;
+          font-weight: 700;
+          cursor: pointer;
+          color: #708090;
+          border-bottom: 2px solid transparent;
+          margin-bottom: -1px;
+          transition: all 0.2s ease;
+        }
+        .login-tab.active {
+          color: var(--sano-teal);
+          border-bottom-color: var(--sano-teal);
+        }
+        .google-btn {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+          width: 100%;
+          background: white;
+          color: var(--sano-dark);
+          border: 1px solid var(--sano-glass-border);
+          padding: 12px;
+          font-size: 0.95rem;
+          font-weight: 700;
+          border-radius: 12px;
+          cursor: pointer;
+          margin-top: 12px;
+          transition: all 0.2s ease;
+          font-family: inherit;
+        }
+        .google-btn:hover {
+          background: #f8faf9;
+          border-color: rgba(0,0,0,0.12);
+        }
+        .divider {
+          display: flex;
+          align-items: center;
+          text-align: center;
+          color: #708090;
+          font-size: 0.8rem;
+          margin: 16px 0;
+        }
+        .divider::before, .divider::after {
+          content: '';
+          flex: 1;
+          border-bottom: 1px solid var(--sano-glass-border);
+        }
+        .divider:not(:empty)::before {
+          margin-right: .5em;
+        }
+        .divider:not(:empty)::after {
+          margin-left: .5em;
+        }
+
         /* Footer */
         .landing-footer {
           padding: 40px 24px;
@@ -963,72 +1142,215 @@ export default function Login({ onLogin }) {
       {/* Login Portal Section */}
       <section className="login-section" id="login-section">
         <div className="login-card">
-          <h2 className="login-title">Acceso al Portal Innova</h2>
-          <p className="login-desc">Ingresa tus credenciales autorizadas de administrador.</p>
+          <div className="login-tabs">
+            <div 
+              className={`login-tab ${isLogin ? "active" : ""}`} 
+              onClick={() => { setIsLogin(true); setError(""); setSuccess(""); }}
+            >
+              Ingresar
+            </div>
+            <div 
+              className={`login-tab ${!isLogin ? "active" : ""}`} 
+              onClick={() => { setIsLogin(false); setError(""); setSuccess(""); }}
+            >
+              Registrarse (Gratis)
+            </div>
+          </div>
+
+          <h2 className="login-title">
+            {isLogin ? "Acceso al Portal Innova" : "Crea tu Cuenta Gratis"}
+          </h2>
+          <p className="login-desc">
+            {isLogin 
+              ? "Ingresa tus credenciales de atleta o administrador." 
+              : "Accede a tu propio portal de entrenamiento independiente."}
+          </p>
           
-          <form className="login-form" onSubmit={handleSubmit}>
-            <div className="input-group">
-              <label className="input-label">Usuario</label>
-              <div className="input-field-wrapper">
-                <input
-                  type="text"
-                  className="input-field"
-                  placeholder="Ej. admin"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  required
-                  disabled={loading}
-                />
+          {isLogin ? (
+            <form className="login-form" onSubmit={handleLoginSubmit}>
+              <div className="input-group">
+                <label className="input-label">Correo Electrónico / Usuario</label>
+                <div className="input-field-wrapper">
+                  <input
+                    type="text"
+                    className="input-field"
+                    placeholder="Ej. atleta@correo.com o admin"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    disabled={loading}
+                  />
+                </div>
               </div>
-            </div>
 
-            <div className="input-group">
-              <label className="input-label">Contraseña</label>
-              <div className="input-field-wrapper">
-                <input
-                  type="password"
-                  className="input-field"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  disabled={loading}
-                />
+              <div className="input-group">
+                <label className="input-label">Contraseña</label>
+                <div className="input-field-wrapper">
+                  <input
+                    type="password"
+                    className="input-field"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    disabled={loading}
+                  />
+                </div>
               </div>
-            </div>
 
-            <div className="options-row">
-              <label className="checkbox-container">
-                <input
-                  type="checkbox"
-                  className="checkbox-input"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  disabled={loading}
-                />
-                Mantener mi sesión iniciada
-              </label>
-            </div>
+              <div className="options-row">
+                <label className="checkbox-container">
+                  <input
+                    type="checkbox"
+                    className="checkbox-input"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    disabled={loading}
+                  />
+                  Mantener mi sesión iniciada
+                </label>
+              </div>
 
-            {error && <div className="error-message">{error}</div>}
+              {error && <div className="error-message">{error}</div>}
 
-            <button type="submit" className="submit-btn" disabled={loading}>
-              {loading ? (
-                <>
-                  <div className="spinner"></div>
-                  Iniciando Sesión...
-                </>
-              ) : (
-                "Ingresar a la Plataforma"
-              )}
-            </button>
-          </form>
+              <button type="submit" className="submit-btn" disabled={loading}>
+                {loading ? (
+                  <>
+                    <div className="spinner"></div>
+                    Iniciando Sesión...
+                  </>
+                ) : (
+                  "Ingresar a la Plataforma"
+                )}
+              </button>
+            </form>
+          ) : (
+            <form className="login-form" onSubmit={handleRegisterSubmit}>
+              <div className="input-group">
+                <label className="input-label">Nombre Completo</label>
+                <div className="input-field-wrapper">
+                  <input
+                    type="text"
+                    className="input-field"
+                    placeholder="Ej. Juan Pérez"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required
+                    disabled={loading}
+                  />
+                </div>
+              </div>
+
+              <div className="input-group">
+                <label className="input-label">Correo Electrónico</label>
+                <div className="input-field-wrapper">
+                  <input
+                    type="email"
+                    className="input-field"
+                    placeholder="Ej. juan@correo.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    disabled={loading}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                <div className="input-group">
+                  <label className="input-label">País</label>
+                  <div className="input-field-wrapper">
+                    <input
+                      type="text"
+                      className="input-field"
+                      placeholder="Ej. México"
+                      value={country}
+                      onChange={(e) => setCountry(e.target.value)}
+                      required
+                      disabled={loading}
+                    />
+                  </div>
+                </div>
+                <div className="input-group">
+                  <label className="input-label">Celular</label>
+                  <div className="input-field-wrapper">
+                    <input
+                      type="tel"
+                      className="input-field"
+                      placeholder="Ej. +5212345678"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      required
+                      disabled={loading}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                <div className="input-group">
+                  <label className="input-label">Contraseña</label>
+                  <div className="input-field-wrapper">
+                    <input
+                      type="password"
+                      className="input-field"
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      disabled={loading}
+                    />
+                  </div>
+                </div>
+                <div className="input-group">
+                  <label className="input-label">Confirmar</label>
+                  <div className="input-field-wrapper">
+                    <input
+                      type="password"
+                      className="input-field"
+                      placeholder="••••••••"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required
+                      disabled={loading}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {error && <div className="error-message">{error}</div>}
+              {success && <div className="success-message" style={{ background: "rgba(50, 205, 50, 0.08)", border: "1px solid rgba(50, 205, 50, 0.2)", color: "var(--sano-teal)", padding: "12px", borderRadius: "12px", fontSize: "0.85rem", fontWeight: "600" }}>{success}</div>}
+
+              <button type="submit" className="submit-btn" disabled={loading}>
+                {loading ? (
+                  <>
+                    <div className="spinner"></div>
+                    Creando Cuenta...
+                  </>
+                ) : (
+                  "Comenzar Prueba Gratis"
+                )}
+              </button>
+            </form>
+          )}
+
+          <div className="divider">o bien</div>
+
+          <button type="button" className="google-btn" onClick={handleGoogleAuth} disabled={loading}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style={{ flexShrink: 0 }}>
+              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
+              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335"/>
+            </svg>
+            {isLogin ? "Ingresar con Google" : "Registrarse con Google"}
+          </button>
         </div>
       </section>
 
       {/* Footer */}
       <footer className="landing-footer">
-        <p>© 2026 INNOVA Logistics & Performance. Todos los derechos reservados. Basado en la estética de Sano & Punto.</p>
+        <p>© 2026 INNOVA Logistics & Performance. Todos los derechos reservados.</p>
       </footer>
     </div>
   );

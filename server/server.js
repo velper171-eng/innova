@@ -4,6 +4,7 @@ import cors from "cors";
 import fs from "fs";
 import path from "path";
 import multer from "multer";
+import crypto from "crypto";
 let prismaInstance = null;
 const prisma = new Proxy({}, {
   get(target, prop) {
@@ -39,6 +40,111 @@ app.use(express.json());
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
   next();
+});
+
+// --- AUTHENTICATION ROUTES ---
+
+// Helper function to hash password
+const hashPassword = (password) => {
+  return crypto.createHash("sha256").update(password).digest("hex");
+};
+
+// Register route
+app.post("/api/auth/register", async (req, res) => {
+  try {
+    const { name, email, password, country, phone, birthdate, gender, sport } = req.body;
+
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: "Nombre, correo y contraseña son obligatorios" });
+    }
+
+    const existing = await prisma.patient.findFirst({
+      where: { email: { equals: email, mode: "insensitive" } }
+    });
+
+    if (existing) {
+      return res.status(400).json({ error: "El correo ya está registrado" });
+    }
+
+    const hashedPassword = hashPassword(password);
+
+    const newPatient = await prisma.patient.create({
+      data: {
+        name,
+        email,
+        phone,
+        password: hashedPassword,
+        country,
+        birthdate: birthdate || "1995-01-01",
+        gender: gender || "male",
+        sport: sport || "General"
+      }
+    });
+
+    res.status(201).json({
+      success: true,
+      user: {
+        id: newPatient.id,
+        name: newPatient.name,
+        email: newPatient.email,
+        role: "patient"
+      }
+    });
+  } catch (error) {
+    console.error("Error in registration:", error);
+    res.status(500).json({ error: "Error en el registro del usuario" });
+  }
+});
+
+// Login route
+app.post("/api/auth/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ error: "Correo y contraseña son obligatorios" });
+    }
+
+    if (email.trim().toLowerCase() === "admin" && password === "innova2026") {
+      return res.json({
+        success: true,
+        user: {
+          id: "admin",
+          name: "Administrador",
+          email: "admin@innova.com",
+          role: "admin"
+        }
+      });
+    }
+
+    const patient = await prisma.patient.findFirst({
+      where: {
+        email: { equals: email, mode: "insensitive" }
+      }
+    });
+
+    if (!patient || !patient.password) {
+      return res.status(401).json({ error: "Usuario o contraseña incorrectos" });
+    }
+
+    const hashedInputPassword = hashPassword(password);
+    if (patient.password !== hashedInputPassword) {
+      return res.status(401).json({ error: "Usuario o contraseña incorrectos" });
+    }
+
+    res.json({
+      success: true,
+      user: {
+        id: patient.id,
+        name: patient.name,
+        email: patient.email,
+        role: "patient"
+      }
+    });
+  } catch (error) {
+    console.error("Error in login:", error);
+    res.status(500).json({ error: "Error en el inicio de sesión" });
+  }
 });
 
 // --- PATIENTS ROUTE ---
