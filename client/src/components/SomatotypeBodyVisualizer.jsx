@@ -18,7 +18,6 @@ const SomatotypeBodyVisualizer = ({ evaluations = [] }) => {
   let category = "Mesomorfo Balanceado";
 
   if (latestEval) {
-    // Check if endomorphy etc are directly available, otherwise default
     endo = latestEval.endomorphy || latestEval.endo || 3.0;
     meso = latestEval.mesomorphy || latestEval.meso || 4.0;
     ecto = latestEval.ectomorphy || latestEval.ecto || 3.0;
@@ -38,67 +37,56 @@ const SomatotypeBodyVisualizer = ({ evaluations = [] }) => {
     dominant = "mesomorph";
   }
 
-  // Define SVG Paths based on Somatotype (Ecto: slender/tall, Meso: muscular/V-shape, Endo: rounder/robust)
-  // We represent the torso, limbs, and highlights
+  // Proportional body silhouette configurations (centered at X=80 on a 160 width canvas)
   const getSilhouettePaths = () => {
     switch (dominant) {
       case "ectomorph":
         return {
-          // Torso (narrow)
-          torso: "M 48,60 C 48,80 50,110 52,140 L 68,140 C 70,110 72,80 72,60 Z",
-          // Shoulders (narrow)
-          shoulders: "M 40,60 C 45,55 52,50 60,50 C 68,50 75,55 80,60 C 74,65 67,65 60,65 C 53,65 46,65 40,60 Z",
-          // Arms (slender)
-          leftArm: "M 40,60 C 37,85 36,105 38,130 C 36,105 35,85 40,60 Z",
-          rightArm: "M 80,60 C 83,85 84,105 82,130 C 84,105 85,85 80,60 Z",
-          // Legs (thin)
-          leftLeg: "M 52,140 C 50,170 48,200 49,230 L 57,230 C 58,200 58,170 57,140 Z",
-          rightLeg: "M 68,140 C 70,170 72,200 71,230 L 63,230 C 62,200 62,170 63,140 Z",
-          glowColor: "rgba(0, 242, 254, 0.4)",
+          head: { cx: 80, cy: 32, rx: 11, ry: 14 },
+          bodyPath: "M 80,47 C 72,49 64,52 58,58 C 55,65 54,80 53,100 C 52,120 51,135 52,155 C 52,158 51,161 53,161 C 54,161 55,155 55,145 C 56,125 57,105 61,85 C 62,100 63,120 63,140 C 63,150 63,157 64,165 C 61,180 60,205 62,235 C 63,250 62,270 63,285 C 63,288 60,290 60,293 C 62,295 68,295 69,293 C 70,290 70,275 69,255 C 68,235 68,205 69,180 L 80,180 L 91,180 C 92,205 92,235 91,255 C 90,275 90,290 91,293 C 92,295 98,295 100,293 C 100,290 97,288 97,285 C 98,270 97,250 98,235 C 100,205 99,180 96,165 C 97,157 97,150 97,140 C 97,120 98,100 99,85 C 103,105 104,125 105,145 C 105,155 106,161 107,161 C 109,161 108,158 108,155 C 109,135 108,120 107,100 C 106,80 105,65 102,58 C 96,52 88,49 80,47 Z",
+          glowColor: "rgba(0, 242, 254, 0.35)",
           strokeColor: "#00f2fe",
-          accentZone: null
+          gradientId: "ectoBodyGrad",
+          accentZone: (
+            <g stroke="#00f2fe" strokeWidth="0.8" opacity="0.45" strokeDasharray="3,3">
+              <line x1="56" y1="90" x2="56" y2="150" />
+              <line x1="104" y1="90" x2="104" y2="150" />
+              <line x1="66" y1="190" x2="66" y2="275" />
+              <line x1="94" y1="190" x2="94" y2="275" />
+            </g>
+          )
         };
       case "endomorph":
         return {
-          // Torso (wider waist & belly)
-          torso: "M 42,60 C 40,85 36,115 44,140 L 76,140 C 84,115 80,85 78,60 Z",
-          // Shoulders (softer, rounder)
-          shoulders: "M 36,60 C 42,54 50,48 60,48 C 70,48 78,54 84,60 C 77,65 68,66 60,66 C 52,66 43,65 36,60 Z",
-          // Arms (fuller)
-          leftArm: "M 36,60 C 32,85 30,105 32,130 C 29,105 31,85 36,60 Z",
-          rightArm: "M 84,60 C 88,85 90,105 88,130 C 91,105 89,85 84,60 Z",
-          // Legs (stouter)
-          leftLeg: "M 44,140 C 42,170 38,200 39,230 L 55,230 C 56,200 58,170 56,140 Z",
-          rightLeg: "M 76,140 C 78,170 82,200 81,230 L 65,230 C 64,200 62,170 64,140 Z",
-          glowColor: "rgba(244, 63, 94, 0.4)",
+          head: { cx: 80, cy: 34, rx: 12, ry: 15 },
+          bodyPath: "M 80,49 C 72,51 63,54 56,62 C 51,72 50,88 49,108 C 48,128 47,143 48,163 C 49,166 47,169 50,169 C 52,169 53,162 53,150 C 54,130 55,113 58,92 C 60,108 62,128 64,148 C 65,158 66,166 67,172 C 62,190 60,213 62,243 C 63,258 62,276 64,290 C 64,293 61,295 61,298 C 64,300 71,300 73,298 C 74,295 74,280 73,260 C 72,240 72,210 73,184 L 80,184 L 87,184 C 88,210 88,240 87,260 C 86,280 86,295 87,298 C 89,300 96,300 99,298 C 99,295 96,293 96,290 C 98,276 97,258 98,243 C 100,213 98,190 93,172 C 94,166 95,158 96,148 C 98,128 100,108 102,92 C 105,113 106,130 107,150 C 107,162 108,169 110,169 C 113,169 111,166 112,163 C 113,143 112,128 111,108 C 110,88 109,72 104,62 C 97,54 88,51 80,49 Z",
+          glowColor: "rgba(244, 63, 94, 0.35)",
           strokeColor: "#f43f5e",
-          // Highlights fat accumulation zones
+          gradientId: "endoBodyGrad",
           accentZone: (
-            <ellipse cx="60" cy="110" rx="16" ry="20" fill="url(#fatGlow)" />
+            <g>
+              <ellipse cx="80" cy="130" rx="16" ry="22" fill="url(#fatGlow)" opacity="0.6" />
+              <circle cx="80" cy="130" r="10" fill="none" stroke="#f43f5e" strokeWidth="0.5" strokeDasharray="2,2" opacity="0.3" />
+            </g>
           )
         };
       case "mesomorph":
       default:
         return {
-          // Torso (V-shape, defined waist)
-          torso: "M 44,60 C 47,85 50,110 48,140 L 72,140 C 70,110 73,85 76,60 Z",
-          // Shoulders (broad)
-          shoulders: "M 34,60 C 42,52 50,45 60,45 C 70,45 78,52 86,60 C 77,63 68,64 60,64 C 52,64 43,63 34,60 Z",
-          // Arms (muscular/biceps outline)
-          leftArm: "M 34,60 C 28,82 27,102 30,130 C 26,102 28,82 34,60 Z",
-          rightArm: "M 86,60 C 92,82 93,102 90,130 C 94,102 92,82 86,60 Z",
-          // Legs (muscular thighs)
-          leftLeg: "M 48,140 C 45,170 42,200 43,230 L 57,230 C 58,200 60,170 58,140 Z",
-          rightLeg: "M 72,140 C 75,170 78,200 77,230 L 63,230 C 62,200 60,170 62,140 Z",
-          glowColor: "rgba(16, 185, 129, 0.4)",
+          head: { cx: 80, cy: 30, rx: 12, ry: 15 },
+          bodyPath: "M 80,45 C 68,46 56,49 48,57 C 43,67 42,83 41,105 C 40,125 39,140 40,160 C 41,163 39,166 42,166 C 44,166 45,159 45,147 C 46,125 48,105 53,83 C 54,100 56,120 56,140 C 56,151 56,159 57,167 C 53,185 51,210 54,240 C 55,255 54,273 56,287 C 56,290 53,292 53,295 C 56,297 64,297 66,295 C 67,292 67,277 66,257 C 65,237 65,207 66,181 L 80,181 L 94,181 C 95,207 95,237 94,257 C 93,277 93,292 94,295 C 96,297 104,297 107,295 C 107,292 104,290 104,287 C 106,273 105,255 106,240 C 109,210 107,185 103,167 C 104,159 104,151 104,140 C 104,120 106,100 107,83 C 112,105 114,125 115,147 C 115,159 116,166 118,166 C 121,166 119,163 120,160 C 121,140 120,125 119,105 C 118,83 117,67 112,57 C 104,49 92,46 80,45 Z",
+          glowColor: "rgba(16, 185, 129, 0.35)",
           strokeColor: "#10b981",
-          // Highlight chest and shoulders
+          gradientId: "mesoBodyGrad",
           accentZone: (
-            <>
-              <path d="M 45,67 C 52,68 59,68 60,68 C 61,68 68,68 75,67 C 72,78 60,82 60,82 C 60,82 48,78 45,67 Z" fill="url(#muscleGlow)" opacity="0.6" />
-              <path d="M 49,85 L 57,85 L 56,120 L 49,120 Z" fill="url(#muscleGlow)" opacity="0.4" />
-              <path d="M 63,85 L 71,85 L 71,120 L 63,120 Z" fill="url(#muscleGlow)" opacity="0.4" />
-            </>
+            <g opacity="0.45" fill="none" stroke="#10b981" strokeWidth="1">
+              <path d="M 66,80 C 71,82 78,82 80,82 C 82,82 89,82 94,80 C 91,91 80,94 80,94 C 80,94 69,91 66,80 Z" fill="url(#muscleGlow)" opacity="0.3" />
+              <rect x="69" y="100" width="22" height="34" rx="4" />
+              <line x1="80" y1="100" x2="80" y2="134" />
+              <line x1="69" y1="108" x2="91" y2="108" />
+              <line x1="69" y1="117" x2="91" y2="117" />
+              <line x1="69" y1="126" x2="91" y2="126" />
+            </g>
           )
         };
     }
@@ -118,9 +106,9 @@ const SomatotypeBodyVisualizer = ({ evaluations = [] }) => {
 
   const getSomatotypeDesc = (type) => {
     switch (type) {
-      case "ectomorph": return "Estructura ósea delgada, extremidades largas y dificultad para ganar peso/grasa. Metabolismo acelerado.";
-      case "endomorph": return "Estructura ósea más ancha, facilidad para ganar grasa y masa muscular, ritmo metabólico más pausado.";
-      case "mesomorph": return "Estructura atlética nativa, hombros anchos y cintura estrecha. Facilidad para desarrollar masa muscular.";
+      case "ectomorph": return "Estructura ósea delgada, extremidades largas y dificultad natural para ganar peso y grasa. Metabolismo muy acelerado.";
+      case "endomorph": return "Estructura ósea más ancha, facilidad para acumular grasa y masa muscular, ritmo metabólico más pausado y eficiente.";
+      case "mesomorph": return "Estructura atlética innata, hombros anchos y cintura estrecha. Gran facilidad para desarrollar masa muscular y fuerza.";
       default: return "";
     }
   };
@@ -128,6 +116,44 @@ const SomatotypeBodyVisualizer = ({ evaluations = [] }) => {
   // Mass calculations
   const fatMass = ((weight * bodyFat) / 100).toFixed(1);
   const muscleMass = (weight - fatMass - (weight * 0.15)).toFixed(1); // 15% estimated bone/residual mass
+
+  // Prepare trend data for area chart
+  const sortedEvalsForChart = [...evaluations]
+    .sort((a, b) => new Date(a.date) - new Date(b.date))
+    .slice(-6);
+
+  // Generate fallback data if user has 0 or 1 evaluation
+  const chartEvals = sortedEvalsForChart.length >= 2
+    ? sortedEvalsForChart
+    : [
+        { date: "1", weight: weight - 2.5, bodyFat: bodyFat + 1.2 },
+        { date: "2", weight: weight - 1.0, bodyFat: bodyFat + 0.6 },
+        { date: "3", weight: weight, bodyFat: bodyFat }
+      ];
+
+  const weights = chartEvals.map(e => e.weight);
+  const minW = Math.min(...weights) - 3;
+  const maxW = Math.max(...weights) + 3;
+  const rangeW = maxW - minW || 1;
+
+  // Layout bounds for chart (X: 15-145, Y: 110-260)
+  const chartWidth = 160;
+  const chartHeight = 320;
+  const paddingX = 15;
+  const startY = 110;
+  const endY = 260;
+
+  const coords = chartEvals.map((e, idx) => {
+    const x = paddingX + (idx / (chartEvals.length - 1)) * (chartWidth - 2 * paddingX);
+    const y = endY - ((e.weight - minW) / rangeW) * (endY - startY);
+    return { x, y, weight: e.weight };
+  });
+
+  const areaPath = `M ${coords[0].x},${chartHeight} ` + 
+    coords.map(c => `L ${c.x},${c.y}`).join(" ") + 
+    ` L ${coords[coords.length - 1].x},${chartHeight} Z`;
+
+  const linePath = "M " + coords.map(c => `${c.x},${c.y}`).join(" L ");
 
   return (
     <div className="glass-card" style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
@@ -137,18 +163,19 @@ const SomatotypeBodyVisualizer = ({ evaluations = [] }) => {
             Visualización Dinámica de Somatotipo
           </h3>
           <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginTop: "2px", marginBottom: 0 }}>
-            Representación 3D e histografía corporal calculada según tu antropometría.
+            Representación tridimensional e histografía corporal calculada según tu antropometría.
           </p>
         </div>
         <span 
           style={{ 
             fontSize: "0.85rem", 
-            padding: "4px 10px", 
+            padding: "4px 12px", 
             borderRadius: "20px", 
-            background: `${silhouette.strokeColor}20`, 
-            border: `1px solid ${silhouette.strokeColor}40`,
+            background: `${silhouette.strokeColor}15`, 
+            border: `1px solid ${silhouette.strokeColor}35`,
             color: silhouette.strokeColor,
-            fontWeight: 700
+            fontWeight: 700,
+            textShadow: `0 0 5px ${silhouette.strokeColor}40`
           }}
         >
           {getSomatotypeLabel(dominant)}
@@ -157,75 +184,147 @@ const SomatotypeBodyVisualizer = ({ evaluations = [] }) => {
 
       <div className="grid-1-1-cols" style={{ display: "grid", gridTemplateColumns: "1.2fr 1.8fr", gap: "24px", alignItems: "center" }}>
         
-        {/* Left column: SVG Human Shape */}
+        {/* Left column: High-tech 3D Scanner SVG */}
         <div 
           style={{ 
-            background: "radial-gradient(circle, rgba(255,255,255,0.02) 0%, rgba(0,0,0,0.3) 100%)",
-            border: "1px solid rgba(255,255,255,0.05)",
-            borderRadius: "16px",
+            background: "radial-gradient(circle at center, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.95) 100%)",
+            border: "1px solid rgba(255, 255, 255, 0.08)",
+            borderRadius: "20px",
             padding: "16px",
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
             position: "relative",
-            minHeight: "270px"
+            minHeight: "340px",
+            overflow: "hidden",
+            boxShadow: "inset 0 0 30px rgba(0, 0, 0, 0.8)"
           }}
         >
-          <svg viewBox="0 0 120 250" width="100%" height="250" style={{ filter: "drop-shadow(0px 0px 10px rgba(0, 0, 0, 0.5))" }}>
+          <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} width="100%" height="320" style={{ filter: "drop-shadow(0px 0px 15px rgba(0, 0, 0, 0.7))" }}>
             <defs>
+              {/* Holographic grid pattern */}
+              <pattern id="scanGrid" width="16" height="16" patternUnits="userSpaceOnUse">
+                <path d="M 16 0 L 0 0 0 16" fill="none" stroke="rgba(255, 255, 255, 0.03)" strokeWidth="0.8" />
+              </pattern>
+
               {/* Glowing Gradients */}
               <radialGradient id="bodyGlow" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stopColor={silhouette.strokeColor} stopOpacity="0.3" />
+                <stop offset="0%" stopColor={silhouette.strokeColor} stopOpacity="0.25" />
                 <stop offset="100%" stopColor={silhouette.strokeColor} stopOpacity="0" />
               </radialGradient>
+              
+              <linearGradient id="chartAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={silhouette.strokeColor} stopOpacity="0.12" />
+                <stop offset="100%" stopColor={silhouette.strokeColor} stopOpacity="0.00" />
+              </linearGradient>
+
+              {/* Silhouette fill gradients */}
+              <linearGradient id="ectoBodyGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="rgba(0, 242, 254, 0.22)" />
+                <stop offset="100%" stopColor="rgba(0, 242, 254, 0.04)" />
+              </linearGradient>
+              <linearGradient id="mesoBodyGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="rgba(16, 185, 129, 0.22)" />
+                <stop offset="100%" stopColor="rgba(16, 185, 129, 0.04)" />
+              </linearGradient>
+              <linearGradient id="endoBodyGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="rgba(244, 63, 94, 0.22)" />
+                <stop offset="100%" stopColor="rgba(244, 63, 94, 0.04)" />
+              </linearGradient>
+
               <radialGradient id="fatGlow" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stopColor="#f43f5e" stopOpacity="0.45" />
+                <stop offset="0%" stopColor="#f43f5e" stopOpacity="0.5" />
                 <stop offset="100%" stopColor="#f43f5e" stopOpacity="0" />
               </radialGradient>
+              
               <radialGradient id="muscleGlow" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stopColor="#10b981" stopOpacity="0.5" />
+                <stop offset="0%" stopColor="#10b981" stopOpacity="0.45" />
                 <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
               </radialGradient>
             </defs>
 
-            {/* Background Glow */}
-            <circle cx="60" cy="120" r="70" fill="url(#bodyGlow)" />
+            {/* Grid Overlay */}
+            <rect width="100%" height="100%" fill="url(#scanGrid)" />
 
-            {/* Silhouette Group with Neon Glow */}
-            <g stroke={silhouette.strokeColor} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none">
-              
+            {/* Background Area Chart (Weight Trend) */}
+            <path d={areaPath} fill="url(#chartAreaGrad)" />
+            <path d={linePath} fill="none" stroke={silhouette.strokeColor} strokeWidth="1.2" opacity="0.35" strokeDasharray="3,3" />
+            
+            {/* Weight trend nodes */}
+            {coords.map((c, i) => (
+              <g key={i}>
+                <circle cx={c.x} cy={c.y} r="2.5" fill={silhouette.strokeColor} opacity="0.75" />
+                <text x={c.x} y={c.y - 8} textAnchor="middle" fontSize="8" fill="rgba(255,255,255,0.4)" fontWeight="600">
+                  {c.weight.toFixed(0)}kg
+                </text>
+              </g>
+            ))}
+
+            {/* Silhouette Background Center Glow */}
+            <circle cx="80" cy="150" r="75" fill="url(#bodyGlow)" />
+
+            {/* Body Silhouette Outline & Shading */}
+            <g stroke={silhouette.strokeColor} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill={`url(#${silhouette.gradientId})`}>
               {/* Head */}
-              <ellipse cx="60" cy="28" rx="13" ry="16" fill="rgba(255,255,255,0.02)" />
+              <ellipse 
+                cx={silhouette.head.cx} 
+                cy={silhouette.head.cy} 
+                rx={silhouette.head.rx} 
+                ry={silhouette.head.ry} 
+                style={{ filter: `drop-shadow(0 0 3px ${silhouette.strokeColor}40)` }}
+              />
               
-              {/* Neck */}
-              <path d="M 54,44 L 54,49 M 66,44 L 66,49" />
-              
-              {/* Shoulders */}
-              <path d={silhouette.shoulders} fill="rgba(255,255,255,0.02)" />
-              
-              {/* Torso */}
-              <path d={silhouette.torso} fill="rgba(255,255,255,0.01)" />
-              
-              {/* Arms */}
-              <path d={silhouette.leftArm} />
-              <path d={silhouette.rightArm} />
-              
-              {/* Legs */}
-              <path d={silhouette.leftLeg} />
-              <path d={silhouette.rightLeg} />
+              {/* Body Path (Torso, Shoulders, Limbs unified) */}
+              <path 
+                d={silhouette.bodyPath} 
+                style={{ filter: `drop-shadow(0 0 5px ${silhouette.strokeColor}50)` }}
+              />
             </g>
 
-            {/* Heatmap / Zone overlays */}
+            {/* Active zone overlays (heatmap) */}
             {silhouette.accentZone}
 
+            {/* Holographic Target Overlays */}
+            <g stroke="rgba(255,255,255,0.15)" strokeWidth="0.5" fill="none">
+              <circle cx="80" cy="30" r="18" />
+              <line x1="80" y1="8" x2="80" y2="52" strokeDasharray="2,2" />
+              <line x1="58" y1="30" x2="102" y2="30" strokeDasharray="2,2" />
+            </g>
+
             {/* Floor reflection grid */}
-            <ellipse cx="60" cy="235" rx="35" ry="6" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="0.8" />
-            <ellipse cx="60" cy="235" rx="20" ry="3.5" fill="none" stroke={silhouette.strokeColor} strokeOpacity="0.3" strokeWidth="0.8" />
+            <ellipse cx="80" cy="300" rx="42" ry="8" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="0.8" />
+            <ellipse cx="80" cy="300" rx="24" ry="4.5" fill="none" stroke={silhouette.strokeColor} strokeOpacity="0.25" strokeWidth="0.8" />
+
+            {/* Glowing Laser Scanner Line */}
+            <line x1="15" y1="50" x2="145" y2="50" stroke={silhouette.strokeColor} strokeWidth="2" opacity="0.8" style={{ filter: `drop-shadow(0 0 4px ${silhouette.strokeColor})` }}>
+              <animate 
+                attributeName="y1" 
+                values="40;290;40" 
+                dur="4.5s" 
+                repeatCount="indefinite" 
+              />
+              <animate 
+                attributeName="y2" 
+                values="40;290;40" 
+                dur="4.5s" 
+                repeatCount="indefinite" 
+              />
+              <animate 
+                attributeName="opacity" 
+                values="0.3;0.9;0.3" 
+                dur="4.5s" 
+                repeatCount="indefinite" 
+              />
+            </line>
           </svg>
 
-          {/* Indicator text */}
-          <div style={{ position: "absolute", bottom: "10px", fontSize: "0.75rem", color: "var(--text-muted)" }}>
-            Contorno Corporal Dinámico
+          {/* Scanner details display */}
+          <div style={{ position: "absolute", bottom: "12px", display: "flex", gap: "12px", fontSize: "0.68rem", color: "rgba(255,255,255,0.4)", fontFamily: "monospace" }}>
+            <span>SYS: ACTIVE</span>
+            <span>|</span>
+            <span>GRID: 16px</span>
+            <span>|</span>
+            <span>SCAN: OK</span>
           </div>
         </div>
 
@@ -276,17 +375,17 @@ const SomatotypeBodyVisualizer = ({ evaluations = [] }) => {
           </div>
 
           <div style={{ display: "flex", gap: "10px", marginTop: "4px" }}>
-            <div style={{ flex: 1, padding: "8px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "8px", textAlign: "center" }}>
-              <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Endomorfia</div>
-              <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "#f43f5e" }}>{endo.toFixed(1)}</div>
+            <div style={{ flex: 1, padding: "8px", background: "rgba(255,255,255,0.01)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "10px", textAlign: "center" }}>
+              <div style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>Endomorfia</div>
+              <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "#f43f5e", marginTop: "2px" }}>{endo.toFixed(1)}</div>
             </div>
-            <div style={{ flex: 1, padding: "8px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "8px", textAlign: "center" }}>
-              <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Mesomorfia</div>
-              <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "#10b981" }}>{meso.toFixed(1)}</div>
+            <div style={{ flex: 1, padding: "8px", background: "rgba(255,255,255,0.01)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "10px", textAlign: "center" }}>
+              <div style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>Mesomorfia</div>
+              <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "#10b981", marginTop: "2px" }}>{meso.toFixed(1)}</div>
             </div>
-            <div style={{ flex: 1, padding: "8px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "8px", textAlign: "center" }}>
-              <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Ectomorfia</div>
-              <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "#00f2fe" }}>{ecto.toFixed(1)}</div>
+            <div style={{ flex: 1, padding: "8px", background: "rgba(255,255,255,0.01)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "10px", textAlign: "center" }}>
+              <div style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>Ectomorfia</div>
+              <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "#00f2fe", marginTop: "2px" }}>{ecto.toFixed(1)}</div>
             </div>
           </div>
         </div>

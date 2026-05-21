@@ -269,7 +269,7 @@ const VolumeBarChart = ({ logs = [] }) => {
 };
 
 // ─── Exercise Card ────────────────────────────────────────────────────────────
-const ExerciseCard = ({ exercise, log, onToggle, onUpdateLog, isAdminMode }) => {
+const ExerciseCard = ({ exercise, log, onToggle, onUpdateLog, onDelete, isAdminMode }) => {
   const isCompleted = log?.completed || false;
   const [editing, setEditing] = useState(false);
   const [actualWeight, setActualWeight] = useState(log?.actualWeight || exercise.weight || "");
@@ -340,34 +340,73 @@ const ExerciseCard = ({ exercise, log, onToggle, onUpdateLog, isAdminMode }) => 
         )}
       </div>
 
-      {/* Toggle button */}
-      {!isAdminMode && (
-        <div style={{ display: "flex", flexDirection: "column", gap: "6px", alignItems: "center" }}>
+      {/* Action / Delete / Toggle */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "6px", alignItems: "center" }}>
+        {isAdminMode ? (
           <button
-            onClick={onToggle}
+            onClick={onDelete}
             style={{
-              width: "36px", height: "36px", borderRadius: "50%", border: "none",
-              background: isCompleted ? "var(--primary)" : "var(--border-color)",
-              color: isCompleted ? "white" : "var(--text-muted)",
-              cursor: "pointer", fontSize: "1rem", transition: "all 0.2s",
-              display: "flex", alignItems: "center", justifyContent: "center"
+              background: "rgba(244, 63, 94, 0.08)",
+              border: "1px solid rgba(244, 63, 94, 0.2)",
+              borderRadius: "8px",
+              width: "36px",
+              height: "36px",
+              color: "#f43f5e",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "1.1rem",
+              transition: "all 0.2s"
+            }}
+            title="Eliminar ejercicio"
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "rgba(244, 63, 94, 0.15)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "rgba(244, 63, 94, 0.08)";
             }}
           >
-            {isCompleted ? "✓" : "○"}
+            🗑️
           </button>
-          {isCompleted && !editing && (
+        ) : (
+          <>
             <button
-              onClick={() => setEditing(true)}
+              onClick={onToggle}
               style={{
-                background: "none", border: "none", fontSize: "0.7rem",
-                color: "var(--text-muted)", cursor: "pointer"
+                width: "36px",
+                height: "36px",
+                borderRadius: "50%",
+                border: "none",
+                background: isCompleted ? "var(--primary)" : "var(--border-color)",
+                color: isCompleted ? "white" : "var(--text-muted)",
+                cursor: "pointer",
+                fontSize: "1rem",
+                transition: "all 0.2s",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center"
               }}
             >
-              ✏️ Peso
+              {isCompleted ? "✓" : "○"}
             </button>
-          )}
-        </div>
-      )}
+            {isCompleted && !editing && (
+              <button
+                onClick={() => setEditing(true)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  fontSize: "0.7rem",
+                  color: "var(--text-muted)",
+                  cursor: "pointer"
+                }}
+              >
+                ✏️ Peso
+              </button>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 };
@@ -471,24 +510,33 @@ const TrainingPlanner = ({ patientId, isAdminMode = false }) => {
 
   const handleAddExercise = async () => {
     if (!newExName.trim() || !activePlan) return;
-    const day = activePlan.days?.find((d) => d.dayIndex === selectedDayIdx);
-    if (!day) {
-      // Create the day first
-      await fetch(`${API_BASE}/training-days`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          planId: activePlan.id,
-          dayIndex: selectedDayIdx,
-          name: DAY_NAMES[selectedDayIdx],
-          muscleGroup: newExMuscle,
-        }),
-      });
-      await fetchPlans();
+    
+    let dayId = activePlan.days?.find((d) => d.dayIndex === selectedDayIdx)?.id;
+    
+    if (!dayId) {
+      try {
+        const dayRes = await fetch(`${API_BASE}/training-days`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            planId: activePlan.id,
+            dayIndex: selectedDayIdx,
+            name: DAY_NAMES[selectedDayIdx],
+            muscleGroup: newExMuscle,
+          }),
+        });
+        if (dayRes.ok) {
+          const createdDay = await dayRes.json();
+          dayId = createdDay.id;
+        } else {
+          console.error("Error creating training day on backend");
+          return;
+        }
+      } catch (err) {
+        console.error("Error creating training day:", err);
+        return;
+      }
     }
-
-    const dayId = activePlan.days?.find((d) => d.dayIndex === selectedDayIdx)?.id;
-    if (!dayId) return;
 
     try {
       const res = await fetch(`${API_BASE}/training-days/${dayId}/exercises`, {
@@ -553,6 +601,22 @@ const TrainingPlanner = ({ patientId, isAdminMode = false }) => {
       fetchLogs();
     } catch (err) {
       console.error("Error updating weight:", err);
+    }
+  };
+
+  const handleDeleteExercise = async (exerciseId) => {
+    if (!window.confirm("¿Seguro que deseas eliminar este ejercicio de la rutina?")) return;
+    try {
+      const res = await fetch(`${API_BASE}/training-exercises/${exerciseId}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        fetchPlans();
+      } else {
+        console.error("Error deleting exercise from server");
+      }
+    } catch (err) {
+      console.error("Error deleting exercise:", err);
     }
   };
 
@@ -837,6 +901,7 @@ const TrainingPlanner = ({ patientId, isAdminMode = false }) => {
                       isAdminMode={isAdminMode}
                       onToggle={() => handleToggleExercise(ex.id)}
                       onUpdateLog={(weight) => handleUpdateLogWeight(ex.id, weight)}
+                      onDelete={() => handleDeleteExercise(ex.id)}
                     />
                   );
                 })
