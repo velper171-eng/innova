@@ -768,60 +768,7 @@ const SomatotypeBodyVisualizer = ({ evaluations = [], activeTab = "anthropometry
             );
           })}
 
-          {/* --- BACKGROUND AREA CHARTS & TREND LINES (drawn behind body model, masked in center) --- */}
-          
-          {/* 1. Weight Trend (faint dashed line) */}
-          <path
-            d={weightLinePath}
-            fill="none"
-            stroke="#237f94"
-            strokeWidth="1.5"
-            strokeDasharray="4,4"
-            opacity="0.4"
-          />
-
-          {/* 2. Selected Percentage Trend (solid line with area fill) */}
-          <path
-            d={rightAreaPath}
-            fill="url(#rightAreaFillGrad)"
-            opacity="1.0"
-          />
-          <path
-            d={rightLinePath}
-            fill="none"
-            stroke={selectedMetric === "fat" ? "#e07a5f" : "#10b981"}
-            strokeWidth="3.5"
-            opacity="0.95"
-            style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.05))" }}
-          />
-
-          {/* Interactive Chart Nodes & Tooltips */}
-          {rightCoords.map((c, idx) => (
-            <g key={`r-node-${idx}`}>
-              <circle cx={c.x} cy={c.y} r="5" fill={selectedMetric === "fat" ? "#e07a5f" : "#10b981"} stroke="#ffffff" strokeWidth="2.5" />
-              <circle cx={c.x} cy={c.y} r="10" fill={selectedMetric === "fat" ? "#e07a5f" : "#10b981"} fillOpacity="0.15" />
-              <rect
-                x={c.x - 22}
-                y={c.y - 30}
-                width="44"
-                height="18"
-                rx="5"
-                fill="#0f2d37"
-                stroke={selectedMetric === "fat" ? "#e07a5f" : "#10b981"}
-                strokeWidth="1"
-              />
-              <text
-                x={c.x}
-                y={c.y - 18}
-                textAnchor="middle"
-                fontSize="9"
-                fontWeight="800"
-                fill="#ffffff"
-              >
-                {c.value.toFixed(1)}%
-              </text>
-            </g>
-          ))}
+          {/* Trend lines and nodes removed — grid only behind silhouette */}
 
           {/* --- HIGH-FIDELITY 3D METALLIC BODY MODEL (Centered, Layered) --- */}
           <g transform={transformStr} style={{ transition: "transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)" }}>

@@ -489,7 +489,10 @@ const TrainingPlanner = ({ patientId, isAdminMode = false }) => {
   };
 
   const handleCreatePlan = async () => {
-    if (!newPlanName.trim()) return;
+    if (!newPlanName.trim()) {
+      setPlanError("Por favor ingresa un nombre para el plan");
+      return;
+    }
     try {
       setCreatingPlan(true);
       setPlanError("");
