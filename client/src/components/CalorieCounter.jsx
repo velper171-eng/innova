@@ -126,6 +126,8 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
           protein: result.protein,
           carbs: result.carbs,
           fat: result.fat,
+          sugar: result.sugar,
+          sodium: result.sodium,
           ingredients: result.ingredients,
           preparation: result.preparation,
           imagePath: result.imagePath
@@ -172,6 +174,8 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
   const totalProteinToday = filteredLogs.reduce((sum, log) => sum + (log.protein || 0), 0);
   const totalCarbsToday = filteredLogs.reduce((sum, log) => sum + (log.carbs || 0), 0);
   const totalFatToday = filteredLogs.reduce((sum, log) => sum + (log.fat || 0), 0);
+  const totalSugarToday = filteredLogs.reduce((sum, log) => sum + (log.sugar || 0), 0);
+  const totalSodiumToday = filteredLogs.reduce((sum, log) => sum + (log.sodium || 0), 0);
 
   // Math for Concentric Rings
   const pctCalories = Math.min(100, Math.round((totalCaloriesToday / calorieGoal) * 100));
@@ -337,7 +341,7 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
           {/* Protein */}
           <div>
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem", marginBottom: "4px" }}>
-              <span style={{ color: "var(--text-muted)" }}>Proteínas (4 kcal/g)</span>
+              <span style={{ color: "var(--text-muted)" }}>Proteínas</span>
               <span style={{ color: "#f43f5e", fontWeight: 700 }}>{totalProteinToday.toFixed(1)}g / 150g</span>
             </div>
             <div style={{ height: "6px", width: "100%", background: "var(--border-color)", borderRadius: "3px", overflow: "hidden" }}>
@@ -347,7 +351,7 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
           {/* Carbs */}
           <div>
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem", marginBottom: "4px" }}>
-              <span style={{ color: "var(--text-muted)" }}>Carbohidratos (4 kcal/g)</span>
+              <span style={{ color: "var(--text-muted)" }}>Carbohidratos</span>
               <span style={{ color: "#10b981", fontWeight: 700 }}>{totalCarbsToday.toFixed(1)}g / 250g</span>
             </div>
             <div style={{ height: "6px", width: "100%", background: "var(--border-color)", borderRadius: "3px", overflow: "hidden" }}>
@@ -357,11 +361,31 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
           {/* Fat */}
           <div>
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem", marginBottom: "4px" }}>
-              <span style={{ color: "var(--text-muted)" }}>Grasas (9 kcal/g)</span>
+              <span style={{ color: "var(--text-muted)" }}>Grasas</span>
               <span style={{ color: "#fbbf24", fontWeight: 700 }}>{totalFatToday.toFixed(1)}g / 80g</span>
             </div>
             <div style={{ height: "6px", width: "100%", background: "var(--border-color)", borderRadius: "3px", overflow: "hidden" }}>
               <div style={{ height: "100%", width: `${Math.min(100, (totalFatToday / 80) * 100)}%`, background: "#fbbf24", transition: "width 0.3s" }} />
+            </div>
+          </div>
+          {/* Sugar */}
+          <div>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem", marginBottom: "4px" }}>
+              <span style={{ color: "var(--text-muted)" }}>Azúcares (Límite)</span>
+              <span style={{ color: "#a855f7", fontWeight: 700 }}>{totalSugarToday.toFixed(1)}g / 50g</span>
+            </div>
+            <div style={{ height: "6px", width: "100%", background: "var(--border-color)", borderRadius: "3px", overflow: "hidden" }}>
+              <div style={{ height: "100%", width: `${Math.min(100, (totalSugarToday / 50) * 100)}%`, background: "#a855f7", transition: "width 0.3s" }} />
+            </div>
+          </div>
+          {/* Sodium */}
+          <div>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem", marginBottom: "4px" }}>
+              <span style={{ color: "var(--text-muted)" }}>Sodio (Límite)</span>
+              <span style={{ color: "#6366f1", fontWeight: 700 }}>{totalSodiumToday.toFixed(0)}mg / 2300mg</span>
+            </div>
+            <div style={{ height: "6px", width: "100%", background: "var(--border-color)", borderRadius: "3px", overflow: "hidden" }}>
+              <div style={{ height: "100%", width: `${Math.min(100, (totalSodiumToday / 2300) * 100)}%`, background: "#6366f1", transition: "width 0.3s" }} />
             </div>
           </div>
         </div>
@@ -621,6 +645,22 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
                       {result.fat}g
                     </div>
                   </div>
+
+                  {/* Sugar card */}
+                  <div style={{ flex: 1, minWidth: "80px", padding: "12px", background: "var(--bg-main)", border: "1px solid var(--border-color)", borderRadius: "8px", textAlign: "center" }}>
+                    <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Azúcar</span>
+                    <div style={{ fontSize: "1.4rem", fontWeight: 700, color: "#a855f7", marginTop: "4px" }}>
+                      {result.sugar !== undefined && result.sugar !== null ? `${result.sugar}g` : "0g"}
+                    </div>
+                  </div>
+
+                  {/* Sodium card */}
+                  <div style={{ flex: 1, minWidth: "80px", padding: "12px", background: "var(--bg-main)", border: "1px solid var(--border-color)", borderRadius: "8px", textAlign: "center" }}>
+                    <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Sodio</span>
+                    <div style={{ fontSize: "1.4rem", fontWeight: 700, color: "#6366f1", marginTop: "4px" }}>
+                      {result.sodium !== undefined && result.sodium !== null ? `${result.sodium}mg` : "0mg"}
+                    </div>
+                  </div>
                 </div>
 
                 <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
@@ -734,10 +774,12 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
                     </div>
                   </div>
 
-                  <div style={{ display: "flex", gap: "12px", marginTop: "8px", fontSize: "0.8rem", color: "var(--text-muted)" }}>
-                    <span>P: <strong>{log.protein ? `${log.protein}g` : "N/A"}</strong></span>
-                    <span>C: <strong>{log.carbs ? `${log.carbs}g` : "N/A"}</strong></span>
-                    <span>G: <strong>{log.fat ? `${log.fat}g` : "N/A"}</strong></span>
+                  <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", marginTop: "8px", fontSize: "0.8rem", color: "var(--text-muted)" }}>
+                    <span>P: <strong>{log.protein !== null ? `${log.protein}g` : "N/A"}</strong></span>
+                    <span>C: <strong>{log.carbs !== null ? `${log.carbs}g` : "N/A"}</strong></span>
+                    <span>G: <strong>{log.fat !== null ? `${log.fat}g` : "N/A"}</strong></span>
+                    <span>Azúcar: <strong>{log.sugar !== null ? `${log.sugar}g` : "0g"}</strong></span>
+                    <span>Sodio: <strong>{log.sodium !== null ? `${log.sodium}mg` : "0mg"}</strong></span>
                   </div>
 
                   {/* Collapsible/Show ingredients list */}

@@ -156,6 +156,8 @@ model CalorieLog {
   protein     Float?
   carbs       Float?
   fat         Float?
+  sugar       Float?
+  sodium      Float?
   ingredients String?
   preparation String?
   imagePath   String?

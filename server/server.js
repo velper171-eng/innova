@@ -1006,7 +1006,7 @@ app.post("/api/patients/:id/calories/logs", async (req, res) => {
       return res.status(400).json({ error: "ID de paciente inválido" });
     }
 
-    const { date, foodName, calories, protein, carbs, fat, ingredients, preparation, imagePath } = req.body;
+    const { date, foodName, calories, protein, carbs, fat, sugar, sodium, ingredients, preparation, imagePath } = req.body;
 
     if (!date || !foodName || calories === undefined) {
       return res.status(400).json({ error: "Fecha, alimento y calorías son obligatorios" });
@@ -1021,6 +1021,8 @@ app.post("/api/patients/:id/calories/logs", async (req, res) => {
         protein: protein ? parseFloat(protein) : null,
         carbs: carbs ? parseFloat(carbs) : null,
         fat: fat ? parseFloat(fat) : null,
+        sugar: sugar ? parseFloat(sugar) : null,
+        sodium: sodium ? parseFloat(sodium) : null,
         ingredients,
         preparation,
         imagePath
