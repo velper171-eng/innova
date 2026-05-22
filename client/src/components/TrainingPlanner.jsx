@@ -69,12 +69,152 @@ const bodySilhouettePath = `
   Z
 `;
 
-const MuscleSilhouette = ({ highlight = "legs", view = "front", somatotypeData, dominantSomatotype = "mesomorph" }) => {
+// Helper function to map exercise names to exact muscle groups
+const getExactMuscles = (exerciseName, primaryGroup) => {
+  const name = (exerciseName || "").toLowerCase();
+  const primary = (primaryGroup || "").toLowerCase();
+  const muscles = new Set();
+
+  if (primary) {
+    if (primary.includes(",")) {
+      primary.split(",").forEach(m => muscles.add(m.trim()));
+    } else {
+      muscles.add(primary);
+    }
+  }
+
+  // Keywords mapping for exact muscle mapping
+  if (name.includes("jalón") || name.includes("lat pulldown") || name.includes("dominadas") || name.includes("pull-up") || name.includes("chin-up") || name.includes("pull over") || name.includes("pullover")) {
+    muscles.add("back");
+    muscles.add("lats");
+    muscles.add("dorsales");
+    if (!name.includes("over") && !name.includes("pecho")) {
+      muscles.add("arms");
+      muscles.add("biceps");
+      muscles.add("bíceps");
+    }
+  }
+  if (name.includes("remo") || name.includes("row")) {
+    muscles.add("back");
+    muscles.add("lats");
+    muscles.add("dorsales");
+    muscles.add("traps");
+    muscles.add("trapecios");
+  }
+  if (name.includes("peso muerto") || name.includes("deadlift")) {
+    muscles.add("back");
+    muscles.add("lower_back");
+    muscles.add("lumbares");
+    muscles.add("legs");
+    muscles.add("glutes");
+    muscles.add("glúteos");
+    muscles.add("hamstrings");
+    muscles.add("isquiotibiales");
+  }
+  if (name.includes("hiperextensiones") || name.includes("back extension") || name.includes("lumbares")) {
+    muscles.add("back");
+    muscles.add("lower_back");
+    muscles.add("lumbares");
+    muscles.add("glutes");
+    muscles.add("glúteos");
+  }
+  if (name.includes("press de banca") || name.includes("bench press") || name.includes("press plano") || name.includes("press inclinado") || name.includes("press declinado") || name.includes("flexiones") || name.includes("push-up") || name.includes("fondos") || name.includes("chest dip") || name.includes("aperturas") || name.includes("fly") || name.includes("pec dec") || name.includes("cruces")) {
+    muscles.add("chest");
+    muscles.add("pecho");
+    if (!name.includes("aperturas") && !name.includes("fly") && !name.includes("cruces") && !name.includes("pec dec")) {
+      muscles.add("shoulders");
+      muscles.add("hombros");
+      muscles.add("arms");
+      muscles.add("triceps");
+      muscles.add("tríceps");
+    }
+  }
+  if (name.includes("press militar") || name.includes("overhead press") || name.includes("shoulder press") || name.includes("press de hombros") || name.includes("lateral") || name.includes("elevaciones laterales") || name.includes("pájaro") || name.includes("rear delt") || name.includes("face-pull") || name.includes("face pull") || name.includes("deltoides")) {
+    muscles.add("shoulders");
+    muscles.add("hombros");
+    if (name.includes("militar") || name.includes("shoulder press") || name.includes("press")) {
+      muscles.add("triceps");
+      muscles.add("tríceps");
+    }
+    if (name.includes("pájaro") || name.includes("rear delt") || name.includes("face")) {
+      muscles.add("back");
+      muscles.add("traps");
+      muscles.add("trapecios");
+    }
+  }
+  if (name.includes("encogimientos") || name.includes("shrugs")) {
+    muscles.add("back");
+    muscles.add("traps");
+    muscles.add("trapecios");
+  }
+  if (name.includes("curl") || name.includes("biceps") || name.includes("bíceps") || name.includes("predicador") || name.includes("preacher")) {
+    muscles.add("arms");
+    muscles.add("biceps");
+    muscles.add("bíceps");
+  }
+  if (name.includes("tríceps") || name.includes("triceps") || name.includes("copa") || name.includes("rompecráneos") || name.includes("skullcrusher") || name.includes("pushdown") || name.includes("patada")) {
+    if (!name.includes("glúteo") && !name.includes("pierna")) {
+      muscles.add("arms");
+      muscles.add("triceps");
+      muscles.add("tríceps");
+    }
+  }
+  if (name.includes("sentadilla") || name.includes("squat") || name.includes("prensa") || name.includes("leg press") || name.includes("extensiones de cuádriceps") || name.includes("leg extension") || name.includes("zancadas") || name.includes("lunges") || name.includes("bulgaras") || name.includes("búlgaras")) {
+    muscles.add("legs");
+    muscles.add("quads");
+    muscles.add("cuádriceps");
+    muscles.add("glutes");
+    muscles.add("glúteos");
+  }
+  if (name.includes("hip thrust") || name.includes("puente de glúteo") || name.includes("glute bridge") || name.includes("patada de glúteo") || name.includes("patada de polea")) {
+    muscles.add("legs");
+    muscles.add("glutes");
+    muscles.add("glúteos");
+    if (name.includes("thrust") || name.includes("puente")) {
+      muscles.add("hamstrings");
+      muscles.add("isquiotibiales");
+      muscles.add("femoral");
+    }
+  }
+  if (name.includes("peso muerto rumano") || name.includes("romanian deadlift") || name.includes("curl de piernas") || name.includes("leg curl") || name.includes("isquios") || name.includes("femoral")) {
+    muscles.add("legs");
+    muscles.add("hamstrings");
+    muscles.add("isquiotibiales");
+    muscles.add("femoral");
+    muscles.add("glutes");
+    muscles.add("glúteos");
+  }
+  if (name.includes("gemelos") || name.includes("pantorrillas") || name.includes("calf") || name.includes("talones")) {
+    muscles.add("legs");
+    muscles.add("calves");
+    muscles.add("gemelos");
+    muscles.add("pantorrillas");
+  }
+  if (name.includes("plancha") || name.includes("plank") || name.includes("crunch") || name.includes("abdominales") || name.includes("elevación de piernas") || name.includes("leg raise") || name.includes("oblicuos") || name.includes("rueda") || name.includes("ab wheel")) {
+    muscles.add("core");
+    muscles.add("abs");
+    muscles.add("abdomen");
+  }
+  if (name.includes("hiit") || name.includes("burpees") || name.includes("swings") || name.includes("farmer") || name.includes("granero")) {
+    muscles.add("full_body");
+  }
+
+  return Array.from(muscles);
+};
+
+const MuscleSilhouette = ({ highlight = "legs", exerciseName = "", view = "front", somatotypeData, dominantSomatotype = "mesomorph" }) => {
+  const mappedMuscles = getExactMuscles(exerciseName, highlight);
+
   const isHighlighted = (muscles) => {
     if (!highlight) return false;
-    const hLower = highlight.toLowerCase();
-    if (hLower === "full_body") return true;
-    return muscles.some(m => hLower.includes(m.toLowerCase()) || m.toLowerCase().includes(hLower));
+    
+    const mappedLower = mappedMuscles.map(m => m.toLowerCase());
+    
+    if (mappedLower.includes("full_body") || mappedLower.includes("cuerpo completo")) return true;
+    
+    return muscles.some(m => 
+      mappedLower.some(mapped => mapped.includes(m.toLowerCase()) || m.toLowerCase().includes(mapped))
+    );
   };
   
   const activeColor = "rgba(16, 185, 129, 0.65)"; // Glowing green semi-transparent
@@ -93,24 +233,25 @@ const MuscleSilhouette = ({ highlight = "legs", view = "front", somatotypeData, 
     };
   };
 
-  const getBodyModelParams = (somatotype) => {
+  const getBodyModelParams = (somatotype, viewMode) => {
+    const suffix = viewMode === "back" ? "_back.png" : ".png";
     if (somatotype === "ectomorph") {
       return {
-        href: "/ectomorph_body.png",
+        href: `/ectomorph_body${suffix}`,
         width: 192.2,
         x: 153.9,
         height: 424,
       };
     } else if (somatotype === "endomorph") {
       return {
-        href: "/endomorph_body.png",
+        href: `/endomorph_body${suffix}`,
         width: 212.4,
         x: 143.8,
         height: 424,
       };
     } else {
       return {
-        href: "/athletic_body.png",
+        href: `/athletic_body${suffix}`,
         width: 202.3,
         x: 148.85,
         height: 424,
@@ -125,7 +266,7 @@ const MuscleSilhouette = ({ highlight = "legs", view = "front", somatotypeData, 
   };
   
   const { dominant, scaleX, scaleY } = data;
-  const bodyModel = getBodyModelParams(dominant);
+  const bodyModel = getBodyModelParams(dominant, view);
   
   const sX = typeof scaleX === "number" ? scaleX : 1.0;
   const sY = typeof scaleY === "number" ? scaleY : 1.0;
@@ -157,7 +298,7 @@ const MuscleSilhouette = ({ highlight = "legs", view = "front", somatotypeData, 
       </defs>
       
       <g transform={transformStr} style={{ transition: "transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)" }}>
-        {/* High-fidelity 3D Body Model Image from Anthropometry */}
+        {/* High-fidelity 3D Body Model Image */}
         <image
           href={bodyModel.href}
           x={bodyModel.x}
@@ -179,31 +320,37 @@ const MuscleSilhouette = ({ highlight = "legs", view = "front", somatotypeData, 
             {/* Chest */}
             <path 
               d="M 250,122 C 240,122 232,126 229,136 C 227,144 227,156 229,165 C 235,168 244,168 250,167 C 256,168 265,168 271,165 C 273,144 273,156 271,136 C 268,126 260,122 250,122 Z M 250,122 L 250,167" 
-              style={getStyleForMuscle(["chest"])} 
+              style={getStyleForMuscle(["chest", "pecho"])} 
             />
 
             {/* Shoulders */}
             <path 
               d="M 228,122 C 220,126 214,128 206,132 C 198,136 198,146 200,160 C 202,170 196,182 191,196 L 195,196 C 202,182 208,170 208,160 C 208,154 213,145 224,136 Z M 272,122 C 280,126 286,128 294,132 C 302,136 302,146 300,160 C 298,170 304,182 309,196 L 305,196 C 298,182 292,170 292,160 C 292,154 287,145 276,136 Z" 
-              style={getStyleForMuscle(["shoulders"])} 
+              style={getStyleForMuscle(["shoulders", "hombros"])} 
             />
 
-            {/* Arms */}
+            {/* Arms (Biceps) */}
             <path 
               d="M 200,160 C 202,170 196,182 191,196 L 206,188 C 208,206 211,228 214,248 C 217,262 216,274 218,284 L 222,284 C 220,274 220,262 218,248 C 215,228 212,206 210,188 C 212,182 218,170 218,160 Z M 300,160 C 298,170 304,182 309,196 L 294,188 C 292,206 289,228 286,248 C 283,262 284,274 282,284 L 278,284 C 280,274 280,262 282,248 C 285,228 288,206 290,188 C 288,182 282,170 282,160 Z" 
-              style={getStyleForMuscle(["arms"])} 
+              style={getStyleForMuscle(["arms", "biceps", "bíceps"])} 
             />
 
             {/* Core */}
             <path 
               d="M 229,165 C 235,168 244,168 250,167 C 256,168 265,168 271,165 C 271,180 270,210 272,248 L 228,248 C 230,210 229,180 229,165 Z M 238,175 H 262 V 190 H 238 Z M 238,195 H 262 V 210 H 238 Z M 238,215 H 262 V 230 H 238 Z M 238,235 H 262 V 246 H 238 Z" 
-              style={getStyleForMuscle(["core", "abs"])} 
+              style={getStyleForMuscle(["core", "abs", "abdomen"])} 
             />
 
-            {/* Legs */}
+            {/* Legs (Quads) */}
             <path 
-              d="M 228,248 C 228,256 226,278 224,302 C 220,332 216,364 218,394 L 248,394 C 250,370 250,308 250,296 C 250,308 250,370 252,394 L 282,394 C 284,364 280,332 276,302 C 274,278 272,256 272,248 Z M 218,394 C 220,412 216,442 222,468 C 224,474 220,480 220,483 C 220,486 226,488 234,488 C 242,488 244,484 244,476 C 244,460 243,438 244,416 C 245,394 246,370 248,348 L 248,394 Z M 282,394 C 280,412 284,442 278,468 C 276,474 280,480 280,483 C 280,486 274,488 266,488 C 258,488 256,484 256,476 C 256,460 257,438 256,416 C 255,394 254,370 252,348 L 252,394 Z" 
-              style={getStyleForMuscle(["legs", "quads", "calves"])} 
+              d="M 228,248 C 228,256 226,278 224,302 C 220,332 216,364 218,394 L 248,394 C 250,370 250,308 250,296 C 250,308 250,370 252,394 L 282,394 C 284,364 280,332 276,302 C 274,278 272,256 272,248 Z" 
+              style={getStyleForMuscle(["legs", "quads", "cuádriceps"])} 
+            />
+
+            {/* Legs (Calves/Shins Front) */}
+            <path 
+              d="M 218,394 C 220,412 216,442 222,468 C 224,474 220,480 220,483 C 220,486 226,488 234,488 C 242,488 244,476 C 244,460 243,438 244,416 C 245,394 246,370 248,348 L 248,394 Z M 282,394 C 280,412 284,442 278,468 C 276,474 280,480 280,483 C 280,486 274,488 266,488 C 258,488 256,484 256,476 C 256,460 257,438 256,416 C 255,394 254,370 252,348 L 252,394 Z" 
+              style={getStyleForMuscle(["legs", "calves", "gemelos", "pantorrillas"])} 
             />
           </>
         ) : (
@@ -212,28 +359,46 @@ const MuscleSilhouette = ({ highlight = "legs", view = "front", somatotypeData, 
             <path d="M 250,64 C 243,64 236,68 236,78 C 236,88 234,88 234,92 C 234,96 238,98 241,102 C 245,98 249,98 250,98 C 251,98 255,98 259,102 C 262,98 266,96 266,92 C 266,88 264,88 264,78 C 264,68 257,64 250,64 Z" fill="transparent" stroke="transparent" strokeWidth="0" />
             <path d="M 241,102 C 241,108 236,114 228,122 L 235,122 C 242,116 247,112 250,112 C 253,112 258,116 265,122 L 272,122 C 264,114 259,108 259,102 Z" fill="transparent" stroke="transparent" strokeWidth="0" />
 
-            {/* Upper & Lower Back */}
+            {/* Upper Back (Traps & Lats) */}
             <path 
-              d="M 250,122 C 240,122 232,126 228,122 L 222,165 C 232,175 242,177 250,176 C 258,177 268,175 278,165 L 272,122 C 268,126 260,122 250,122 Z M 222,165 C 232,175 242,177 250,176 C 258,177 268,175 278,165 L 272,248 L 228,248 Z" 
-              style={getStyleForMuscle(["back", "core"])} 
+              d="M 250,122 C 240,122 232,126 228,122 L 222,165 C 232,175 242,177 250,176 C 258,177 268,175 278,165 L 272,122 C 268,126 260,122 250,122 Z" 
+              style={getStyleForMuscle(["back", "espalda", "lats", "dorsales", "traps", "trapecios"])} 
+            />
+
+            {/* Lower Back */}
+            <path 
+              d="M 222,165 C 232,175 242,177 250,176 C 258,177 268,175 278,165 L 272,248 L 228,248 Z" 
+              style={getStyleForMuscle(["back", "espalda", "lower_back", "lumbares"])} 
             />
 
             {/* Shoulders (Posterior) */}
             <path 
               d="M 228,122 C 220,126 214,128 206,132 C 198,136 198,146 200,160 C 202,170 196,182 191,196 L 195,196 C 202,182 208,170 208,160 C 208,154 213,145 224,136 Z M 272,122 C 280,126 286,128 294,132 C 302,136 302,146 300,160 C 298,170 304,182 309,196 L 305,196 C 298,182 292,170 292,160 C 292,154 287,145 276,136 Z" 
-              style={getStyleForMuscle(["shoulders"])} 
+              style={getStyleForMuscle(["shoulders", "hombros"])} 
             />
 
-            {/* Arms (Posterior) */}
+            {/* Arms (Posterior/Triceps) */}
             <path 
               d="M 200,160 C 202,170 196,182 191,196 L 206,188 C 208,206 211,228 214,248 C 217,262 216,274 218,284 L 222,284 C 220,274 220,262 218,248 C 215,228 212,206 210,188 C 212,182 218,170 218,160 Z M 300,160 C 298,170 304,182 309,196 L 294,188 C 292,206 289,228 286,248 C 283,262 284,274 282,284 L 278,284 C 280,274 280,262 282,248 C 285,228 288,206 290,188 C 288,182 282,170 282,160 Z" 
-              style={getStyleForMuscle(["arms"])} 
+              style={getStyleForMuscle(["arms", "triceps", "tríceps"])} 
             />
 
-            {/* Legs (Posterior/Glutes/Hamstrings/Calves) */}
+            {/* Glutes (Glúteos) */}
             <path 
-              d="M 228,248 C 228,256 226,278 224,302 C 220,332 216,364 218,394 L 248,394 C 250,370 250,308 250,296 C 250,308 250,370 252,394 L 282,394 C 284,364 280,332 276,302 C 274,278 272,256 272,248 Z M 218,394 C 220,412 216,442 222,468 C 224,474 220,480 220,483 C 220,486 226,488 234,488 C 242,488 244,484 244,476 C 244,460 243,438 244,416 C 245,394 246,370 248,348 L 248,394 Z M 282,394 C 280,412 284,442 278,468 C 276,474 280,480 280,483 C 280,486 274,488 266,488 C 258,488 256,484 256,476 C 256,460 257,438 256,416 C 255,394 254,370 252,348 L 252,394 Z" 
-              style={getStyleForMuscle(["legs", "quads", "calves", "hamstrings", "glutes"])} 
+              d="M 228,248 C 228,260 226,278 224,296 L 250,296 L 276,296 C 274,278 272,260 272,248 Z" 
+              style={getStyleForMuscle(["legs", "glutes", "glúteos"])} 
+            />
+
+            {/* Hamstrings (Isquiotibiales) */}
+            <path 
+              d="M 224,296 C 220,332 216,364 218,394 L 248,394 C 250,370 250,308 250,296 Z M 250,296 C 250,308 250,370 252,394 L 282,394 C 280,364 276,332 276,296 Z" 
+              style={getStyleForMuscle(["legs", "hamstrings", "isquiotibiales", "femoral"])} 
+            />
+
+            {/* Calves (Pantorrillas) */}
+            <path 
+              d="M 218,394 C 220,412 216,442 222,468 C 224,474 220,480 220,483 C 220,486 226,488 234,488 C 242,488 244,476 C 244,460 243,438 244,416 C 245,394 246,370 248,348 L 248,394 Z M 282,394 C 280,412 284,442 278,468 C 276,474 280,480 280,483 C 280,486 274,488 266,488 C 258,488 256,484 256,476 C 256,460 257,438 256,416 C 255,394 254,370 252,348 L 252,394 Z" 
+              style={getStyleForMuscle(["legs", "calves", "gemelos", "pantorrillas"])} 
             />
           </>
         )}
@@ -311,29 +476,33 @@ const VolumeBarChart = ({ logs = [] }) => {
 };
 
 // ─── Exercise Card ────────────────────────────────────────────────────────────
-const ExerciseCard = ({ exercise, log, onToggle, onUpdateLog, onDelete, isAdminMode, somatotypeData }) => {
+const ExerciseCard = ({ exercise, log, onToggle, onUpdateLog, onDelete, isAdminMode, somatotypeData, onMouseEnter, onMouseLeave }) => {
   const isCompleted = log?.completed || false;
   const [editing, setEditing] = useState(false);
   const [actualWeight, setActualWeight] = useState(log?.actualWeight || exercise.weight || "");
 
   return (
-    <div style={{
-      display: "grid",
-      gridTemplateColumns: "64px 1fr auto",
-      gap: "12px",
-      alignItems: "center",
-      padding: "14px",
-      borderRadius: "12px",
-      background: isCompleted ? "rgba(0,128,128,0.06)" : "var(--bg-main)",
-      border: `1px solid ${isCompleted ? "var(--primary)" : "var(--border-color)"}`,
-      transition: "all 0.2s",
-    }}>
+    <div 
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+      style={{
+        display: "grid",
+        gridTemplateColumns: "64px 1fr auto",
+        gap: "12px",
+        alignItems: "center",
+        padding: "14px",
+        borderRadius: "12px",
+        background: isCompleted ? "rgba(0,128,128,0.06)" : "var(--bg-main)",
+        border: `1px solid ${isCompleted ? "var(--primary)" : "var(--border-color)"}`,
+        transition: "all 0.2s",
+      }}
+    >
       {/* Muscle silhouette */}
       <div style={{
         background: "var(--bg-card)", borderRadius: "10px", padding: "4px",
         border: "1px solid var(--border-color)"
       }}>
-        <MuscleSilhouette highlight={exercise.muscleGroup} somatotypeData={somatotypeData} />
+        <MuscleSilhouette highlight={exercise.muscleGroup} exerciseName={exercise.name} somatotypeData={somatotypeData} />
       </div>
 
       {/* Info */}
@@ -467,6 +636,7 @@ const TrainingPlanner = ({ patientId, isAdminMode = false }) => {
   const [showAddExercise, setShowAddExercise] = useState(false);
   const [creatingPlan, setCreatingPlan] = useState(false);
   const [planError, setPlanError] = useState("");
+  const [hoveredExercise, setHoveredExercise] = useState(null);
 
   const [somatotypeData, setSomatotypeData] = useState({
     dominant: "mesomorph",
@@ -981,7 +1151,7 @@ const TrainingPlanner = ({ patientId, isAdminMode = false }) => {
                       borderRadius: "16px",
                       boxShadow: "0 4px 12px rgba(35, 127, 148, 0.05)",
                     }}>
-                      <MuscleSilhouette highlight={selectedDay?.muscleGroup} view="front" somatotypeData={somatotypeData} />
+                      <MuscleSilhouette highlight={hoveredExercise ? hoveredExercise.muscleGroup : selectedDay?.muscleGroup} exerciseName={hoveredExercise ? hoveredExercise.name : ""} view="front" somatotypeData={somatotypeData} />
                     </div>
                   </div>
                   {/* Back View */}
@@ -994,7 +1164,7 @@ const TrainingPlanner = ({ patientId, isAdminMode = false }) => {
                       borderRadius: "16px",
                       boxShadow: "0 4px 12px rgba(35, 127, 148, 0.05)",
                     }}>
-                      <MuscleSilhouette highlight={selectedDay?.muscleGroup} view="back" somatotypeData={somatotypeData} />
+                      <MuscleSilhouette highlight={hoveredExercise ? hoveredExercise.muscleGroup : selectedDay?.muscleGroup} exerciseName={hoveredExercise ? hoveredExercise.name : ""} view="back" somatotypeData={somatotypeData} />
                     </div>
                   </div>
                 </div>
@@ -1029,6 +1199,8 @@ const TrainingPlanner = ({ patientId, isAdminMode = false }) => {
                       onToggle={() => handleToggleExercise(ex.id)}
                       onUpdateLog={(weight) => handleUpdateLogWeight(ex.id, weight)}
                       onDelete={() => handleDeleteExercise(ex.id)}
+                      onMouseEnter={() => setHoveredExercise(ex)}
+                      onMouseLeave={() => setHoveredExercise(null)}
                     />
                   );
                 })
