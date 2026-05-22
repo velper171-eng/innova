@@ -310,7 +310,7 @@ export async function analyzeCalories({ imagePath, mimeType, foodName, ingredien
   "fat": 25.0,
   "sugar": 5.0,
   "sodium": 800,
-  "ingredients": "• Lomo de res, 150g\n• Papas fritas, 100g\n• Arroz blanco, 150g\n• Cebolla morada, 50g\n• Tomate, 50g",
+  "ingredients": "• Lomo de res, 150g\\n• Papas fritas, 100g\\n• Arroz blanco, 150g\\n• Cebolla morada, 50g\\n• Tomate, 50g",
   "preparation": "Salteado en sartén a fuego alto con cebolla, tomate y un toque de sillao."
 }
 Reglas para la propiedad 'ingredients': Genera una lista de los ingredientes estimados con su nombre y cantidad aproximada (ej. '• Pechuga de pollo, 150g' o '• Huevo, 2 unidades'), uno por línea. Queda estrictamente PROHIBIDO incluir calorías, proteínas o cualquier valor nutricional individual en esta lista. Solo pon el nombre y la cantidad.
@@ -379,7 +379,43 @@ Preparación: ${preparation || ""}`;
         throw new Error(`Empty response from model ${model}`);
       }
 
-      const nutritionData = JSON.parse(responseText.trim());
+      let cleanText = responseText.trim();
+      if (cleanText.startsWith("```")) {
+        cleanText = cleanText.replace(/^```json\s*/i, "").replace(/```$/, "").trim();
+      }
+
+      // Safe JSON parse by escaping literal control characters (raw newlines) inside double quotes
+      let processedText = "";
+      let inString = false;
+      let escape = false;
+      for (let i = 0; i < cleanText.length; i++) {
+        const char = cleanText[i];
+        if (char === '"' && !escape) {
+          inString = !inString;
+        }
+        if (char === '\\' && !escape) {
+          escape = true;
+        } else {
+          escape = false;
+        }
+        if (inString && (char === '\n' || char === '\r')) {
+          processedText += '\\n';
+        } else {
+          processedText += char;
+        }
+      }
+
+      let nutritionData = JSON.parse(processedText);
+
+      // Normalize ingredients array to string format with bullet points if returned as array
+      if (Array.isArray(nutritionData.ingredients)) {
+        nutritionData.ingredients = nutritionData.ingredients
+          .map(item => item.trim())
+          .filter(item => item.length > 0)
+          .map(item => item.startsWith("•") ? item : `• ${item}`)
+          .join("\n");
+      }
+
       console.log(`Calorie Engine: Successfully obtained response using model ${model}`);
       return {
         ...nutritionData,
