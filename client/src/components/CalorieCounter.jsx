@@ -82,13 +82,6 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
   const [errorMsg, setErrorMsg] = useState("");
   const [reAnalyzing, setReAnalyzing] = useState(false);
 
-  // Custom Gemini API Key
-  const [customApiKey, setCustomApiKey] = useState(() => {
-    return localStorage.getItem(`gemini_api_key_${patientId}`) || "";
-  });
-  const [showApiKeyConfig, setShowApiKeyConfig] = useState(false);
-  const [apiKeyInput, setApiKeyInput] = useState(customApiKey);
-
   const fileInputRef = useRef(null);
   const reAnalyzeTimeoutRef = useRef(null);
 
@@ -165,15 +158,9 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
       formData.append("ingredients", updatedIngredients);
       formData.append("preparation", updatedPreparation);
 
-      const headers = {};
-      if (customApiKey) {
-        headers["x-gemini-key"] = customApiKey;
-      }
-
       try {
         const res = await fetch(`${API_BASE}/patients/${patientId}/calories/analyze`, {
           method: "POST",
-          headers,
           body: formData,
         });
 
@@ -214,15 +201,9 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
     formData.append("ingredients", ingredients);
     formData.append("preparation", preparation);
 
-    const headers = {};
-    if (customApiKey) {
-      headers["x-gemini-key"] = customApiKey;
-    }
-
     try {
       const res = await fetch(`${API_BASE}/patients/${patientId}/calories/analyze`, {
         method: "POST",
-        headers,
         body: formData,
       });
 
@@ -589,96 +570,7 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
           
           {/* Form to submit food image & info */}
           <form onSubmit={handleAnalyze} className="glass-card" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <h4 className="glow-text" style={{ fontSize: "1.2rem", margin: 0 }}>Analizar Alimento con AI</h4>
-              <button
-                type="button"
-                onClick={() => setShowApiKeyConfig(!showApiKeyConfig)}
-                title="Configurar API Key de Gemini"
-                style={{
-                  background: customApiKey ? "rgba(16,185,129,0.12)" : "rgba(0,0,0,0.04)",
-                  border: customApiKey ? "1px solid rgba(16,185,129,0.3)" : "1px solid var(--border-color)",
-                  borderRadius: "8px",
-                  padding: "6px 10px",
-                  cursor: "pointer",
-                  fontSize: "1rem",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  transition: "all 0.2s ease"
-                }}
-              >
-                ⚙️
-                {customApiKey && (
-                  <span style={{ fontSize: "0.65rem", color: "var(--success)", fontWeight: 600 }}>KEY ✓</span>
-                )}
-              </button>
-            </div>
-
-            {showApiKeyConfig && (
-              <div style={{
-                padding: "14px",
-                borderRadius: "10px",
-                background: "linear-gradient(135deg, rgba(0,242,254,0.04), rgba(79,172,254,0.04))",
-                border: "1px solid rgba(0,242,254,0.15)",
-                display: "flex",
-                flexDirection: "column",
-                gap: "10px"
-              }}>
-                <div style={{ fontSize: "0.8rem", color: "var(--text-main)", fontWeight: 600 }}>
-                  🔑 API Key de Google AI Studio (Opcional)
-                </div>
-                <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", margin: 0, lineHeight: 1.5 }}>
-                  Si la IA no genera el desglose de ingredientes, es posible que la cuota gratuita del servidor se haya agotado.
-                  Puedes obtener tu propia clave gratuita en{" "}
-                  <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" style={{ color: "var(--primary)", fontWeight: 600 }}>aistudio.google.com/apikey</a>
-                  {" "}y pegarla aquí para usar tu propia cuota.
-                </p>
-                <div style={{ display: "flex", gap: "8px" }}>
-                  <input
-                    type="password"
-                    className="form-input"
-                    placeholder="AIzaSy..."
-                    value={apiKeyInput}
-                    onChange={(e) => setApiKeyInput(e.target.value)}
-                    style={{ flex: 1, fontSize: "0.8rem", padding: "8px 12px" }}
-                  />
-                  <button
-                    type="button"
-                    className="btn btn-primary"
-                    onClick={() => {
-                      const trimmed = apiKeyInput.trim();
-                      setCustomApiKey(trimmed);
-                      if (trimmed) {
-                        localStorage.setItem(`gemini_api_key_${patientId}`, trimmed);
-                      } else {
-                        localStorage.removeItem(`gemini_api_key_${patientId}`);
-                      }
-                      setShowApiKeyConfig(false);
-                    }}
-                    style={{ padding: "8px 16px", fontSize: "0.8rem", whiteSpace: "nowrap" }}
-                  >
-                    {apiKeyInput.trim() ? "Guardar" : "Borrar"}
-                  </button>
-                </div>
-                {customApiKey && (
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.75rem", color: "var(--success)" }}>
-                    <span>✅</span> API Key personalizada configurada y activa.
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setCustomApiKey("");
-                        setApiKeyInput("");
-                        localStorage.removeItem(`gemini_api_key_${patientId}`);
-                      }}
-                      style={{ background: "none", border: "none", color: "var(--error)", cursor: "pointer", fontSize: "0.75rem", textDecoration: "underline" }}
-                    >
-                      Eliminar
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
+            <h4 className="glow-text" style={{ fontSize: "1.2rem", margin: 0 }}>Analizar Alimento con AI</h4>
             
             {/* Image upload preview area */}
             <div

@@ -567,11 +567,10 @@ Preparación: ${preparation || ""}`;
   // Build a user-friendly error message in Spanish
   let friendlyError = "Todos los modelos de IA fallaron. Se usó el simulador local.";
   if (lastError?.message?.includes("429") || lastError?.message?.includes("RESOURCE_EXHAUSTED")) {
-    friendlyError = "⚠️ La cuota de la API de Gemini se ha agotado (límite gratuito excedido). " +
-      "El resultado mostrado es una estimación local simulada y NO proviene del análisis de IA real de la imagen. " +
-      "Para obtener el desglose real de ingredientes basado en la foto, puedes: " +
-      "(1) Escribir el nombre del plato en el campo de texto para que el simulador lo identifique, o " +
-      "(2) Configurar tu propia API Key de Google AI Studio en el icono ⚙️ de arriba.";
+    friendlyError = "⚠️ El servicio de IA está temporalmente saturado (límite de uso excedido). " +
+      "El resultado mostrado es una estimación local simulada. " +
+      "Para obtener un mejor desglose, escribe el nombre del plato en el campo de texto (ej. 'Lomo Saltado') " +
+      "y el sistema lo identificará automáticamente.";
   }
 
   return {
