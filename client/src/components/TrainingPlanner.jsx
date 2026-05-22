@@ -14,190 +14,189 @@ const MUSCLE_COLORS = {
   rest: "#aaa",
 };
 
+const bodySilhouettePath = `
+  M 250,64
+  C 243,64 236,68 236,78
+  C 236,88 234,88 234,92
+  C 234,96 238,98 241,102
+  C 241,108 236,114 228,122
+  C 220,126 214,128 206,132
+  C 198,136 198,146 200,160
+  C 202,170 196,182 191,196
+  C 186,210 180,228 177,246
+  C 174,258 172,266 174,272
+  C 176,276 182,274 184,268
+  C 188,256 192,238 198,218
+  C 202,204 204,196 206,188
+  C 208,206 211,228 214,248
+  C 217,262 216,274 218,284
+  C 220,290 224,290 226,284
+  C 228,274 228,260 228,248
+  C 228,256 226,278 224,302
+  C 220,332 216,364 218,394
+  C 220,412 216,442 222,468
+  C 224,474 220,480 220,483
+  C 220,486 226,488 234,488
+  C 242,488 244,484 244,476
+  C 244,460 243,438 244,416
+  C 245,394 246,370 248,348
+  C 249,326 250,308 250,296
+  C 250,308 251,326 252,348
+  C 254,370 255,394 256,416
+  C 256,438 256,460 256,476
+  C 256,484 258,488 266,488
+  C 274,488 280,486 280,483
+  C 280,480 276,474 278,468
+  C 284,412 280,442 282,394
+  C 284,364 280,332 276,302
+  C 274,278 272,256 272,248
+  C 272,260 272,274 274,284
+  C 276,290 280,290 282,284
+  C 284,274 283,262 286,248
+  C 289,228 292,206 294,188
+  C 296,196 298,204 302,218
+  C 308,238 312,256 316,268
+  C 318,274 324,276 326,272
+  C 328,266 326,258 323,246
+  C 320,228 314,210 309,196
+  C 304,182 298,170 300,160
+  C 302,146 302,136 294,132
+  C 286,128 280,126 272,122
+  C 264,114 259,108 259,102
+  C 262,98 266,96 266,92
+  C 266,88 264,88 264,78
+  C 264,68 257,64 250,64
+  Z
+`;
+
 const MuscleSilhouette = ({ highlight = "legs", view = "front" }) => {
-  const isHighlighted = (muscles) => muscles.includes(highlight) || highlight === "full_body";
+  const isHighlighted = (muscles) => {
+    if (!highlight) return false;
+    const hLower = highlight.toLowerCase();
+    if (hLower === "full_body") return true;
+    return muscles.some(m => hLower.includes(m.toLowerCase()) || m.toLowerCase().includes(hLower));
+  };
   
-  // Neon colors
   const activeColor = "#10b981"; // Glowing green
-  const inactiveColor = "rgba(255, 255, 255, 0.06)";
-  const strokeColor = "rgba(255, 255, 255, 0.15)";
+  const activeStroke = "#34d399";
+  const inactiveColor = "rgba(255, 255, 255, 0.05)";
+  const strokeColor = "rgba(255, 255, 255, 0.12)";
+  const outlineStroke = "rgba(255, 255, 255, 0.16)";
+  const outlineFill = "rgba(0, 0, 0, 0.2)";
 
-  if (view === "front") {
-    return (
-      <svg viewBox="0 0 120 240" width="80" height="160" style={{ display: "block", margin: "0 auto", overflow: "visible" }}>
-        <defs>
-          <filter id="neonGlowFront" x="-25%" y="-25%" width="150%" height="150%">
-            <feGaussianBlur stdDeviation="3.5" result="blur" />
-            <feMerge>
-              <feMergeNode in="blur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-        </defs>
-        
-        {/* Head */}
-        <ellipse cx="60" cy="22" rx="14" ry="16" fill={inactiveColor} stroke={strokeColor} strokeWidth="1" />
-        {/* Neck */}
-        <rect x="55" y="38" width="10" height="8" rx="2" fill={inactiveColor} stroke={strokeColor} strokeWidth="1" />
-        
-        {/* Chest */}
-        <path d="M 36,46 C 45,43 55,43 60,43 C 65,43 75,43 84,46 L 81,75 C 60,78 60,78 39,75 Z"
-          fill={isHighlighted(["chest"]) ? activeColor : inactiveColor}
-          stroke={isHighlighted(["chest"]) ? activeColor : strokeColor}
-          strokeWidth="1.2"
-          filter={isHighlighted(["chest"]) ? "url(#neonGlowFront)" : ""}
-          style={{ transition: "all 0.3s" }}
-        />
-        
-        {/* Shoulders */}
-        <path d="M 36,46 C 28,48 26,56 30,62 C 32,58 35,50 36,46 Z"
-          fill={isHighlighted(["shoulders"]) ? activeColor : inactiveColor}
-          stroke={isHighlighted(["shoulders"]) ? activeColor : strokeColor}
-          strokeWidth="1.2"
-          filter={isHighlighted(["shoulders"]) ? "url(#neonGlowFront)" : ""}
-          style={{ transition: "all 0.3s" }}
-        />
-        <path d="M 84,46 C 92,48 94,56 90,62 C 88,58 85,50 84,46 Z"
-          fill={isHighlighted(["shoulders"]) ? activeColor : inactiveColor}
-          stroke={isHighlighted(["shoulders"]) ? activeColor : strokeColor}
-          strokeWidth="1.2"
-          filter={isHighlighted(["shoulders"]) ? "url(#neonGlowFront)" : ""}
-          style={{ transition: "all 0.3s" }}
-        />
+  const getStyleForMuscle = (muscles) => {
+    const active = isHighlighted(muscles);
+    return {
+      fill: active ? activeColor : inactiveColor,
+      stroke: active ? activeStroke : strokeColor,
+      strokeWidth: active ? "1.5" : "1",
+      filter: active ? "url(#neonGlowMuscle)" : "none",
+      transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
+    };
+  };
 
-        {/* Arms */}
-        <path d="M 30,62 C 27,80 25,98 28,120 C 31,98 33,80 34,70 Z"
-          fill={isHighlighted(["arms"]) ? activeColor : inactiveColor}
-          stroke={isHighlighted(["arms"]) ? activeColor : strokeColor}
-          strokeWidth="1.2"
-          filter={isHighlighted(["arms"]) ? "url(#neonGlowFront)" : ""}
-          style={{ transition: "all 0.3s" }}
-        />
-        <path d="M 90,62 C 93,80 95,98 92,120 C 89,98 87,80 86,70 Z"
-          fill={isHighlighted(["arms"]) ? activeColor : inactiveColor}
-          stroke={isHighlighted(["arms"]) ? activeColor : strokeColor}
-          strokeWidth="1.2"
-          filter={isHighlighted(["arms"]) ? "url(#neonGlowFront)" : ""}
-          style={{ transition: "all 0.3s" }}
-        />
+  return (
+    <svg 
+      viewBox="160 50 180 440" 
+      style={{ 
+        display: "block", 
+        margin: "0 auto", 
+        overflow: "visible", 
+        width: "100%", 
+        height: "auto", 
+        maxWidth: "90px", 
+        maxHeight: "180px" 
+      }}
+    >
+      <defs>
+        <filter id="neonGlowMuscle" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="4" result="blur1" />
+          <feGaussianBlur stdDeviation="8" result="blur2" />
+          <feMerge>
+            <feMergeNode in="blur2" />
+            <feMergeNode in="blur1" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
+      
+      {/* Background silhouette outline */}
+      <path 
+        d={bodySilhouettePath} 
+        fill={outlineFill} 
+        stroke={outlineStroke} 
+        strokeWidth="1.2" 
+      />
+      
+      {view === "front" ? (
+        <>
+          {/* Head & Neck */}
+          <path d="M 250,64 C 243,64 236,68 236,78 C 236,88 234,88 234,92 C 234,96 238,98 241,102 C 245,98 249,98 250,98 C 251,98 255,98 259,102 C 262,98 266,96 266,92 C 266,88 264,88 264,78 C 264,68 257,64 250,64 Z" fill="rgba(255, 255, 255, 0.05)" stroke="rgba(255, 255, 255, 0.1)" strokeWidth="0.8" />
+          <path d="M 241,102 C 241,108 236,114 228,122 L 235,122 C 242,116 247,112 250,112 C 253,112 258,116 265,122 L 272,122 C 264,114 259,108 259,102 Z" fill="rgba(255, 255, 255, 0.05)" stroke="rgba(255, 255, 255, 0.1)" strokeWidth="0.8" />
 
-        {/* Core/Abs */}
-        <path d="M 39,75 C 60,78 60,78 81,75 L 76,125 L 44,125 Z"
-          fill={isHighlighted(["core"]) ? activeColor : inactiveColor}
-          stroke={isHighlighted(["core"]) ? activeColor : strokeColor}
-          strokeWidth="1.2"
-          filter={isHighlighted(["core"]) ? "url(#neonGlowFront)" : ""}
-          style={{ transition: "all 0.3s" }}
-        />
+          {/* Chest */}
+          <path 
+            d="M 250,122 C 240,122 232,126 229,136 C 227,144 227,156 229,165 C 235,168 244,168 250,167 C 256,168 265,168 271,165 C 273,144 273,156 271,136 C 268,126 260,122 250,122 Z M 250,122 L 250,167" 
+            style={getStyleForMuscle(["chest"])} 
+          />
 
-        {/* Legs (Quads) */}
-        <path d="M 44,125 L 58,125 L 56,190 L 42,190 Z"
-          fill={isHighlighted(["legs"]) ? activeColor : inactiveColor}
-          stroke={isHighlighted(["legs"]) ? activeColor : strokeColor}
-          strokeWidth="1.2"
-          filter={isHighlighted(["legs"]) ? "url(#neonGlowFront)" : ""}
-          style={{ transition: "all 0.3s" }}
-        />
-        <path d="M 62,125 L 76,125 L 78,190 L 64,190 Z"
-          fill={isHighlighted(["legs"]) ? activeColor : inactiveColor}
-          stroke={isHighlighted(["legs"]) ? activeColor : strokeColor}
-          strokeWidth="1.2"
-          filter={isHighlighted(["legs"]) ? "url(#neonGlowFront)" : ""}
-          style={{ transition: "all 0.3s" }}
-        />
+          {/* Shoulders */}
+          <path 
+            d="M 228,122 C 220,126 214,128 206,132 C 198,136 198,146 200,160 C 202,170 196,182 191,196 L 195,196 C 202,182 208,170 208,160 C 208,154 213,145 224,136 Z M 272,122 C 280,126 286,128 294,132 C 302,136 302,146 300,160 C 298,170 304,182 309,196 L 305,196 C 298,182 292,170 292,160 C 292,154 287,145 276,136 Z" 
+            style={getStyleForMuscle(["shoulders"])} 
+          />
 
-        {/* Calves (Front) */}
-        <rect x="44" y="195" width="10" height="30" rx="4" fill={inactiveColor} stroke={strokeColor} strokeWidth="1" />
-        <rect x="66" y="195" width="10" height="30" rx="4" fill={inactiveColor} stroke={strokeColor} strokeWidth="1" />
-      </svg>
-    );
-  } else {
-    // Back view
-    return (
-      <svg viewBox="0 0 120 240" width="80" height="160" style={{ display: "block", margin: "0 auto", overflow: "visible" }}>
-        <defs>
-          <filter id="neonGlowBack" x="-25%" y="-25%" width="150%" height="150%">
-            <feGaussianBlur stdDeviation="3.5" result="blur" />
-            <feMerge>
-              <feMergeNode in="blur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-        </defs>
+          {/* Arms */}
+          <path 
+            d="M 200,160 C 202,170 196,182 191,196 L 206,188 C 208,206 211,228 214,248 C 217,262 216,274 218,284 L 222,284 C 220,274 220,262 218,248 C 215,228 212,206 210,188 C 212,182 218,170 218,160 Z M 300,160 C 298,170 304,182 309,196 L 294,188 C 292,206 289,228 286,248 C 283,262 284,274 282,284 L 278,284 C 280,274 280,262 282,248 C 285,228 288,206 290,188 C 288,182 282,170 282,160 Z" 
+            style={getStyleForMuscle(["arms"])} 
+          />
 
-        {/* Head */}
-        <ellipse cx="60" cy="22" rx="14" ry="16" fill={inactiveColor} stroke={strokeColor} strokeWidth="1" />
-        {/* Neck */}
-        <rect x="55" y="38" width="10" height="8" rx="2" fill={inactiveColor} stroke={strokeColor} strokeWidth="1" />
+          {/* Core */}
+          <path 
+            d="M 229,165 C 235,168 244,168 250,167 C 256,168 265,168 271,165 C 271,180 270,210 272,248 L 228,248 C 230,210 229,180 229,165 Z M 238,175 H 262 V 190 H 238 Z M 238,195 H 262 V 210 H 238 Z M 238,215 H 262 V 230 H 238 Z M 238,235 H 262 V 246 H 238 Z" 
+            style={getStyleForMuscle(["core", "abs"])} 
+          />
 
-        {/* Upper Back */}
-        <path d="M 36,46 C 45,42 55,42 60,42 C 65,42 75,42 84,46 L 81,75 C 60,78 60,78 39,75 Z"
-          fill={isHighlighted(["back"]) ? activeColor : inactiveColor}
-          stroke={isHighlighted(["back"]) ? activeColor : strokeColor}
-          strokeWidth="1.2"
-          filter={isHighlighted(["back"]) ? "url(#neonGlowBack)" : ""}
-          style={{ transition: "all 0.3s" }}
-        />
+          {/* Legs */}
+          <path 
+            d="M 228,248 C 228,256 226,278 224,302 C 220,332 216,364 218,394 L 248,394 C 250,370 250,308 250,296 C 250,308 250,370 252,394 L 282,394 C 284,364 280,332 276,302 C 274,278 272,256 272,248 Z M 218,394 C 220,412 216,442 222,468 C 224,474 220,480 220,483 C 220,486 226,488 234,488 C 242,488 244,484 244,476 C 244,460 243,438 244,416 C 245,394 246,370 248,348 L 248,394 Z M 282,394 C 280,412 284,442 278,468 C 276,474 280,480 280,483 C 280,486 274,488 266,488 C 258,488 256,484 256,476 C 256,460 257,438 256,416 C 255,394 254,370 252,348 L 252,394 Z" 
+            style={getStyleForMuscle(["legs", "quads", "calves"])} 
+          />
+        </>
+      ) : (
+        <>
+          {/* Head & Neck */}
+          <path d="M 250,64 C 243,64 236,68 236,78 C 236,88 234,88 234,92 C 234,96 238,98 241,102 C 245,98 249,98 250,98 C 251,98 255,98 259,102 C 262,98 266,96 266,92 C 266,88 264,88 264,78 C 264,68 257,64 250,64 Z" fill="rgba(255, 255, 255, 0.05)" stroke="rgba(255, 255, 255, 0.1)" strokeWidth="0.8" />
+          <path d="M 241,102 C 241,108 236,114 228,122 L 235,122 C 242,116 247,112 250,112 C 253,112 258,116 265,122 L 272,122 C 264,114 259,108 259,102 Z" fill="rgba(255, 255, 255, 0.05)" stroke="rgba(255, 255, 255, 0.1)" strokeWidth="0.8" />
 
-        {/* Shoulders */}
-        <path d="M 36,46 C 28,48 26,56 30,62 C 32,58 35,50 36,46 Z"
-          fill={isHighlighted(["shoulders"]) ? activeColor : inactiveColor}
-          stroke={isHighlighted(["shoulders"]) ? activeColor : strokeColor}
-          strokeWidth="1.2"
-          filter={isHighlighted(["shoulders"]) ? "url(#neonGlowBack)" : ""}
-          style={{ transition: "all 0.3s" }}
-        />
-        <path d="M 84,46 C 92,48 94,56 90,62 C 88,58 85,50 84,46 Z"
-          fill={isHighlighted(["shoulders"]) ? activeColor : inactiveColor}
-          stroke={isHighlighted(["shoulders"]) ? activeColor : strokeColor}
-          strokeWidth="1.2"
-          filter={isHighlighted(["shoulders"]) ? "url(#neonGlowBack)" : ""}
-          style={{ transition: "all 0.3s" }}
-        />
+          {/* Upper & Lower Back */}
+          <path 
+            d="M 250,122 C 240,122 232,126 228,122 L 222,165 C 232,175 242,177 250,176 C 258,177 268,175 278,165 L 272,122 C 268,126 260,122 250,122 Z M 222,165 C 232,175 242,177 250,176 C 258,177 268,175 278,165 L 272,248 L 228,248 Z" 
+            style={getStyleForMuscle(["back", "core"])} 
+          />
 
-        {/* Lower Back */}
-        <path d="M 39,75 C 60,78 60,78 81,75 L 76,125 L 44,125 Z"
-          fill={isHighlighted(["back", "core"]) ? activeColor : inactiveColor}
-          stroke={isHighlighted(["back", "core"]) ? activeColor : strokeColor}
-          strokeWidth="1.2"
-          filter={isHighlighted(["back", "core"]) ? "url(#neonGlowBack)" : ""}
-          style={{ transition: "all 0.3s" }}
-        />
+          {/* Shoulders (Posterior) */}
+          <path 
+            d="M 228,122 C 220,126 214,128 206,132 C 198,136 198,146 200,160 C 202,170 196,182 191,196 L 195,196 C 202,182 208,170 208,160 C 208,154 213,145 224,136 Z M 272,122 C 280,126 286,128 294,132 C 302,136 302,146 300,160 C 298,170 304,182 309,196 L 305,196 C 298,182 292,170 292,160 C 292,154 287,145 276,136 Z" 
+            style={getStyleForMuscle(["shoulders"])} 
+          />
 
-        {/* Hamstrings / Glutes */}
-        <path d="M 44,125 L 58,125 L 56,190 L 42,190 Z"
-          fill={isHighlighted(["legs"]) ? activeColor : inactiveColor}
-          stroke={isHighlighted(["legs"]) ? activeColor : strokeColor}
-          strokeWidth="1.2"
-          filter={isHighlighted(["legs"]) ? "url(#neonGlowBack)" : ""}
-          style={{ transition: "all 0.3s" }}
-        />
-        <path d="M 62,125 L 76,125 L 78,190 L 64,190 Z"
-          fill={isHighlighted(["legs"]) ? activeColor : inactiveColor}
-          stroke={isHighlighted(["legs"]) ? activeColor : strokeColor}
-          strokeWidth="1.2"
-          filter={isHighlighted(["legs"]) ? "url(#neonGlowBack)" : ""}
-          style={{ transition: "all 0.3s" }}
-        />
+          {/* Arms (Posterior) */}
+          <path 
+            d="M 200,160 C 202,170 196,182 191,196 L 206,188 C 208,206 211,228 214,248 C 217,262 216,274 218,284 L 222,284 C 220,274 220,262 218,248 C 215,228 212,206 210,188 C 212,182 218,170 218,160 Z M 300,160 C 298,170 304,182 309,196 L 294,188 C 292,206 289,228 286,248 C 283,262 284,274 282,284 L 278,284 C 280,274 280,262 282,248 C 285,228 288,206 290,188 C 288,182 282,170 282,160 Z" 
+            style={getStyleForMuscle(["arms"])} 
+          />
 
-        {/* Calves */}
-        <path d="M 44,195 L 54,195 L 52,225 L 44,225 Z"
-          fill={isHighlighted(["legs"]) ? activeColor : inactiveColor}
-          stroke={isHighlighted(["legs"]) ? activeColor : strokeColor}
-          strokeWidth="1.2"
-          filter={isHighlighted(["legs"]) ? "url(#neonGlowBack)" : ""}
-          style={{ transition: "all 0.3s" }}
-        />
-        <path d="M 66,195 L 76,195 L 76,225 L 68,225 Z"
-          fill={isHighlighted(["legs"]) ? activeColor : inactiveColor}
-          stroke={isHighlighted(["legs"]) ? activeColor : strokeColor}
-          strokeWidth="1.2"
-          filter={isHighlighted(["legs"]) ? "url(#neonGlowBack)" : ""}
-          style={{ transition: "all 0.3s" }}
-        />
-      </svg>
-    );
-  }
+          {/* Legs (Posterior/Glutes/Hamstrings/Calves) */}
+          <path 
+            d="M 228,248 C 228,256 226,278 224,302 C 220,332 216,364 218,394 L 248,394 C 250,370 250,308 250,296 C 250,308 250,370 252,394 L 282,394 C 284,364 280,332 276,302 C 274,278 272,256 272,248 Z M 218,394 C 220,412 216,442 222,468 C 224,474 220,480 220,483 C 220,486 226,488 234,488 C 242,488 244,484 244,476 C 244,460 243,438 244,416 C 245,394 246,370 248,348 L 248,394 Z M 282,394 C 280,412 284,442 278,468 C 276,474 280,480 280,483 C 280,486 274,488 266,488 C 258,488 256,484 256,476 C 256,460 257,438 256,416 C 255,394 254,370 252,348 L 252,394 Z" 
+            style={getStyleForMuscle(["legs", "quads", "calves", "hamstrings", "glutes"])} 
+          />
+        </>
+      )}
+    </svg>
+  );
 };
 
 // ─── Weekly Volume Bar Chart ─────────────────────────────────────────────────
