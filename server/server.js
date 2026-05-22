@@ -870,6 +870,31 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
+// Serve uploaded files from Database (Supabase) to support Vercel serverless persistence
+app.get("/api/uploads/:filename", async (req, res) => {
+  try {
+    const { filename } = req.params;
+    const fileRecord = await prisma.uploadedFile.findUnique({
+      where: { filename }
+    });
+    if (!fileRecord) {
+      // Fallback to local files if it exists (e.g. local development)
+      const localPath = path.join(uploadDir, filename);
+      if (fs.existsSync(localPath)) {
+        return res.sendFile(localPath);
+      }
+      return res.status(404).send("Archivo no encontrado");
+    }
+    const buffer = Buffer.from(fileRecord.data, "base64");
+    res.setHeader("Content-Type", fileRecord.mimeType);
+    res.setHeader("Cache-Control", "public, max-age=31536000"); // Cache for 1 year
+    return res.send(buffer);
+  } catch (err) {
+    console.error("Error serving file from database:", err);
+    return res.status(500).send("Error al obtener el archivo");
+  }
+});
+
 // Serve uploaded videos statically
 app.use("/api/uploads", express.static(uploadDir));
 
@@ -886,6 +911,20 @@ app.post("/api/patients/:id/posture", upload.single("video"), async (req, res) =
     }
 
     const videoPath = `/uploads/${req.file.filename}`;
+
+    // Back up video file to database for serverless persistence
+    try {
+      const fileData = fs.readFileSync(req.file.path);
+      await prisma.uploadedFile.create({
+        data: {
+          filename: req.file.filename,
+          mimeType: req.file.mimetype,
+          data: fileData.toString("base64")
+        }
+      });
+    } catch (err) {
+      console.error("Error backing up video to database:", err);
+    }
 
     // Create record in database
     const job = await prisma.postureAnalysisJob.create({
@@ -991,6 +1030,20 @@ app.post("/api/patients/:id/calories/analyze", uploadCalorie.single("image"), as
 
     if (file) {
       result.imagePath = `/uploads/${file.filename}`;
+      try {
+        const fileData = fs.readFileSync(file.path);
+        await prisma.uploadedFile.create({
+          data: {
+            filename: file.filename,
+            mimeType: file.mimetype,
+            data: fileData.toString("base64")
+          }
+        });
+        // Delete the temporary file from disk
+        fs.unlinkSync(file.path);
+      } catch (err) {
+        console.error("Error backing up calorie image to database:", err);
+      }
     }
 
     res.json(result);

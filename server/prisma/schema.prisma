@@ -215,3 +215,10 @@ model ExerciseLog {
   actualWeight Float?
   createdAt  DateTime         @default(now())
 }
+
+model UploadedFile {
+  filename  String   @id
+  mimeType  String
+  data      String   // Base64-encoded file data
+  createdAt DateTime @default(now())
+}
