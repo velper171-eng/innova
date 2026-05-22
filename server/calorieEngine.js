@@ -301,92 +301,99 @@ export async function analyzeCalories({ imagePath, mimeType, foodName, ingredien
     return simulateCalorieEstimation(foodName, ingredients, preparation);
   }
 
-  console.log("Calorie Engine: Querying Google Gemini 1.5 Flash API...");
-
-  try {
-    let imagePart = null;
-
-    if (imagePath && fs.existsSync(imagePath)) {
-      const imageBuffer = fs.readFileSync(imagePath);
-      imagePart = {
-        inlineData: {
-          mimeType: mimeType || "image/jpeg",
-          data: imageBuffer.toString("base64")
-        }
-      };
-    }
-
-    const systemInstructions = `Nutriólogo experto. Devuelve JSON en español:
+  const systemInstructions = `Nutriólogo experto. Devuelve JSON en español:
 {
-  "foodName": "Nombre del plato",
-  "calories": 120,
-  "protein": 15.5,
-  "carbs": 30.0,
-  "fat": 8.5,
-  "sugar": 2.1,
-  "sodium": 350,
-  "ingredients": "• Lista de ingredientes con solo el nombre del ingrediente y su cantidad aproximada (ej. '• Pechuga de pollo, 150g' o '• Huevo, 2 unidades'). Queda estrictamente PROHIBIDO incluir el aporte calórico, proteínas, carbohidratos, grasas o cualquier otra información nutricional al final de cada ingrediente del desglose. Solo pon nombre y cantidad.",
-  "preparation": "Detalle breve del método de preparación"
+  "foodName": "Nombre del plato (ej. Lomo Saltado)",
+  "calories": 650,
+  "protein": 35.0,
+  "carbs": 55.0,
+  "fat": 25.0,
+  "sugar": 5.0,
+  "sodium": 800,
+  "ingredients": "• Lomo de res, 150g\n• Papas fritas, 100g\n• Arroz blanco, 150g\n• Cebolla morada, 50g\n• Tomate, 50g",
+  "preparation": "Salteado en sartén a fuego alto con cebolla, tomate y un toque de sillao."
 }
+Reglas para la propiedad 'ingredients': Genera una lista de los ingredientes estimados con su nombre y cantidad aproximada (ej. '• Pechuga de pollo, 150g' o '• Huevo, 2 unidades'), uno por línea. Queda estrictamente PROHIBIDO incluir calorías, proteínas o cualquier valor nutricional individual en esta lista. Solo pon el nombre y la cantidad.
 IMPORTANTE: Si el usuario proporciona un nombre de plato en el campo 'Plato' y no está vacío, debes usar exactamente ese nombre en la propiedad 'foodName' del JSON devuelto. Si el usuario proporciona una lista manual de ingredientes con cantidades en el campo 'Ingredientes', debes calcular los valores totales de 'calories', 'protein', 'carbs', 'fat', 'sugar' y 'sodium' basándote estrictamente en esa lista y en las cantidades indicadas. Si el usuario corrige, agrega, borra ingredientes o cambia las cantidades, recalcula la suma total de forma proporcional para reflejar con total precisión dichos cambios.`;
 
-    const userPrompt = `Plato: ${foodName || ""}
+  const userPrompt = `Plato: ${foodName || ""}
 Ingredientes: ${ingredients || ""}
 Preparación: ${preparation || ""}`;
 
-    const contentParts = [];
-    contentParts.push({ text: userPrompt });
-    
-    if (imagePart) {
-      contentParts.push(imagePart);
-    }
+  let imagePart = null;
 
-    const payload = {
-      contents: [{
-        parts: contentParts
-      }],
-      systemInstruction: {
-        parts: [{ text: systemInstructions }]
-      },
-      generationConfig: {
-        responseMimeType: "application/json",
-        temperature: 0.2
+  if (imagePath && fs.existsSync(imagePath)) {
+    const imageBuffer = fs.readFileSync(imagePath);
+    imagePart = {
+      inlineData: {
+        mimeType: mimeType || "image/jpeg",
+        data: imageBuffer.toString("base64")
       }
     };
-
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
-
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(payload)
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Gemini API returned status ${response.status}: ${errorText}`);
-    }
-
-    const result = await response.json();
-    const responseText = result.candidates?.[0]?.content?.parts?.[0]?.text;
-
-    if (!responseText) {
-      throw new Error("Empty response from Gemini API");
-    }
-
-    const nutritionData = JSON.parse(responseText.trim());
-    return {
-      ...nutritionData,
-      simulated: false
-    };
-
-  } catch (error) {
-    console.error("Calorie Engine: Error calling Gemini API. Falling back to local simulation...", error);
-    return {
-      ...simulateCalorieEstimation(foodName, ingredients, preparation),
-      error: error.message
-    };
   }
+
+  const contentParts = [];
+  contentParts.push({ text: userPrompt });
+  if (imagePart) {
+    contentParts.push(imagePart);
+  }
+
+  const payload = {
+    contents: [{
+      parts: contentParts
+    }],
+    systemInstruction: {
+      parts: [{ text: systemInstructions }]
+    },
+    generationConfig: {
+      responseMimeType: "application/json",
+      temperature: 0.2
+    }
+  };
+
+  const models = ["gemini-2.5-flash-lite", "gemini-2.5-flash", "gemini-2.0-flash", "gemini-2.0-flash-lite"];
+  let lastError = null;
+
+  for (const model of models) {
+    try {
+      console.log(`Calorie Engine: Querying Google Gemini API with model ${model}...`);
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Gemini API model ${model} returned status ${response.status}: ${errorText}`);
+      }
+
+      const result = await response.json();
+      const responseText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+
+      if (!responseText) {
+        throw new Error(`Empty response from model ${model}`);
+      }
+
+      const nutritionData = JSON.parse(responseText.trim());
+      console.log(`Calorie Engine: Successfully obtained response using model ${model}`);
+      return {
+        ...nutritionData,
+        simulated: false
+      };
+    } catch (error) {
+      console.warn(`Calorie Engine: Model ${model} failed:`, error.message);
+      lastError = error;
+    }
+  }
+
+  console.error("Calorie Engine: All Gemini models failed. Falling back to local simulation. Last error:", lastError?.message);
+  return {
+    ...simulateCalorieEstimation(foodName, ingredients, preparation),
+    error: lastError ? lastError.message : "All Gemini API models failed"
+  };
 }
