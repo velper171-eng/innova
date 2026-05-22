@@ -328,7 +328,7 @@ export async function analyzeCalories({ imagePath, mimeType, foodName, ingredien
   "ingredients": "• Lista de ingredientes con solo el nombre del ingrediente y su cantidad aproximada (ej. '• Pechuga de pollo, 150g' o '• Huevo, 2 unidades'). Queda estrictamente PROHIBIDO incluir el aporte calórico, proteínas, carbohidratos, grasas o cualquier otra información nutricional al final de cada ingrediente del desglose. Solo pon nombre y cantidad.",
   "preparation": "Detalle breve del método de preparación"
 }
-IMPORTANTE: Si el usuario proporciona una lista manual de ingredientes con cantidades en el campo 'Ingredientes', debes calcular los valores totales de 'calories', 'protein', 'carbs', 'fat', 'sugar' y 'sodium' basándote estrictamente en esa lista y en las cantidades indicadas. Si el usuario corrige, agrega, borra ingredientes o cambia las cantidades, recalcula la suma total de forma proporcional para reflejar con total precisión dichos cambios.`;
+IMPORTANTE: Si el usuario proporciona un nombre de plato en el campo 'Plato' y no está vacío, debes usar exactamente ese nombre en la propiedad 'foodName' del JSON devuelto. Si el usuario proporciona una lista manual de ingredientes con cantidades en el campo 'Ingredientes', debes calcular los valores totales de 'calories', 'protein', 'carbs', 'fat', 'sugar' y 'sodium' basándote estrictamente en esa lista y en las cantidades indicadas. Si el usuario corrige, agrega, borra ingredientes o cambia las cantidades, recalcula la suma total de forma proporcional para reflejar con total precisión dichos cambios.`;
 
     const userPrompt = `Plato: ${foodName || ""}
 Ingredientes: ${ingredients || ""}

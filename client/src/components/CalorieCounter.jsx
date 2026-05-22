@@ -142,7 +142,7 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
     }
   };
 
-  const triggerAutoReAnalyze = (updatedIngredients, updatedPreparation) => {
+  const triggerAutoReAnalyze = (updatedIngredients, updatedPreparation, updatedFoodName) => {
     if (reAnalyzeTimeoutRef.current) {
       clearTimeout(reAnalyzeTimeoutRef.current);
     }
@@ -151,8 +151,10 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
       setReAnalyzing(true);
       setErrorMsg("");
 
+      const finalFoodName = updatedFoodName !== undefined ? updatedFoodName : (result?.foodName || foodName || "");
+
       const formData = new FormData();
-      formData.append("foodName", result?.foodName || foodName || "");
+      formData.append("foodName", finalFoodName);
       formData.append("ingredients", updatedIngredients);
       formData.append("preparation", updatedPreparation);
 
@@ -171,6 +173,7 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
           if (!prev) return null;
           return {
             ...data,
+            foodName: finalFoodName,
             ingredients: updatedIngredients,
             preparation: updatedPreparation,
             imagePath: prev.imagePath || data.imagePath
@@ -721,9 +724,32 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
             {result ? (
               <div className="glass-card animate-fade-in" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--border-color)", paddingBottom: "12px" }}>
-                  <div>
-                    <h4 style={{ fontSize: "1.2rem", color: "var(--text-main)" }}>Resultado del Análisis</h4>
-                    <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Plato: {result.foodName}</span>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "4px", flex: 1 }}>
+                    <h4 style={{ fontSize: "1.2rem", color: "var(--text-main)", margin: 0 }}>Resultado del Análisis</h4>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "4px" }}>
+                      <span style={{ fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 500, whiteSpace: "nowrap" }}>Plato:</span>
+                      <input
+                        type="text"
+                        value={result.foodName || ""}
+                        onChange={(e) => {
+                          const newFoodName = e.target.value;
+                          setResult(prev => ({ ...prev, foodName: newFoodName }));
+                          triggerAutoReAnalyze(result.ingredients || "", result.preparation || "", newFoodName);
+                        }}
+                        placeholder="Nombre del plato"
+                        style={{
+                          fontSize: "0.85rem",
+                          fontWeight: 600,
+                          color: "var(--text-main)",
+                          background: "transparent",
+                          border: "none",
+                          borderBottom: "1px dashed var(--primary)",
+                          padding: "2px 4px",
+                          flex: 1,
+                          outline: "none"
+                        }}
+                      />
+                    </div>
                   </div>
                   {result.simulated ? (
                     <span style={{ fontSize: "0.75rem", padding: "2px 8px", borderRadius: "6px", background: "rgba(245,158,11,0.15)", border: "1px solid rgba(245,158,11,0.3)", color: "var(--warning)", fontWeight: 600 }}>
@@ -828,7 +854,7 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
                       onChange={(e) => {
                         const newIngredients = e.target.value;
                         setResult(prev => ({ ...prev, ingredients: newIngredients }));
-                        triggerAutoReAnalyze(newIngredients, result.preparation || "");
+                        triggerAutoReAnalyze(newIngredients, result.preparation || "", result.foodName || "");
                       }}
                       rows={4}
                       style={{ fontSize: "0.85rem", resize: "none", background: "#ffffff", border: "1px dashed var(--border-color)" }}
@@ -843,7 +869,7 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
                       onChange={(e) => {
                         const newPrep = e.target.value;
                         setResult(prev => ({ ...prev, preparation: newPrep }));
-                        triggerAutoReAnalyze(result.ingredients || "", newPrep);
+                        triggerAutoReAnalyze(result.ingredients || "", newPrep, result.foodName || "");
                       }}
                       style={{ fontSize: "0.85rem", background: "#ffffff", border: "1px dashed var(--border-color)" }}
                     />
