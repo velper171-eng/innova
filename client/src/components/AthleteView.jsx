@@ -1,15 +1,19 @@
 import React, { useState, useEffect } from "react";
 import CalorieCounter from "./CalorieCounter";
 import TrainingPlanner from "./TrainingPlanner";
+import Somatochart from "./Somatochart";
+import BodyTrendChart from "./BodyTrendChart";
+import SomatotypeBodyVisualizer from "./SomatotypeBodyVisualizer";
 
 const API_BASE = "/api";
 
-const AthleteView = ({ patientId, onBack }) => {
+const AthleteView = ({ patientId, onBack, isPublicShare = false }) => {
   const [reminders, setReminders] = useState([]);
   const [workoutTime, setWorkoutTime] = useState("18:00");
   const [activeDays, setActiveDays] = useState("Lunes,Miércoles,Viernes");
   const [supplements, setSupplements] = useState([]);
   const [cycles, setCycles] = useState([]);
+  const [patientDetail, setPatientDetail] = useState(null);
   
   // UI toggles
   const [isEditingSchedule, setIsEditingSchedule] = useState(false);
@@ -44,18 +48,13 @@ const AthleteView = ({ patientId, onBack }) => {
         triggerBrowserNotifications(data.reminders || []);
       }
 
-      // Get supplements
-      const supRes = await fetch(`${API_BASE}/patients/${patientId}/supplements`);
-      if (supRes.ok) {
-        const sups = await supRes.json();
-        setSupplements(sups);
-      }
-
-      // Get cycles
-      const cycRes = await fetch(`${API_BASE}/patients/${patientId}/cycles`);
-      if (cycRes.ok) {
-        const cycs = await cycRes.json();
-        setCycles(cycs);
+      // Get patient details (including evaluations, supplements, cycles)
+      const patRes = await fetch(`${API_BASE}/patients/${patientId}`);
+      if (patRes.ok) {
+        const detail = await patRes.json();
+        setPatientDetail(detail);
+        setSupplements(detail.supplements || []);
+        setCycles(detail.cycles || []);
       }
     } catch (err) {
       console.error("Error loading athlete data:", err);
@@ -252,12 +251,16 @@ const AthleteView = ({ patientId, onBack }) => {
     <div style={{ maxWidth: "640px", margin: "0 auto", padding: "0 0 40px", width: "100%" }} className="animate-fade-in">
       
       {/* Mobile Nav Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-        <button className="btn btn-secondary" onClick={onBack}>
-          ← Regresar CRM
-        </button>
+      <div style={{ display: "flex", justifyContent: isPublicShare ? "flex-end" : "space-between", alignItems: "center", marginBottom: "20px" }}>
+        {!isPublicShare && (
+          <button className="btn btn-secondary" onClick={onBack}>
+            ← Regresar CRM
+          </button>
+        )}
         <div style={{ textAlign: "right" }}>
-          <h3 className="glow-text" style={{ fontSize: "1.2rem", margin: 0 }}>Modo Atleta</h3>
+          <h3 className="glow-text" style={{ fontSize: "1.2rem", margin: 0 }}>
+            {patientDetail ? patientDetail.name : "Modo Atleta"}
+          </h3>
           <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>Consola Portátil</span>
         </div>
       </div>
@@ -269,6 +272,12 @@ const AthleteView = ({ patientId, onBack }) => {
           onClick={() => setAthleteTab("supplements")}
         >
           💊 Plan de Suplementos
+        </button>
+        <button
+          className={`athlete-tab-btn ${athleteTab === "somatotype" ? "active" : ""}`}
+          onClick={() => setAthleteTab("somatotype")}
+        >
+          🧬 Somatotipo (Cuerpo)
         </button>
         <button
           className={`athlete-tab-btn ${athleteTab === "training" ? "active" : ""}`}
@@ -545,13 +554,15 @@ const AthleteView = ({ patientId, onBack }) => {
                   Hora: <strong>{workoutTime}</strong> | Días: <strong>{activeDays}</strong>
                 </div>
               </div>
-              <button
-                className="btn btn-secondary"
-                style={{ padding: "6px 12px", fontSize: "0.8rem" }}
-                onClick={() => setIsEditingSchedule(!isEditingSchedule)}
-              >
-                {isEditingSchedule ? "Cerrar" : "Ajustar"}
-              </button>
+              {!isPublicShare && (
+                <button
+                  className="btn btn-secondary"
+                  style={{ padding: "6px 12px", fontSize: "0.8rem" }}
+                  onClick={() => setIsEditingSchedule(!isEditingSchedule)}
+                >
+                  {isEditingSchedule ? "Cerrar" : "Ajustar"}
+                </button>
+              )}
             </div>
 
             {isEditingSchedule && (
@@ -588,13 +599,15 @@ const AthleteView = ({ patientId, onBack }) => {
           <section className="glass-card">
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
               <h4 className="glow-text" style={{ fontSize: "1.2rem" }}>Mi Inventario de Suplementos</h4>
-              <button
-                className="btn btn-primary"
-                style={{ padding: "6px 12px", fontSize: "0.8rem" }}
-                onClick={() => setIsAddingSupplement(!isAddingSupplement)}
-              >
-                {isAddingSupplement ? "Cancelar" : "+ Agregar"}
-              </button>
+              {!isPublicShare && (
+                <button
+                  className="btn btn-primary"
+                  style={{ padding: "6px 12px", fontSize: "0.8rem" }}
+                  onClick={() => setIsAddingSupplement(!isAddingSupplement)}
+                >
+                  {isAddingSupplement ? "Cancelar" : "+ Agregar"}
+                </button>
+              )}
             </div>
 
             {/* Add supplement form */}
@@ -705,14 +718,16 @@ const AthleteView = ({ patientId, onBack }) => {
 
                       {/* Stock alerts & Actions */}
                       <div style={{ display: "flex", gap: "6px", width: "100%", marginTop: "10px", justifyContent: "center" }}>
-                        <button
-                          type="button"
-                          className="btn"
-                          style={{ padding: "4px 8px", fontSize: "0.7rem", background: "rgba(255, 69, 0, 0.05)", color: "var(--error)", borderRadius: "6px" }}
-                          onClick={() => handleDeleteSupplement(sup.id)}
-                        >
-                          🗑️
-                        </button>
+                        {!isPublicShare && (
+                          <button
+                            type="button"
+                            className="btn"
+                            style={{ padding: "4px 8px", fontSize: "0.7rem", background: "rgba(255, 69, 0, 0.05)", color: "var(--error)", borderRadius: "6px" }}
+                            onClick={() => handleDeleteSupplement(sup.id)}
+                          >
+                            🗑️
+                          </button>
+                        )}
                         {isLow && sup.purchaseLink && (
                           <a
                             href={sup.purchaseLink}
@@ -732,6 +747,87 @@ const AthleteView = ({ patientId, onBack }) => {
             )}
           </section>
         </>
+      )}
+
+      {athleteTab === "somatotype" && patientDetail && (
+        <div style={{ display: "flex", flexDirection: "column", gap: "20px" }} className="animate-fade-in">
+          {/* Dynamic Somatotype Body Shape Visualizer */}
+          <SomatotypeBodyVisualizer
+            evaluations={patientDetail.evaluations || []}
+            activeTab={athleteTab === "somatotype" ? "anthropometry" : athleteTab}
+            setActiveTab={(tab) => {
+              if (tab === "anthropometry") setAthleteTab("somatotype");
+              else if (tab === "nutrition") setAthleteTab("calories");
+              else if (tab === "training") setAthleteTab("training");
+              else if (tab === "supplementation") setAthleteTab("supplements");
+            }}
+          />
+
+          {/* Body Trend Chart */}
+          {patientDetail.evaluations?.length >= 2 && (
+            <div className="glass-card">
+              <h3 className="glow-text" style={{ fontSize: "1.15rem", marginBottom: "4px" }}>
+                📈 Evolución Corporal
+              </h3>
+              <p style={{ fontSize: "0.82rem", color: "var(--text-muted)", marginBottom: "16px", marginTop: "-2px" }}>
+                Tendencia de peso y porcentaje de grasa a lo largo del tiempo.
+              </p>
+              <BodyTrendChart evaluations={patientDetail.evaluations} />
+            </div>
+          )}
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "20px" }}>
+            {/* Somatochart */}
+            <div className="glass-card" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+              <h3 className="glow-text" style={{ fontSize: "1.25rem" }}>
+                Somatocarta Histórica
+              </h3>
+              <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginTop: "-8px" }}>
+                La línea de tendencia conecta tus evaluaciones de forma cronológica. Pasa el cursor por los puntos para ver el desglose.
+              </p>
+              <Somatochart evaluations={patientDetail.evaluations || []} />
+            </div>
+
+            {/* Evaluations timeline list */}
+            <div className="glass-card" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+              <h3 className="glow-text" style={{ fontSize: "1.25rem" }}>
+                Historial de Evaluaciones
+              </h3>
+              <div style={{ overflowX: "auto" }}>
+                {!patientDetail.evaluations || patientDetail.evaluations.length === 0 ? (
+                  <div style={{ color: "var(--text-dark)", textAlign: "center", padding: "40px", fontStyle: "italic" }}>
+                    Aún no se han registrado evaluaciones.
+                  </div>
+                ) : (
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.85rem", color: "var(--text-muted)", textAlign: "left" }}>
+                    <thead>
+                      <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.08)", color: "var(--text-main)" }}>
+                        <th style={{ padding: "12px 8px" }}>Fecha</th>
+                        <th style={{ padding: "12px 8px" }}>Peso</th>
+                        <th style={{ padding: "12px 8px" }}>Grasa %</th>
+                        <th style={{ padding: "12px 8px" }}>Somatotipo</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {patientDetail.evaluations.map((ev) => (
+                        <tr key={ev.id} style={{ borderBottom: "1px solid var(--border-color)" }}>
+                          <td style={{ padding: "12px 8px", color: "var(--text-main)", fontWeight: 600 }}>{ev.date}</td>
+                          <td style={{ padding: "12px 8px" }}>{ev.weight} kg</td>
+                          <td style={{ padding: "12px 8px", color: "var(--warning)", fontWeight: 600 }}>
+                            {ev.bodyFat ? `${ev.bodyFat}%` : "N/A"}
+                          </td>
+                          <td style={{ padding: "12px 8px" }}>
+                            {ev.endomorphy.toFixed(1)} - {ev.mesomorphy.toFixed(1)} - {ev.ectomorphy.toFixed(1)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {athleteTab === "training" && (

@@ -25,6 +25,15 @@ function App() {
 
   const isAuthenticated = !!currentUser;
 
+  const [sharedAthleteId, setSharedAthleteId] = useState(() => {
+    try {
+      return new URLSearchParams(window.location.search).get("athleteId");
+    } catch {
+      return null;
+    }
+  });
+  const [showQrModal, setShowQrModal] = useState(false);
+
   const handleLoginSuccess = (user, rememberMe) => {
     setCurrentUser(user);
     const storage = rememberMe ? localStorage : sessionStorage;
@@ -252,6 +261,18 @@ function App() {
   const filteredPatients = patients.filter((p) =>
     p.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  if (sharedAthleteId) {
+    return (
+      <div style={{ minHeight: "100vh", padding: "20px", background: "var(--grad-dark)" }}>
+        <AthleteView
+          patientId={sharedAthleteId}
+          isPublicShare={true}
+          onBack={() => {}}
+        />
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     return <Login onLogin={handleLoginSuccess} />;
@@ -767,6 +788,9 @@ function App() {
                   </div>
 
                   <div className="profile-actions">
+                    <button className="btn btn-secondary" style={{ border: "1px solid var(--primary)", color: "var(--primary)" }} onClick={() => setShowQrModal(true)}>
+                      🔗 Generar QR de Acceso
+                    </button>
                     <button className="btn btn-secondary" style={{ border: "1px solid var(--primary)", color: "var(--primary)" }} onClick={() => setIsAthleteView(true)}>
                       📱 Vista Móvil (Atleta PWA)
                     </button>
@@ -1223,6 +1247,108 @@ function App() {
 
         </main>
       </div>
+
+      {showQrModal && selectedPatient && (
+        <div
+          className="modal-backdrop animate-fade-in"
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            background: "rgba(47, 79, 79, 0.4)",
+            backdropFilter: "blur(8px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+          }}
+          onClick={() => setShowQrModal(false)}
+        >
+          <div
+            className="glass-card animate-scale-in"
+            style={{
+              width: "90%",
+              maxWidth: "400px",
+              padding: "32px",
+              textAlign: "center",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "20px",
+              background: "#ffffff",
+              border: "1px solid var(--border-color)",
+              boxShadow: "var(--shadow-strong)",
+              borderRadius: "24px",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="glow-text" style={{ fontSize: "1.4rem", margin: 0 }}>
+              Código QR de Acceso
+            </h3>
+            <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", margin: 0 }}>
+              Escanea este código con tu celular para acceder directamente a tu perfil en modo lectura de Somatotipo y Plan de Entrenamiento, y poder registrar tu Suplementación y Nutrición.
+            </p>
+            
+            <div
+              style={{
+                background: "#f4f7f6",
+                padding: "16px",
+                borderRadius: "16px",
+                border: "1px solid var(--border-color)",
+              }}
+            >
+              <img
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
+                  `${window.location.protocol}//${window.location.host}${window.location.pathname}?athleteId=${selectedPatient.id}`
+                )}&color=008080&bgcolor=ffffff`}
+                alt="Código QR del Atleta"
+                style={{ display: "block", width: "200px", height: "200px", borderRadius: "8px" }}
+              />
+            </div>
+
+            <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: "8px" }}>
+              <input
+                type="text"
+                readOnly
+                value={`${window.location.protocol}//${window.location.host}${window.location.pathname}?athleteId=${selectedPatient.id}`}
+                style={{
+                  width: "100%",
+                  padding: "10px 14px",
+                  fontSize: "0.8rem",
+                  background: "#f4f7f6",
+                  border: "1px solid var(--border-color)",
+                  borderRadius: "10px",
+                  textAlign: "center",
+                  color: "var(--text-main)",
+                  fontWeight: "500",
+                }}
+                onClick={(e) => e.target.select()}
+              />
+              <button
+                className="btn btn-primary"
+                style={{ width: "100%" }}
+                onClick={() => {
+                  const url = `${window.location.protocol}//${window.location.host}${window.location.pathname}?athleteId=${selectedPatient.id}`;
+                  navigator.clipboard.writeText(url);
+                  alert("¡Enlace copiado al portapapeles!");
+                }}
+              >
+                Copiar Enlace Directo
+              </button>
+            </div>
+
+            <button
+              className="btn btn-secondary"
+              style={{ width: "100%" }}
+              onClick={() => setShowQrModal(false)}
+            >
+              Cerrar
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
