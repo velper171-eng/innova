@@ -2,6 +2,58 @@ import React, { useState, useEffect, useRef } from "react";
 
 const API_BASE = "/api";
 
+// Utility to compress and resize image before upload
+const compressImage = (file, maxWidth = 1024, maxHeight = 1024, quality = 0.8) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target.result;
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", {
+                type: "image/jpeg",
+                lastModified: Date.now(),
+              });
+              resolve({ compressedFile, previewUrl: canvas.toDataURL("image/jpeg") });
+            } else {
+              reject(new Error("Canvas toBlob returned null"));
+            }
+          },
+          "image/jpeg",
+          quality
+        );
+      };
+      img.onerror = (err) => reject(err);
+    };
+    reader.onerror = (err) => reject(err);
+  });
+};
+
 const CalorieCounter = ({ patientId, isAdminMode = false }) => {
   const [logs, setLogs] = useState([]);
   const [calorieGoal, setCalorieGoal] = useState(() => {
@@ -55,15 +107,23 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
     setIsEditingGoal(false);
   };
 
-  const handleImageChange = (e) => {
+  const handleImageChange = async (e) => {
     const file = e.target.files?.[0];
     if (file) {
-      setImageFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result);
-      };
-      reader.readAsDataURL(file);
+      setErrorMsg("");
+      try {
+        const { compressedFile, previewUrl } = await compressImage(file);
+        setImageFile(compressedFile);
+        setImagePreview(previewUrl);
+      } catch (err) {
+        console.error("Compression failed, using original file:", err);
+        setImageFile(file);
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setImagePreview(reader.result);
+        };
+        reader.readAsDataURL(file);
+      }
     }
   };
 
@@ -96,8 +156,20 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
       });
 
       if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || "Error al analizar el alimento");
+        let errMsg = "Error al analizar el alimento";
+        try {
+          const errData = await res.json();
+          if (errData && errData.error) {
+            errMsg = errData.error;
+          }
+        } catch (jsonErr) {
+          if (res.status === 504) {
+            errMsg = "Tiempo de espera agotado (Vercel Timeout - 10s). Por favor, intenta de nuevo o con una imagen más pequeña.";
+          } else {
+            errMsg = `Error del servidor (${res.status})`;
+          }
+        }
+        throw new Error(errMsg);
       }
 
       const data = await res.json();
