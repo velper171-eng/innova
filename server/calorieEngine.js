@@ -164,6 +164,37 @@ const FOOD_DATABASE = [
   }
 ];
 
+const COMMON_RECIPES = [
+  {
+    keywords: ["lomo saltado"],
+    ingredients: "• Carne de res a la plancha, 150g\n• Papas fritas, 100g\n• Arroz blanco cocido, 150g\n• Cebolla morada, 50g\n• Tomate fresco, 50g\n• Aceite de oliva, 1 cucharada"
+  },
+  {
+    keywords: ["arroz con pollo", "arroz pollo"],
+    ingredients: "• Pechuga de pollo cocida, 150g\n• Arroz blanco cocido, 150g\n• Aceite de oliva, 1 cucharada"
+  },
+  {
+    keywords: ["ensalada de pollo", "ensalada pollo", "chicken salad"],
+    ingredients: "• Pechuga de pollo cocida, 150g\n• Ensalada mixta sin aderezo, 1 plato\n• Aguacate fresco, 100g\n• Aceite de oliva, 1 cucharada"
+  },
+  {
+    keywords: ["huevos con tostadas", "huevos con tostada", "desayuno", "eggs with toast", "tostadas con huevo", "huevo con tostada"],
+    ingredients: "• Huevos enteros cocidos, 2 unidades\n• Pan integral, 2 rebanadas\n• Aceite de oliva, 1 cucharada"
+  },
+  {
+    keywords: ["avena con platano", "avena con plátano", "avena", "oatmeal"],
+    ingredients: "• Avena en hojuelas, 40g\n• Leche descremada, 1 taza\n• Plátano mediano, 1 unidad"
+  },
+  {
+    keywords: ["pollo con arroz", "pechuga con arroz", "pollo a la plancha con arroz", "arroz con pechuga"],
+    ingredients: "• Pechuga de pollo cocida, 150g\n• Arroz blanco cocido, 150g\n• Aceite de oliva, 1 cucharada"
+  },
+  {
+    keywords: ["ensalada mixta", "ensalada"],
+    ingredients: "• Ensalada mixta sin aderezo, 1 plato\n• Aguacate fresco, 100g\n• Aceite de oliva, 1 cucharada"
+  }
+];
+
 function simulateCalorieEstimation(foodName = "", ingredients = "", preparation = "") {
   let calories = 0;
   let protein = 0;
@@ -173,7 +204,59 @@ function simulateCalorieEstimation(foodName = "", ingredients = "", preparation 
   let sodium = 0;
   const breakdownItems = [];
 
-  const lines = ingredients ? ingredients.split("\n").map(l => l.trim()).filter(l => l.length > 0) : [];
+  let activeIngredients = ingredients || "";
+
+  // If no ingredients provided, attempt to pre-populate from common recipes or matched foods
+  if (!activeIngredients.trim() && foodName) {
+    const lowerFood = foodName.toLowerCase().trim();
+    let matchedRecipe = null;
+    for (const recipe of COMMON_RECIPES) {
+      if (recipe.keywords.some(kw => lowerFood.includes(kw))) {
+        matchedRecipe = recipe;
+        break;
+      }
+    }
+
+    if (matchedRecipe) {
+      activeIngredients = matchedRecipe.ingredients;
+    } else {
+      // If no direct recipe, search individual items in database
+      const textToScan = `${foodName} ${preparation}`.toLowerCase();
+      const matchedFoods = [];
+      for (const food of FOOD_DATABASE) {
+        if (food.keywords.some(keyword => {
+          if (keyword.length <= 3) {
+            return new RegExp(`\\b${keyword}\\b`, 'i').test(textToScan);
+          }
+          return textToScan.includes(keyword);
+        })) {
+          matchedFoods.push(food);
+        }
+      }
+
+      // Filter subsets (e.g. keep "papas fritas" and filter out "papa")
+      const finalFoods = [];
+      for (const food of matchedFoods) {
+        const isSubsetOfAnother = matchedFoods.some(other => 
+          other !== food && other.keywords[0].includes(food.keywords[0]) && other.keywords[0] !== food.keywords[0]
+        );
+        if (!isSubsetOfAnother) {
+          finalFoods.push(food);
+        }
+      }
+
+      if (finalFoods.length > 0) {
+        activeIngredients = finalFoods.map(food => {
+          const qty = food.defaultQty;
+          const unit = food.defaultUnit;
+          const labelQty = ['g', 'gr', 'gramos'].includes(unit) ? `${qty}g` : `${qty} ${unit}`;
+          return `• ${food.name}, ${labelQty}`;
+        }).join("\n");
+      }
+    }
+  }
+
+  const lines = activeIngredients ? activeIngredients.split("\n").map(l => l.trim()).filter(l => l.length > 0) : [];
 
   if (lines.length > 0) {
     for (const line of lines) {
@@ -183,7 +266,12 @@ function simulateCalorieEstimation(foodName = "", ingredients = "", preparation 
       // Find matching food in database
       let matchedFood = null;
       for (const food of FOOD_DATABASE) {
-        if (food.keywords.some(keyword => lowerLine.includes(keyword))) {
+        if (food.keywords.some(keyword => {
+          if (keyword.length <= 3) {
+            return new RegExp(`\\b${keyword}\\b`, 'i').test(lowerLine);
+          }
+          return lowerLine.includes(keyword);
+        })) {
           // Prioritize more specific keywords (e.g. "papas fritas" over "papa")
           if (!matchedFood || food.keywords[0].length > matchedFood.keywords[0].length) {
             matchedFood = food;
@@ -259,55 +347,9 @@ function simulateCalorieEstimation(foodName = "", ingredients = "", preparation 
 
       breakdownItems.push(`${foodItemName}, ${labelQty}`);
     }
-  } else {
-    // When ingredients list is empty, scan foodName and preparation
-    const textToScan = `${foodName} ${preparation}`.toLowerCase();
-    const matchedFoods = [];
-
-    for (const food of FOOD_DATABASE) {
-      if (food.keywords.some(keyword => textToScan.includes(keyword))) {
-        matchedFoods.push(food);
-      }
-    }
-
-    // Filter subsets (e.g. keep "papas fritas" and filter out "papa")
-    const finalFoods = [];
-    for (const food of matchedFoods) {
-      const isSubsetOfAnother = matchedFoods.some(other => 
-        other !== food && other.keywords[0].includes(food.keywords[0]) && other.keywords[0] !== food.keywords[0]
-      );
-      if (!isSubsetOfAnother) {
-        finalFoods.push(food);
-      }
-    }
-
-    for (const food of finalFoods) {
-      const qty = food.defaultQty;
-      const unit = food.defaultUnit;
-      let finalQtyGrams = 0;
-      let labelQty = "";
-
-      if (['g', 'gr', 'gramos'].includes(unit)) {
-        finalQtyGrams = qty;
-        labelQty = `${qty}g`;
-      } else {
-        const weightPerUnit = food.unitWeights[unit] || food.unitWeights['unidad'] || 100;
-        finalQtyGrams = qty * weightPerUnit;
-        labelQty = `${qty} ${unit}`;
-      }
-
-      const ratio = finalQtyGrams / 100;
-      protein += food.density.protein * ratio;
-      carbs += food.density.carbs * ratio;
-      fat += food.density.fat * ratio;
-      sugar += food.density.sugar * ratio;
-      sodium += food.density.sodium * ratio;
-
-      breakdownItems.push(`${food.name}, ${labelQty}`);
-    }
   }
 
-  // General fallback if nothing matched and ingredients list is empty or sums to 0
+  // General fallback if nothing matched and activeIngredients is empty or sums to 0
   if (protein === 0 && carbs === 0 && fat === 0) {
     protein = 24;
     carbs = 50;
@@ -334,7 +376,7 @@ function simulateCalorieEstimation(foodName = "", ingredients = "", preparation 
     fat: parseFloat(fat.toFixed(1)),
     sugar: parseFloat(sugar.toFixed(1)),
     sodium: Math.round(sodium),
-    ingredients: ingredientsDesc || ingredients,
+    ingredients: ingredientsDesc || activeIngredients || ingredients,
     preparation: prepDesc,
     simulated: true
   };
