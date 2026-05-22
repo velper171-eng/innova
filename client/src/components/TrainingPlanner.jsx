@@ -69,7 +69,7 @@ const bodySilhouettePath = `
   Z
 `;
 
-const MuscleSilhouette = ({ highlight = "legs", view = "front" }) => {
+const MuscleSilhouette = ({ highlight = "legs", view = "front", somatotypeData, dominantSomatotype = "mesomorph" }) => {
   const isHighlighted = (muscles) => {
     if (!highlight) return false;
     const hLower = highlight.toLowerCase();
@@ -77,23 +77,59 @@ const MuscleSilhouette = ({ highlight = "legs", view = "front" }) => {
     return muscles.some(m => hLower.includes(m.toLowerCase()) || m.toLowerCase().includes(hLower));
   };
   
-  const activeColor = "#10b981"; // Glowing green
+  const activeColor = "rgba(16, 185, 129, 0.65)"; // Glowing green semi-transparent
   const activeStroke = "#34d399";
-  const inactiveColor = "rgba(255, 255, 255, 0.05)";
-  const strokeColor = "rgba(255, 255, 255, 0.12)";
-  const outlineStroke = "rgba(255, 255, 255, 0.16)";
-  const outlineFill = "rgba(0, 0, 0, 0.2)";
+  const inactiveColor = "transparent";
+  const strokeColor = "transparent"; 
 
   const getStyleForMuscle = (muscles) => {
     const active = isHighlighted(muscles);
     return {
       fill: active ? activeColor : inactiveColor,
       stroke: active ? activeStroke : strokeColor,
-      strokeWidth: active ? "1.5" : "1",
+      strokeWidth: active ? "1.5" : "0",
       filter: active ? "url(#neonGlowMuscle)" : "none",
       transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
     };
   };
+
+  const getBodyModelParams = (somatotype) => {
+    if (somatotype === "ectomorph") {
+      return {
+        href: "/ectomorph_body.png",
+        width: 192.2,
+        x: 153.9,
+        height: 424,
+      };
+    } else if (somatotype === "endomorph") {
+      return {
+        href: "/endomorph_body.png",
+        width: 212.4,
+        x: 143.8,
+        height: 424,
+      };
+    } else {
+      return {
+        href: "/athletic_body.png",
+        width: 202.3,
+        x: 148.85,
+        height: 424,
+      };
+    }
+  };
+
+  const data = somatotypeData || {
+    dominant: dominantSomatotype,
+    scaleX: 1.0,
+    scaleY: 1.0
+  };
+  
+  const { dominant, scaleX, scaleY } = data;
+  const bodyModel = getBodyModelParams(dominant);
+  
+  const sX = typeof scaleX === "number" ? scaleX : 1.0;
+  const sY = typeof scaleY === "number" ? scaleY : 1.0;
+  const transformStr = `translate(250, 260) scale(${sX.toFixed(3)}, ${sY.toFixed(3)}) translate(-250, -260)`;
 
   return (
     <svg 
@@ -120,81 +156,88 @@ const MuscleSilhouette = ({ highlight = "legs", view = "front" }) => {
         </filter>
       </defs>
       
-      {/* Background silhouette outline */}
-      <path 
-        d={bodySilhouettePath} 
-        fill={outlineFill} 
-        stroke={outlineStroke} 
-        strokeWidth="1.2" 
-      />
-      
-      {view === "front" ? (
-        <>
-          {/* Head & Neck */}
-          <path d="M 250,64 C 243,64 236,68 236,78 C 236,88 234,88 234,92 C 234,96 238,98 241,102 C 245,98 249,98 250,98 C 251,98 255,98 259,102 C 262,98 266,96 266,92 C 266,88 264,88 264,78 C 264,68 257,64 250,64 Z" fill="rgba(255, 255, 255, 0.05)" stroke="rgba(255, 255, 255, 0.1)" strokeWidth="0.8" />
-          <path d="M 241,102 C 241,108 236,114 228,122 L 235,122 C 242,116 247,112 250,112 C 253,112 258,116 265,122 L 272,122 C 264,114 259,108 259,102 Z" fill="rgba(255, 255, 255, 0.05)" stroke="rgba(255, 255, 255, 0.1)" strokeWidth="0.8" />
+      <g transform={transformStr} style={{ transition: "transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)" }}>
+        {/* High-fidelity 3D Body Model Image from Anthropometry */}
+        <image
+          href={bodyModel.href}
+          x={bodyModel.x}
+          y="64"
+          width={bodyModel.width}
+          height={bodyModel.height}
+          style={{
+            opacity: 0.95,
+            transition: "all 0.3s ease"
+          }}
+        />
+        
+        {view === "front" ? (
+          <>
+            {/* Head & Neck (transparent) */}
+            <path d="M 250,64 C 243,64 236,68 236,78 C 236,88 234,88 234,92 C 234,96 238,98 241,102 C 245,98 249,98 250,98 C 251,98 255,98 259,102 C 262,98 266,96 266,92 C 266,88 264,88 264,78 C 264,68 257,64 250,64 Z" fill="transparent" stroke="transparent" strokeWidth="0" />
+            <path d="M 241,102 C 241,108 236,114 228,122 L 235,122 C 242,116 247,112 250,112 C 253,112 258,116 265,122 L 272,122 C 264,114 259,108 259,102 Z" fill="transparent" stroke="transparent" strokeWidth="0" />
 
-          {/* Chest */}
-          <path 
-            d="M 250,122 C 240,122 232,126 229,136 C 227,144 227,156 229,165 C 235,168 244,168 250,167 C 256,168 265,168 271,165 C 273,144 273,156 271,136 C 268,126 260,122 250,122 Z M 250,122 L 250,167" 
-            style={getStyleForMuscle(["chest"])} 
-          />
+            {/* Chest */}
+            <path 
+              d="M 250,122 C 240,122 232,126 229,136 C 227,144 227,156 229,165 C 235,168 244,168 250,167 C 256,168 265,168 271,165 C 273,144 273,156 271,136 C 268,126 260,122 250,122 Z M 250,122 L 250,167" 
+              style={getStyleForMuscle(["chest"])} 
+            />
 
-          {/* Shoulders */}
-          <path 
-            d="M 228,122 C 220,126 214,128 206,132 C 198,136 198,146 200,160 C 202,170 196,182 191,196 L 195,196 C 202,182 208,170 208,160 C 208,154 213,145 224,136 Z M 272,122 C 280,126 286,128 294,132 C 302,136 302,146 300,160 C 298,170 304,182 309,196 L 305,196 C 298,182 292,170 292,160 C 292,154 287,145 276,136 Z" 
-            style={getStyleForMuscle(["shoulders"])} 
-          />
+            {/* Shoulders */}
+            <path 
+              d="M 228,122 C 220,126 214,128 206,132 C 198,136 198,146 200,160 C 202,170 196,182 191,196 L 195,196 C 202,182 208,170 208,160 C 208,154 213,145 224,136 Z M 272,122 C 280,126 286,128 294,132 C 302,136 302,146 300,160 C 298,170 304,182 309,196 L 305,196 C 298,182 292,170 292,160 C 292,154 287,145 276,136 Z" 
+              style={getStyleForMuscle(["shoulders"])} 
+            />
 
-          {/* Arms */}
-          <path 
-            d="M 200,160 C 202,170 196,182 191,196 L 206,188 C 208,206 211,228 214,248 C 217,262 216,274 218,284 L 222,284 C 220,274 220,262 218,248 C 215,228 212,206 210,188 C 212,182 218,170 218,160 Z M 300,160 C 298,170 304,182 309,196 L 294,188 C 292,206 289,228 286,248 C 283,262 284,274 282,284 L 278,284 C 280,274 280,262 282,248 C 285,228 288,206 290,188 C 288,182 282,170 282,160 Z" 
-            style={getStyleForMuscle(["arms"])} 
-          />
+            {/* Arms */}
+            <path 
+              d="M 200,160 C 202,170 196,182 191,196 L 206,188 C 208,206 211,228 214,248 C 217,262 216,274 218,284 L 222,284 C 220,274 220,262 218,248 C 215,228 212,206 210,188 C 212,182 218,170 218,160 Z M 300,160 C 298,170 304,182 309,196 L 294,188 C 292,206 289,228 286,248 C 283,262 284,274 282,284 L 278,284 C 280,274 280,262 282,248 C 285,228 288,206 290,188 C 288,182 282,170 282,160 Z" 
+              style={getStyleForMuscle(["arms"])} 
+            />
 
-          {/* Core */}
-          <path 
-            d="M 229,165 C 235,168 244,168 250,167 C 256,168 265,168 271,165 C 271,180 270,210 272,248 L 228,248 C 230,210 229,180 229,165 Z M 238,175 H 262 V 190 H 238 Z M 238,195 H 262 V 210 H 238 Z M 238,215 H 262 V 230 H 238 Z M 238,235 H 262 V 246 H 238 Z" 
-            style={getStyleForMuscle(["core", "abs"])} 
-          />
+            {/* Core */}
+            <path 
+              d="M 229,165 C 235,168 244,168 250,167 C 256,168 265,168 271,165 C 271,180 270,210 272,248 L 228,248 C 230,210 229,180 229,165 Z M 238,175 H 262 V 190 H 238 Z M 238,195 H 262 V 210 H 238 Z M 238,215 H 262 V 230 H 238 Z M 238,235 H 262 V 246 H 238 Z" 
+              style={getStyleForMuscle(["core", "abs"])} 
+            />
 
-          {/* Legs */}
-          <path 
-            d="M 228,248 C 228,256 226,278 224,302 C 220,332 216,364 218,394 L 248,394 C 250,370 250,308 250,296 C 250,308 250,370 252,394 L 282,394 C 284,364 280,332 276,302 C 274,278 272,256 272,248 Z M 218,394 C 220,412 216,442 222,468 C 224,474 220,480 220,483 C 220,486 226,488 234,488 C 242,488 244,484 244,476 C 244,460 243,438 244,416 C 245,394 246,370 248,348 L 248,394 Z M 282,394 C 280,412 284,442 278,468 C 276,474 280,480 280,483 C 280,486 274,488 266,488 C 258,488 256,484 256,476 C 256,460 257,438 256,416 C 255,394 254,370 252,348 L 252,394 Z" 
-            style={getStyleForMuscle(["legs", "quads", "calves"])} 
-          />
-        </>
-      ) : (
-        <>
-          {/* Head & Neck */}
-          <path d="M 250,64 C 243,64 236,68 236,78 C 236,88 234,88 234,92 C 234,96 238,98 241,102 C 245,98 249,98 250,98 C 251,98 255,98 259,102 C 262,98 266,96 266,92 C 266,88 264,88 264,78 C 264,68 257,64 250,64 Z" fill="rgba(255, 255, 255, 0.05)" stroke="rgba(255, 255, 255, 0.1)" strokeWidth="0.8" />
-          <path d="M 241,102 C 241,108 236,114 228,122 L 235,122 C 242,116 247,112 250,112 C 253,112 258,116 265,122 L 272,122 C 264,114 259,108 259,102 Z" fill="rgba(255, 255, 255, 0.05)" stroke="rgba(255, 255, 255, 0.1)" strokeWidth="0.8" />
+            {/* Legs */}
+            <path 
+              d="M 228,248 C 228,256 226,278 224,302 C 220,332 216,364 218,394 L 248,394 C 250,370 250,308 250,296 C 250,308 250,370 252,394 L 282,394 C 284,364 280,332 276,302 C 274,278 272,256 272,248 Z M 218,394 C 220,412 216,442 222,468 C 224,474 220,480 220,483 C 220,486 226,488 234,488 C 242,488 244,484 244,476 C 244,460 243,438 244,416 C 245,394 246,370 248,348 L 248,394 Z M 282,394 C 280,412 284,442 278,468 C 276,474 280,480 280,483 C 280,486 274,488 266,488 C 258,488 256,484 256,476 C 256,460 257,438 256,416 C 255,394 254,370 252,348 L 252,394 Z" 
+              style={getStyleForMuscle(["legs", "quads", "calves"])} 
+            />
+          </>
+        ) : (
+          <>
+            {/* Head & Neck (transparent) */}
+            <path d="M 250,64 C 243,64 236,68 236,78 C 236,88 234,88 234,92 C 234,96 238,98 241,102 C 245,98 249,98 250,98 C 251,98 255,98 259,102 C 262,98 266,96 266,92 C 266,88 264,88 264,78 C 264,68 257,64 250,64 Z" fill="transparent" stroke="transparent" strokeWidth="0" />
+            <path d="M 241,102 C 241,108 236,114 228,122 L 235,122 C 242,116 247,112 250,112 C 253,112 258,116 265,122 L 272,122 C 264,114 259,108 259,102 Z" fill="transparent" stroke="transparent" strokeWidth="0" />
 
-          {/* Upper & Lower Back */}
-          <path 
-            d="M 250,122 C 240,122 232,126 228,122 L 222,165 C 232,175 242,177 250,176 C 258,177 268,175 278,165 L 272,122 C 268,126 260,122 250,122 Z M 222,165 C 232,175 242,177 250,176 C 258,177 268,175 278,165 L 272,248 L 228,248 Z" 
-            style={getStyleForMuscle(["back", "core"])} 
-          />
+            {/* Upper & Lower Back */}
+            <path 
+              d="M 250,122 C 240,122 232,126 228,122 L 222,165 C 232,175 242,177 250,176 C 258,177 268,175 278,165 L 272,122 C 268,126 260,122 250,122 Z M 222,165 C 232,175 242,177 250,176 C 258,177 268,175 278,165 L 272,248 L 228,248 Z" 
+              style={getStyleForMuscle(["back", "core"])} 
+            />
 
-          {/* Shoulders (Posterior) */}
-          <path 
-            d="M 228,122 C 220,126 214,128 206,132 C 198,136 198,146 200,160 C 202,170 196,182 191,196 L 195,196 C 202,182 208,170 208,160 C 208,154 213,145 224,136 Z M 272,122 C 280,126 286,128 294,132 C 302,136 302,146 300,160 C 298,170 304,182 309,196 L 305,196 C 298,182 292,170 292,160 C 292,154 287,145 276,136 Z" 
-            style={getStyleForMuscle(["shoulders"])} 
-          />
+            {/* Shoulders (Posterior) */}
+            <path 
+              d="M 228,122 C 220,126 214,128 206,132 C 198,136 198,146 200,160 C 202,170 196,182 191,196 L 195,196 C 202,182 208,170 208,160 C 208,154 213,145 224,136 Z M 272,122 C 280,126 286,128 294,132 C 302,136 302,146 300,160 C 298,170 304,182 309,196 L 305,196 C 298,182 292,170 292,160 C 292,154 287,145 276,136 Z" 
+              style={getStyleForMuscle(["shoulders"])} 
+            />
 
-          {/* Arms (Posterior) */}
-          <path 
-            d="M 200,160 C 202,170 196,182 191,196 L 206,188 C 208,206 211,228 214,248 C 217,262 216,274 218,284 L 222,284 C 220,274 220,262 218,248 C 215,228 212,206 210,188 C 212,182 218,170 218,160 Z M 300,160 C 298,170 304,182 309,196 L 294,188 C 292,206 289,228 286,248 C 283,262 284,274 282,284 L 278,284 C 280,274 280,262 282,248 C 285,228 288,206 290,188 C 288,182 282,170 282,160 Z" 
-            style={getStyleForMuscle(["arms"])} 
-          />
+            {/* Arms (Posterior) */}
+            <path 
+              d="M 200,160 C 202,170 196,182 191,196 L 206,188 C 208,206 211,228 214,248 C 217,262 216,274 218,284 L 222,284 C 220,274 220,262 218,248 C 215,228 212,206 210,188 C 212,182 218,170 218,160 Z M 300,160 C 298,170 304,182 309,196 L 294,188 C 292,206 289,228 286,248 C 283,262 284,274 282,284 L 278,284 C 280,274 280,262 282,248 C 285,228 288,206 290,188 C 288,182 282,170 282,160 Z" 
+              style={getStyleForMuscle(["arms"])} 
+            />
 
-          {/* Legs (Posterior/Glutes/Hamstrings/Calves) */}
-          <path 
-            d="M 228,248 C 228,256 226,278 224,302 C 220,332 216,364 218,394 L 248,394 C 250,370 250,308 250,296 C 250,308 250,370 252,394 L 282,394 C 284,364 280,332 276,302 C 274,278 272,256 272,248 Z M 218,394 C 220,412 216,442 222,468 C 224,474 220,480 220,483 C 220,486 226,488 234,488 C 242,488 244,484 244,476 C 244,460 243,438 244,416 C 245,394 246,370 248,348 L 248,394 Z M 282,394 C 280,412 284,442 278,468 C 276,474 280,480 280,483 C 280,486 274,488 266,488 C 258,488 256,484 256,476 C 256,460 257,438 256,416 C 255,394 254,370 252,348 L 252,394 Z" 
-            style={getStyleForMuscle(["legs", "quads", "calves", "hamstrings", "glutes"])} 
-          />
-        </>
-      )}
+            {/* Legs (Posterior/Glutes/Hamstrings/Calves) */}
+            <path 
+              d="M 228,248 C 228,256 226,278 224,302 C 220,332 216,364 218,394 L 248,394 C 250,370 250,308 250,296 C 250,308 250,370 252,394 L 282,394 C 284,364 280,332 276,302 C 274,278 272,256 272,248 Z M 218,394 C 220,412 216,442 222,468 C 224,474 220,480 220,483 C 220,486 226,488 234,488 C 242,488 244,484 244,476 C 244,460 243,438 244,416 C 245,394 246,370 248,348 L 248,394 Z M 282,394 C 280,412 284,442 278,468 C 276,474 280,480 280,483 C 280,486 274,488 266,488 C 258,488 256,484 256,476 C 256,460 257,438 256,416 C 255,394 254,370 252,348 L 252,394 Z" 
+              style={getStyleForMuscle(["legs", "quads", "calves", "hamstrings", "glutes"])} 
+            />
+          </>
+        )}
+      </g>
     </svg>
   );
 };
@@ -268,7 +311,7 @@ const VolumeBarChart = ({ logs = [] }) => {
 };
 
 // ─── Exercise Card ────────────────────────────────────────────────────────────
-const ExerciseCard = ({ exercise, log, onToggle, onUpdateLog, onDelete, isAdminMode }) => {
+const ExerciseCard = ({ exercise, log, onToggle, onUpdateLog, onDelete, isAdminMode, somatotypeData }) => {
   const isCompleted = log?.completed || false;
   const [editing, setEditing] = useState(false);
   const [actualWeight, setActualWeight] = useState(log?.actualWeight || exercise.weight || "");
@@ -290,7 +333,7 @@ const ExerciseCard = ({ exercise, log, onToggle, onUpdateLog, onDelete, isAdminM
         background: "var(--bg-card)", borderRadius: "10px", padding: "4px",
         border: "1px solid var(--border-color)"
       }}>
-        <MuscleSilhouette highlight={exercise.muscleGroup} />
+        <MuscleSilhouette highlight={exercise.muscleGroup} somatotypeData={somatotypeData} />
       </div>
 
       {/* Info */}
@@ -425,6 +468,57 @@ const TrainingPlanner = ({ patientId, isAdminMode = false }) => {
   const [creatingPlan, setCreatingPlan] = useState(false);
   const [planError, setPlanError] = useState("");
 
+  const [somatotypeData, setSomatotypeData] = useState({
+    dominant: "mesomorph",
+    scaleX: 1.0,
+    scaleY: 1.0,
+  });
+
+  const fetchPatientSomatotype = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/patients/${patientId}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.evaluations && data.evaluations.length > 0) {
+          const sortedEvals = [...data.evaluations].sort(
+            (a, b) => new Date(a.date) - new Date(b.date)
+          );
+          const latestEval = sortedEvals[sortedEvals.length - 1];
+          const endo = latestEval.endomorphy || latestEval.endo || 3.0;
+          const meso = latestEval.mesomorphy || latestEval.meso || 4.0;
+          const ecto = latestEval.ectomorphy || latestEval.ecto || 3.0;
+          
+          let dominant = "mesomorph";
+          if (endo > meso && endo > ecto) {
+            dominant = "endomorph";
+          } else if (ecto > endo && ecto > meso) {
+            dominant = "ectomorph";
+          } else {
+            dominant = "mesomorph";
+          }
+
+          // Morph scale factor dynamically depending on endo, meso, and ecto coordinates
+          const dEndo = endo - 3.0;
+          const dMeso = meso - 4.0;
+          const dEcto = ecto - 3.0;
+
+          // scaleX: endomorphy increases width, ectomorphy decreases it, mesomorphy increases it moderately
+          let scaleX = 1.0 + (dEndo * 0.06) + (dMeso * 0.02) - (dEcto * 0.06);
+          // scaleY: ectomorphy increases height/linearity, endomorphy decreases it slightly
+          let scaleY = 1.0 + (dEcto * 0.015) - (dEndo * 0.01);
+
+          // Keep scaling within realistic, aesthetic bounds
+          scaleX = Math.max(0.78, Math.min(1.22, scaleX));
+          scaleY = Math.max(0.94, Math.min(1.06, scaleY));
+
+          setSomatotypeData({ dominant, scaleX, scaleY });
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching patient somatotype:", err);
+    }
+  };
+
   // Form states
   const [newPlanName, setNewPlanName] = useState("");
   const [newPlanGoal, setNewPlanGoal] = useState("hypertrophy");
@@ -456,6 +550,7 @@ const TrainingPlanner = ({ patientId, isAdminMode = false }) => {
   useEffect(() => {
     fetchPlans();
     fetchLogs();
+    fetchPatientSomatotype();
   }, [patientId]);
 
   const fetchPlans = async () => {
@@ -879,15 +974,27 @@ const TrainingPlanner = ({ patientId, isAdminMode = false }) => {
                   {/* Front View */}
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
                     <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginBottom: "6px" }}>Vista Frontal</span>
-                    <div style={{ background: "rgba(0,0,0,0.2)", padding: "12px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.05)" }}>
-                      <MuscleSilhouette highlight={selectedDay?.muscleGroup} view="front" />
+                    <div style={{
+                      background: "linear-gradient(180deg, #e7f1f3 0%, #edf4f5 100%)",
+                      border: "1px solid #b8cdd2",
+                      padding: "12px",
+                      borderRadius: "16px",
+                      boxShadow: "0 4px 12px rgba(35, 127, 148, 0.05)",
+                    }}>
+                      <MuscleSilhouette highlight={selectedDay?.muscleGroup} view="front" somatotypeData={somatotypeData} />
                     </div>
                   </div>
                   {/* Back View */}
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
                     <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginBottom: "6px" }}>Vista Posterior</span>
-                    <div style={{ background: "rgba(0,0,0,0.2)", padding: "12px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.05)" }}>
-                      <MuscleSilhouette highlight={selectedDay?.muscleGroup} view="back" />
+                    <div style={{
+                      background: "linear-gradient(180deg, #e7f1f3 0%, #edf4f5 100%)",
+                      border: "1px solid #b8cdd2",
+                      padding: "12px",
+                      borderRadius: "16px",
+                      boxShadow: "0 4px 12px rgba(35, 127, 148, 0.05)",
+                    }}>
+                      <MuscleSilhouette highlight={selectedDay?.muscleGroup} view="back" somatotypeData={somatotypeData} />
                     </div>
                   </div>
                 </div>
@@ -918,6 +1025,7 @@ const TrainingPlanner = ({ patientId, isAdminMode = false }) => {
                       exercise={ex}
                       log={log}
                       isAdminMode={isAdminMode}
+                      somatotypeData={somatotypeData}
                       onToggle={() => handleToggleExercise(ex.id)}
                       onUpdateLog={(weight) => handleUpdateLogWeight(ex.id, weight)}
                       onDelete={() => handleDeleteExercise(ex.id)}
