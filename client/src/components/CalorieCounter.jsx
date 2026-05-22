@@ -80,11 +80,18 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
   const [saving, setSaving] = useState(false);
   const [result, setResult] = useState(null);
   const [errorMsg, setErrorMsg] = useState("");
+  const [reAnalyzing, setReAnalyzing] = useState(false);
 
   const fileInputRef = useRef(null);
+  const reAnalyzeTimeoutRef = useRef(null);
 
   useEffect(() => {
     fetchLogs();
+    return () => {
+      if (reAnalyzeTimeoutRef.current) {
+        clearTimeout(reAnalyzeTimeoutRef.current);
+      }
+    };
   }, [patientId]);
 
   const fetchLogs = async () => {
@@ -133,6 +140,48 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
+  };
+
+  const triggerAutoReAnalyze = (updatedIngredients, updatedPreparation) => {
+    if (reAnalyzeTimeoutRef.current) {
+      clearTimeout(reAnalyzeTimeoutRef.current);
+    }
+
+    reAnalyzeTimeoutRef.current = setTimeout(async () => {
+      setReAnalyzing(true);
+      setErrorMsg("");
+
+      const formData = new FormData();
+      formData.append("foodName", result?.foodName || foodName || "");
+      formData.append("ingredients", updatedIngredients);
+      formData.append("preparation", updatedPreparation);
+
+      try {
+        const res = await fetch(`${API_BASE}/patients/${patientId}/calories/analyze`, {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!res.ok) {
+          throw new Error("Error al recalcular nutrientes");
+        }
+
+        const data = await res.json();
+        setResult(prev => {
+          if (!prev) return null;
+          return {
+            ...data,
+            ingredients: updatedIngredients,
+            preparation: updatedPreparation,
+            imagePath: prev.imagePath || data.imagePath
+          };
+        });
+      } catch (err) {
+        console.error("Auto re-analysis error:", err);
+      } finally {
+        setReAnalyzing(false);
+      }
+    }, 1500);
   };
 
   const handleAnalyze = async (e) => {
@@ -213,6 +262,9 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
 
       await fetchLogs();
       // Clear analysis result and input fields
+      if (reAnalyzeTimeoutRef.current) {
+        clearTimeout(reAnalyzeTimeoutRef.current);
+      }
       setResult(null);
       setFoodName("");
       setIngredients("");
@@ -685,7 +737,39 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
                 </div>
 
                 {/* Micro KPIs layout */}
-                <div style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
+                <div style={{ display: "flex", gap: "16px", flexWrap: "wrap", position: "relative" }}>
+                  {reAnalyzing && (
+                    <div style={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      background: "rgba(255, 255, 255, 0.85)",
+                      backdropFilter: "blur(1.5px)",
+                      zIndex: 10,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      borderRadius: "8px",
+                      color: "var(--primary)",
+                      fontWeight: 600,
+                      fontSize: "0.95rem",
+                      gap: "8px",
+                      boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+                      border: "1px solid var(--border-color)"
+                    }}>
+                      <div style={{
+                        width: "18px",
+                        height: "18px",
+                        border: "2px solid var(--primary)",
+                        borderTopColor: "transparent",
+                        borderRadius: "50%",
+                        animation: "spin 0.6s linear infinite"
+                      }}></div>
+                      Actualizando nutrientes...
+                    </div>
+                  )}
                   {/* Calories ring card */}
                   <div style={{ flex: 1, minWidth: "100px", padding: "12px", background: "var(--primary-glow)", border: "1px solid var(--primary)", borderRadius: "8px", textAlign: "center" }}>
                     <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Calorías</span>
@@ -741,7 +825,11 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
                     <textarea
                       className="form-input"
                       value={result.ingredients || ""}
-                      onChange={(e) => setResult(prev => ({ ...prev, ingredients: e.target.value }))}
+                      onChange={(e) => {
+                        const newIngredients = e.target.value;
+                        setResult(prev => ({ ...prev, ingredients: newIngredients }));
+                        triggerAutoReAnalyze(newIngredients, result.preparation || "");
+                      }}
                       rows={4}
                       style={{ fontSize: "0.85rem", resize: "none", background: "#ffffff", border: "1px dashed var(--border-color)" }}
                     />
@@ -752,7 +840,11 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
                       type="text"
                       className="form-input"
                       value={result.preparation || ""}
-                      onChange={(e) => setResult(prev => ({ ...prev, preparation: e.target.value }))}
+                      onChange={(e) => {
+                        const newPrep = e.target.value;
+                        setResult(prev => ({ ...prev, preparation: newPrep }));
+                        triggerAutoReAnalyze(result.ingredients || "", newPrep);
+                      }}
                       style={{ fontSize: "0.85rem", background: "#ffffff", border: "1px dashed var(--border-color)" }}
                     />
                   </div>
@@ -763,7 +855,12 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
                   <button
                     type="button"
                     className="btn btn-secondary"
-                    onClick={() => setResult(null)}
+                    onClick={() => {
+                      if (reAnalyzeTimeoutRef.current) {
+                        clearTimeout(reAnalyzeTimeoutRef.current);
+                      }
+                      setResult(null);
+                    }}
                     style={{ flex: 1, padding: "8px 16px", fontSize: "0.85rem" }}
                   >
                     Descartar
