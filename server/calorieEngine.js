@@ -314,7 +314,10 @@ export async function analyzeCalories({ imagePath, mimeType, foodName, ingredien
   "preparation": "Salteado en sartén a fuego alto con cebolla, tomate y un toque de sillao."
 }
 Reglas para la propiedad 'ingredients': Genera una lista de los ingredientes estimados con su nombre y cantidad aproximada (ej. '• Pechuga de pollo, 150g' o '• Huevo, 2 unidades'), uno por línea. Queda estrictamente PROHIBIDO incluir calorías, proteínas o cualquier valor nutricional individual en esta lista. Solo pon el nombre y la cantidad.
-IMPORTANTE: Si el usuario proporciona un nombre de plato en el campo 'Plato' y no está vacío, debes usar exactamente ese nombre en la propiedad 'foodName' del JSON devuelto. Si el usuario proporciona una lista manual de ingredientes con cantidades en el campo 'Ingredientes', debes calcular los valores totales de 'calories', 'protein', 'carbs', 'fat', 'sugar' y 'sodium' basándote estrictamente en esa lista y en las cantidades indicadas. Si el usuario corrige, agrega, borra ingredientes o cambia las cantidades, recalcula la suma total de forma proporcional para reflejar con total precisión dichos cambios.`;
+IMPORTANTE:
+1. Si el usuario proporciona un nombre de plato en el campo 'Plato' y no está vacío, debes usar exactamente ese nombre en la propiedad 'foodName' del JSON devuelto.
+2. Si el usuario proporciona una lista manual/editada de ingredientes con cantidades en el campo 'Ingredientes', debes calcular los valores nutricionales totales (calories, protein, carbs, fat, sugar, sodium) basándote ÚNICA y ESTRICTAMENTE en esa lista de ingredientes y en las cantidades indicadas en ella.
+3. REGLA CRÍTICA DE CORRECCIÓN: Si el usuario corrige, edita, cambia las cantidades, agrega o elimina ingredientes de la lista, debes tratar la nueva lista como la lista FINAL y ABSOLUTA de ingredientes. NO sumes los gramos o cantidades anteriores con las nuevas cantidades corregidas (por ejemplo, si antes eran 150g y ahora el texto dice 200g, el ingrediente es de 200g en total, NO 350g). Tampoco sumes calorías por defecto del nombre del plato a los ingredientes. Los valores nutricionales deben corresponder exactamente a las cantidades escritas en la lista en ese momento.`;
 
   const userPrompt = `Plato: ${foodName || ""}
 Ingredientes: ${ingredients || ""}
