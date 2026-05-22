@@ -17,6 +17,153 @@ function parseQuantity(line) {
 /**
  * Heuristic simulator for calorie and macro estimation based on food description/ingredients.
  */
+const FOOD_DATABASE = [
+  {
+    keywords: ["pechuga de pollo", "pechuga pollo", "pollo", "chicken", "pechuga"],
+    name: "Pechuga de pollo cocida",
+    defaultQty: 150,
+    defaultUnit: "g",
+    density: { protein: 25.0, carbs: 0.0, fat: 3.0, sodium: 70.0, sugar: 0.0 },
+    unitWeights: { u: 150, unidad: 150, unidades: 150, plato: 150 }
+  },
+  {
+    keywords: ["arroz blanco", "arroz", "rice"],
+    name: "Arroz blanco cocido",
+    defaultQty: 150,
+    defaultUnit: "g",
+    density: { protein: 2.7, carbs: 28.0, fat: 0.3, sodium: 1.0, sugar: 0.1 },
+    unitWeights: { taza: 150, tazas: 150, plato: 200 }
+  },
+  {
+    keywords: ["aguacate", "avocado", "palta"],
+    name: "Aguacate fresco",
+    defaultQty: 100,
+    defaultUnit: "g",
+    density: { protein: 2.0, carbs: 8.5, fat: 15.0, sodium: 7.0, sugar: 0.7 },
+    unitWeights: { u: 150, unidad: 150, unidades: 150, und: 150 }
+  },
+  {
+    keywords: ["huevo", "egg"],
+    name: "Huevos enteros cocidos",
+    defaultQty: 2,
+    defaultUnit: "unidades",
+    density: { protein: 12.6, carbs: 0.7, fat: 9.5, sodium: 124.0, sugar: 0.4 },
+    unitWeights: { u: 50, unidad: 50, unidades: 50, und: 50, ud: 50 }
+  },
+  {
+    keywords: ["papas fritas", "papa frita", "patatas fritas", "patata frita"],
+    name: "Papas fritas",
+    defaultQty: 80,
+    defaultUnit: "g",
+    density: { protein: 3.5, carbs: 38.0, fat: 15.0, sodium: 210.0, sugar: 0.3 },
+    unitWeights: { plato: 150, unidad: 15, unidades: 15 }
+  },
+  {
+    keywords: ["papa", "patata"],
+    name: "Papa cocida",
+    defaultQty: 150,
+    defaultUnit: "g",
+    density: { protein: 2.0, carbs: 20.0, fat: 0.1, sodium: 5.0, sugar: 0.8 },
+    unitWeights: { u: 150, unidad: 150, unidades: 150, und: 150, plato: 200 }
+  },
+  {
+    keywords: ["cebolla"],
+    name: "Cebolla morada",
+    defaultQty: 50,
+    defaultUnit: "g",
+    density: { protein: 1.1, carbs: 9.3, fat: 0.1, sodium: 4.0, sugar: 4.2 },
+    unitWeights: { u: 100, unidad: 100, unidades: 100, und: 100 }
+  },
+  {
+    keywords: ["tomate"],
+    name: "Tomate fresco",
+    defaultQty: 50,
+    defaultUnit: "g",
+    density: { protein: 0.9, carbs: 3.9, fat: 0.2, sodium: 5.0, sugar: 2.6 },
+    unitWeights: { u: 120, unidad: 120, unidades: 120, und: 120 }
+  },
+  {
+    keywords: ["ensalada", "salad", "lechuga"],
+    name: "Ensalada mixta sin aderezo",
+    defaultQty: 1,
+    defaultUnit: "plato",
+    density: { protein: 1.2, carbs: 5.0, fat: 0.2, sodium: 30.0, sugar: 2.0 },
+    unitWeights: { plato: 150, platos: 150, taza: 75, tazas: 75 }
+  },
+  {
+    keywords: ["aceite de oliva", "aceite", "oil"],
+    name: "Aceite de oliva",
+    defaultQty: 1,
+    defaultUnit: "cucharada",
+    density: { protein: 0.0, carbs: 0.0, fat: 100.0, sodium: 2.0, sugar: 0.0 },
+    unitWeights: { cucharada: 14, cucharadas: 14, cucharadita: 5, cucharaditas: 5, u: 14, unidad: 14 }
+  },
+  {
+    keywords: ["pan integral", "pan", "bread", "tostada"],
+    name: "Pan integral",
+    defaultQty: 2,
+    defaultUnit: "rebanadas",
+    density: { protein: 9.0, carbs: 49.0, fat: 3.0, sodium: 400.0, sugar: 5.0 },
+    unitWeights: { rebanada: 30, rebanadas: 30, slice: 30, slices: 30, u: 30, unidad: 30 }
+  },
+  {
+    keywords: ["lomo de res", "lomo", "carne de res", "carne", "res", "beef", "bife"],
+    name: "Carne de res a la plancha",
+    defaultQty: 150,
+    defaultUnit: "g",
+    density: { protein: 22.0, carbs: 0.0, fat: 12.0, sodium: 60.0, sugar: 0.0 },
+    unitWeights: { u: 150, unidad: 150, unidades: 150, und: 150, bife: 150 }
+  },
+  {
+    keywords: ["queso", "cheese"],
+    name: "Queso fresco",
+    defaultQty: 30,
+    defaultUnit: "g",
+    density: { protein: 20.0, carbs: 2.0, fat: 25.0, sodium: 600.0, sugar: 1.0 },
+    unitWeights: { rebanada: 30, rebanadas: 30, slice: 30, slices: 30, u: 30, unidad: 30 }
+  },
+  {
+    keywords: ["avena", "oats"],
+    name: "Avena en hojuelas",
+    defaultQty: 40,
+    defaultUnit: "g",
+    density: { protein: 13.0, carbs: 68.0, fat: 7.0, sodium: 2.0, sugar: 1.0 },
+    unitWeights: { taza: 40, tazas: 40 }
+  },
+  {
+    keywords: ["leche", "milk"],
+    name: "Leche descremada",
+    defaultQty: 1,
+    defaultUnit: "taza",
+    density: { protein: 3.3, carbs: 4.8, fat: 1.5, sodium: 40.0, sugar: 4.8 },
+    unitWeights: { taza: 240, tazas: 240, vaso: 240, vasos: 240 }
+  },
+  {
+    keywords: ["yogur", "yogurt"],
+    name: "Yogur natural",
+    defaultQty: 1,
+    defaultUnit: "taza",
+    density: { protein: 4.0, carbs: 5.0, fat: 1.5, sodium: 50.0, sugar: 4.0 },
+    unitWeights: { taza: 200, tazas: 200, vaso: 200, vasos: 200, pote: 125, potes: 125 }
+  },
+  {
+    keywords: ["platano", "plátano", "banana"],
+    name: "Plátano mediano",
+    defaultQty: 1,
+    defaultUnit: "unidad",
+    density: { protein: 1.1, carbs: 22.8, fat: 0.3, sodium: 1.0, sugar: 12.2 },
+    unitWeights: { u: 120, unidad: 120, unidades: 120, und: 120 }
+  },
+  {
+    keywords: ["manzana", "apple"],
+    name: "Manzana mediana",
+    defaultQty: 1,
+    defaultUnit: "unidad",
+    density: { protein: 0.3, carbs: 13.8, fat: 0.2, sodium: 1.0, sugar: 10.4 },
+    unitWeights: { u: 150, unidad: 150, unidades: 150, und: 150 }
+  }
+];
+
 function simulateCalorieEstimation(foodName = "", ingredients = "", preparation = "") {
   let calories = 0;
   let protein = 0;
@@ -32,235 +179,136 @@ function simulateCalorieEstimation(foodName = "", ingredients = "", preparation 
     for (const line of lines) {
       const lowerLine = line.toLowerCase();
       const parsed = parseQuantity(line);
-      const val = parsed ? parsed.value : null;
 
-      if (lowerLine.includes("pollo") || lowerLine.includes("chicken") || lowerLine.includes("pechuga")) {
-        const qty = val !== null ? val : 150;
-        const factor = qty / 150;
-        calories += 240 * factor;
-        protein += 30 * factor;
-        fat += 5 * factor;
-        sodium += 70 * factor;
-        breakdownItems.push(`Pechuga de pollo cocida, ${qty}g`);
-      } else if (lowerLine.includes("arroz") || lowerLine.includes("rice")) {
-        const qty = val !== null ? val : 150;
-        const factor = qty / 150;
-        calories += 200 * factor;
-        carbs += 45 * factor;
-        protein += 4 * factor;
-        sodium += 5 * factor;
-        breakdownItems.push(`Arroz blanco cocido, ${qty}g`);
-      } else if (lowerLine.includes("aguacate") || lowerLine.includes("avocado")) {
-        const qty = val !== null ? val : 100;
-        const factor = qty / 100;
-        calories += 160 * factor;
-        fat += 15 * factor;
-        carbs += 8 * factor;
-        protein += 2 * factor;
-        sodium += 10 * factor;
-        breakdownItems.push(`Aguacate fresco, ${qty}g`);
-      } else if (lowerLine.includes("huevo") || lowerLine.includes("egg")) {
-        const qty = val !== null ? val : 2;
-        calories += 75 * qty;
-        protein += 6 * qty;
-        fat += 5 * qty;
-        sodium += 140 * qty;
-        breakdownItems.push(`Huevos enteros cocidos, ${qty} unidades`);
-      } else if (lowerLine.includes("ensalada") || lowerLine.includes("salad") || lowerLine.includes("lechuga") || lowerLine.includes("tomate")) {
-        const qty = val !== null ? val : 1;
-        calories += 45 * qty;
-        carbs += 8 * qty;
-        protein += 1 * qty;
-        sodium += 50 * qty;
-        breakdownItems.push(`Ensalada mixta sin aderezo, ${qty} plato`);
-      } else if (lowerLine.includes("aceite") || lowerLine.includes("oil")) {
-        const qty = val !== null ? val : 1;
-        calories += 120 * qty;
-        fat += 14 * qty;
-        breakdownItems.push(`Aceite de oliva, ${qty} cucharada`);
-      } else if (lowerLine.includes("pan") || lowerLine.includes("bread") || lowerLine.includes("tostada")) {
-        const qty = val !== null ? val : 2;
-        const factor = qty / 2;
-        calories += 160 * factor;
-        carbs += 30 * factor;
-        protein += 5 * factor;
-        fat += 2 * factor;
-        sugar += 4 * factor;
-        sodium += 260 * factor;
-        breakdownItems.push(`Pan integral, ${qty} rebanadas`);
-      } else if (lowerLine.includes("carne") || lowerLine.includes("res") || lowerLine.includes("beef") || lowerLine.includes("bife") || lowerLine.includes("lomo")) {
-        const qty = val !== null ? val : 150;
-        const factor = qty / 150;
-        calories += 320 * factor;
-        protein += 28 * factor;
-        fat += 18 * factor;
-        sodium += 90 * factor;
-        breakdownItems.push(`Carne de res a la plancha, ${qty}g`);
-      } else if (lowerLine.includes("queso") || lowerLine.includes("cheese")) {
-        const qty = val !== null ? val : 30;
-        const factor = qty / 30;
-        calories += 110 * factor;
-        protein += 7 * factor;
-        fat += 9 * factor;
-        sugar += 1 * factor;
-        sodium += 200 * factor;
-        breakdownItems.push(`Queso fresco, ${qty}g`);
-      } else if (lowerLine.includes("avena") || lowerLine.includes("oats")) {
-        const qty = val !== null ? val : 40;
-        const factor = qty / 40;
-        calories += 150 * factor;
-        carbs += 27 * factor;
-        protein += 5 * factor;
-        fat += 3 * factor;
-        sugar += 1 * factor;
-        sodium += 2 * factor;
-        breakdownItems.push(`Avena en hojuelas, ${qty}g`);
-      } else if (lowerLine.includes("leche") || lowerLine.includes("milk") || lowerLine.includes("yogur") || lowerLine.includes("yogurt")) {
-        const qty = val !== null ? val : 1;
-        calories += 120 * qty;
-        carbs += 12 * qty;
-        protein += 8 * qty;
-        fat += 4 * qty;
-        sugar += 11 * qty;
-        sodium += 120 * qty;
-        breakdownItems.push(`Leche descremada / yogur, ${qty} taza`);
-      } else if (lowerLine.includes("platano") || lowerLine.includes("plátano") || lowerLine.includes("banana")) {
-        const qty = val !== null ? val : 1;
-        calories += 95 * qty;
-        carbs += 23 * qty;
-        protein += 1 * qty;
-        sugar += 12 * qty;
-        sodium += 1 * qty;
-        breakdownItems.push(`Plátano mediano, ${qty} unidad`);
-      } else if (lowerLine.includes("manzana") || lowerLine.includes("apple")) {
-        const qty = val !== null ? val : 1;
-        calories += 75 * qty;
-        carbs += 18 * qty;
-        sugar += 15 * qty;
-        sodium += 1 * qty;
-        breakdownItems.push(`Manzana mediana, ${qty} unidad`);
-      } else if (parsed) {
-        const qty = parsed.value;
-        let factor = qty;
-        if (!['g', 'gr', 'gramos'].includes(parsed.unit)) {
-          factor = qty * 100;
+      // Find matching food in database
+      let matchedFood = null;
+      for (const food of FOOD_DATABASE) {
+        if (food.keywords.some(keyword => lowerLine.includes(keyword))) {
+          // Prioritize more specific keywords (e.g. "papas fritas" over "papa")
+          if (!matchedFood || food.keywords[0].length > matchedFood.keywords[0].length) {
+            matchedFood = food;
+          }
         }
-        calories += 1.5 * factor;
-        protein += 0.08 * factor;
-        carbs += 0.15 * factor;
-        fat += 0.05 * factor;
-        sugar += 0.02 * factor;
-        sodium += 1.5 * factor;
-
-        const cleanedName = line.replace(/[•\-\d,\.]/g, "").replace(/(?:gramos|gr|g|unidades|unidad|cucharadas|cucharada|tazas|taza|rebanadas|rebanada|platos|plato|ud|und|u)\b/gi, "").trim();
-        breakdownItems.push(`${cleanedName || "Ingrediente adicional"}, ${qty}${parsed.unit || 'g'}`);
       }
+
+      let finalQtyGrams = 0;
+      let labelQty = "";
+      let foodItemName = "";
+      let itemProtein = 0;
+      let itemCarbs = 0;
+      let itemFat = 0;
+      let itemSugar = 0;
+      let itemSodium = 0;
+
+      if (matchedFood) {
+        foodItemName = matchedFood.name;
+        let qty = parsed ? parsed.value : matchedFood.defaultQty;
+        let unit = parsed && parsed.unit ? parsed.unit : matchedFood.defaultUnit;
+
+        if (['g', 'gr', 'gramos'].includes(unit)) {
+          finalQtyGrams = qty;
+          labelQty = `${qty}g`;
+        } else {
+          const weightPerUnit = matchedFood.unitWeights[unit] || matchedFood.unitWeights['unidad'] || 100;
+          finalQtyGrams = qty * weightPerUnit;
+          labelQty = `${qty} ${unit}`;
+        }
+
+        const ratio = finalQtyGrams / 100;
+        itemProtein = matchedFood.density.protein * ratio;
+        itemCarbs = matchedFood.density.carbs * ratio;
+        itemFat = matchedFood.density.fat * ratio;
+        itemSugar = matchedFood.density.sugar * ratio;
+        itemSodium = matchedFood.density.sodium * ratio;
+      } else {
+        // Unrecognized food fallback
+        let qty = 100;
+        let unit = 'g';
+        if (parsed) {
+          qty = parsed.value;
+          unit = parsed.unit || 'g';
+        }
+
+        if (['g', 'gr', 'gramos'].includes(unit)) {
+          finalQtyGrams = qty;
+          labelQty = `${qty}g`;
+        } else {
+          finalQtyGrams = qty * 100; // default to 100g per unit
+          labelQty = `${qty} ${unit}`;
+        }
+
+        const ratio = finalQtyGrams / 100;
+        itemProtein = 2.0 * ratio;
+        itemCarbs = 15.0 * ratio;
+        itemFat = 3.0 * ratio;
+        itemSugar = 2.0 * ratio;
+        itemSodium = 150.0 * ratio;
+
+        const cleanedName = line
+          .replace(/[•\-\d,\.]/g, "")
+          .replace(/(?:gramos|gr|g|unidades|unidad|cucharadas|cucharada|tazas|taza|rebanadas|rebanada|platos|plato|ud|und|u)\b/gi, "")
+          .trim();
+        foodItemName = cleanedName ? cleanedName.charAt(0).toUpperCase() + cleanedName.slice(1) : "Ingrediente adicional";
+      }
+
+      protein += itemProtein;
+      carbs += itemCarbs;
+      fat += itemFat;
+      sugar += itemSugar;
+      sodium += itemSodium;
+
+      breakdownItems.push(`${foodItemName}, ${labelQty}`);
     }
   } else {
+    // When ingredients list is empty, scan foodName and preparation
     const textToScan = `${foodName} ${preparation}`.toLowerCase();
-    if (textToScan.includes("pollo") || textToScan.includes("chicken") || textToScan.includes("pechuga")) {
-      calories += 240;
-      protein += 30;
-      fat += 5;
-      sodium += 70;
-      breakdownItems.push("Pechuga de pollo cocida, 150g");
+    const matchedFoods = [];
+
+    for (const food of FOOD_DATABASE) {
+      if (food.keywords.some(keyword => textToScan.includes(keyword))) {
+        matchedFoods.push(food);
+      }
     }
-    if (textToScan.includes("arroz") || textToScan.includes("rice")) {
-      calories += 200;
-      carbs += 45;
-      protein += 4;
-      sodium += 5;
-      breakdownItems.push("Arroz blanco cocido, 150g");
+
+    // Filter subsets (e.g. keep "papas fritas" and filter out "papa")
+    const finalFoods = [];
+    for (const food of matchedFoods) {
+      const isSubsetOfAnother = matchedFoods.some(other => 
+        other !== food && other.keywords[0].includes(food.keywords[0]) && other.keywords[0] !== food.keywords[0]
+      );
+      if (!isSubsetOfAnother) {
+        finalFoods.push(food);
+      }
     }
-    if (textToScan.includes("aguacate") || textToScan.includes("avocado")) {
-      calories += 160;
-      fat += 15;
-      carbs += 8;
-      protein += 2;
-      sodium += 10;
-      breakdownItems.push("Aguacate fresco, 100g");
-    }
-    if (textToScan.includes("huevo") || textToScan.includes("egg")) {
-      const count = (textToScan.match(/huevos/g) || []).length > 0 ? 3 : 2;
-      calories += 75 * count;
-      protein += 6 * count;
-      fat += 5 * count;
-      sodium += 140 * count;
-      breakdownItems.push(`Huevos enteros cocidos, ${count} unidades`);
-    }
-    if (textToScan.includes("ensalada") || textToScan.includes("salad") || textToScan.includes("lechuga") || textToScan.includes("tomate")) {
-      calories += 45;
-      carbs += 8;
-      protein += 1;
-      sodium += 50;
-      breakdownItems.push("Ensalada mixta sin aderezo, 1 plato");
-    }
-    if (textToScan.includes("aceite") || textToScan.includes("oil")) {
-      calories += 120;
-      fat += 14;
-      breakdownItems.push("Aceite de oliva, 1 cucharada");
-    }
-    if (textToScan.includes("pan") || textToScan.includes("bread") || textToScan.includes("tostada")) {
-      calories += 160;
-      carbs += 30;
-      protein += 5;
-      fat += 2;
-      sugar += 4;
-      sodium += 260;
-      breakdownItems.push("Pan integral, 2 rebanadas");
-    }
-    if (textToScan.includes("carne") || textToScan.includes("res") || textToScan.includes("beef") || textToScan.includes("bife") || textToScan.includes("lomo")) {
-      calories += 320;
-      protein += 28;
-      fat += 18;
-      sodium += 90;
-      breakdownItems.push("Carne de res a la plancha, 150g");
-    }
-    if (textToScan.includes("queso") || textToScan.includes("cheese")) {
-      calories += 110;
-      protein += 7;
-      fat += 9;
-      sugar += 1;
-      sodium += 200;
-      breakdownItems.push("Queso fresco, 30g");
-    }
-    if (textToScan.includes("avena") || textToScan.includes("oats")) {
-      calories += 150;
-      carbs += 27;
-      protein += 5;
-      fat += 3;
-      sugar += 1;
-      sodium += 2;
-      breakdownItems.push("Avena en hojuelas, 40g");
-    }
-    if (textToScan.includes("leche") || textToScan.includes("milk") || textToScan.includes("yogur") || textToScan.includes("yogurt")) {
-      calories += 120;
-      carbs += 12;
-      protein += 8;
-      fat += 4;
-      sugar += 11;
-      sodium += 120;
-      breakdownItems.push("Leche descremada / yogur, 1 taza");
-    }
-    if (textToScan.includes("platano") || textToScan.includes("plátano") || textToScan.includes("banana")) {
-      calories += 95;
-      carbs += 23;
-      protein += 1;
-      sugar += 12;
-      sodium += 1;
-      breakdownItems.push("Plátano mediano, 1 unidad");
-    }
-    if (textToScan.includes("manzana") || textToScan.includes("apple")) {
-      calories += 75;
-      carbs += 18;
-      sugar += 15;
-      sodium += 1;
-      breakdownItems.push("Manzana mediana, 1 unidad");
+
+    for (const food of finalFoods) {
+      const qty = food.defaultQty;
+      const unit = food.defaultUnit;
+      let finalQtyGrams = 0;
+      let labelQty = "";
+
+      if (['g', 'gr', 'gramos'].includes(unit)) {
+        finalQtyGrams = qty;
+        labelQty = `${qty}g`;
+      } else {
+        const weightPerUnit = food.unitWeights[unit] || food.unitWeights['unidad'] || 100;
+        finalQtyGrams = qty * weightPerUnit;
+        labelQty = `${qty} ${unit}`;
+      }
+
+      const ratio = finalQtyGrams / 100;
+      protein += food.density.protein * ratio;
+      carbs += food.density.carbs * ratio;
+      fat += food.density.fat * ratio;
+      sugar += food.density.sugar * ratio;
+      sodium += food.density.sodium * ratio;
+
+      breakdownItems.push(`${food.name}, ${labelQty}`);
     }
   }
 
-  if (calories === 0) {
-    calories = 450;
+  // General fallback if nothing matched and ingredients list is empty or sums to 0
+  if (protein === 0 && carbs === 0 && fat === 0) {
     protein = 24;
     carbs = 50;
     fat = 14;
@@ -270,6 +318,9 @@ function simulateCalorieEstimation(foodName = "", ingredients = "", preparation 
       breakdownItems.push("Plato balanceado estándar, 1 unidad");
     }
   }
+
+  // Calculate calories using 4/4/9 formula to guarantee mathematical consistency
+  calories = protein * 4 + carbs * 4 + fat * 9;
 
   const detectedName = foodName || "Plato de Comida Saludable";
   const ingredientsDesc = breakdownItems.map(item => `• ${item}`).join("\n");
