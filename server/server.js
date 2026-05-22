@@ -148,18 +148,93 @@ app.post("/api/auth/login", async (req, res) => {
   }
 });
 
+// Google Authentication verification
+app.post("/api/auth/google", async (req, res) => {
+  try {
+    const { credential } = req.body;
+    if (!credential) {
+      return res.status(400).json({ error: "El token de Google es obligatorio" });
+    }
+
+    // Verify token with Google's API
+    const googleVerifyRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${credential}`);
+    if (!googleVerifyRes.ok) {
+      return res.status(401).json({ error: "Token de Google inválido o expirado" });
+    }
+
+    const payload = await googleVerifyRes.json();
+    const { email, name } = payload;
+
+    if (!email) {
+      return res.status(400).json({ error: "No se pudo obtener el correo de Google" });
+    }
+
+    // Check if patient exists
+    let patient = await prisma.patient.findFirst({
+      where: { email: { equals: email, mode: "insensitive" } }
+    });
+
+    if (!patient) {
+      // Create new user (automatically a parent account with creatorId: null)
+      patient = await prisma.patient.create({
+        data: {
+          name: name || "Atleta Google",
+          email: email,
+          birthdate: "1995-01-01",
+          gender: "male",
+          sport: "General",
+          creatorId: null
+        }
+      });
+    }
+
+    res.json({
+      success: true,
+      user: {
+        id: patient.id,
+        name: patient.name,
+        email: patient.email,
+        role: "patient"
+      }
+    });
+  } catch (error) {
+    console.error("Error in Google authentication:", error);
+    res.status(500).json({ error: "Error en la autenticación con Google" });
+  }
+});
+
 // --- PATIENTS ROUTE ---
 
-// Get all patients
+// Get all patients (supports filtering by creatorId)
 app.get("/api/patients", async (req, res) => {
   console.log("ROUTE /api/patients: Request received.");
   try {
-    console.log("ROUTE /api/patients: Querying Prisma...");
+    const creatorIdQuery = req.query.creatorId;
+    let whereClause = {};
+
+    if (creatorIdQuery) {
+      // User is fetching their own athletes
+      whereClause = { creatorId: parseInt(creatorIdQuery) };
+    } else {
+      // Admin fetching: only show root accounts (registered users)
+      whereClause = { creatorId: null };
+    }
+
+    console.log("ROUTE /api/patients: Querying Prisma with clause:", whereClause);
     const patients = await prisma.patient.findMany({
+      where: whereClause,
       orderBy: { name: "asc" },
       include: {
         _count: {
           select: { evaluations: true }
+        },
+        athletes: {
+          orderBy: { name: "asc" },
+          include: {
+            _count: {
+              select: { evaluations: true }
+            }
+          }
         }
       }
     });
@@ -195,7 +270,16 @@ app.get("/api/patients/:id", async (req, res) => {
         workoutSchedule: true,
         calorieLogs: {
           orderBy: { createdAt: "desc" }
-        }
+        },
+        athletes: {
+          orderBy: { name: "asc" },
+          include: {
+            _count: {
+              select: { evaluations: true }
+            }
+          }
+        },
+        creator: true
       }
     });
 
@@ -213,7 +297,7 @@ app.get("/api/patients/:id", async (req, res) => {
 // Create a new patient
 app.post("/api/patients", async (req, res) => {
   try {
-    const { name, birthdate, gender, email, phone, sport } = req.body;
+    const { name, birthdate, gender, email, phone, sport, creatorId } = req.body;
     
     if (!name || !birthdate || !gender) {
       return res.status(400).json({ error: "El nombre, fecha de nacimiento y género son obligatorios" });
@@ -226,7 +310,8 @@ app.post("/api/patients", async (req, res) => {
         gender,
         email,
         phone,
-        sport
+        sport,
+        creatorId: creatorId ? parseInt(creatorId) : null
       }
     });
 

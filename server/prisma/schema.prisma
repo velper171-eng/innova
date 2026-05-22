@@ -25,6 +25,10 @@ model Patient {
   postureJobs     PostureAnalysisJob[]
   calorieLogs     CalorieLog[]
   trainingPlans   TrainingPlan[]
+  
+  creatorId       Int?
+  creator         Patient?         @relation("UserAthletes", fields: [creatorId], references: [id], onDelete: Cascade)
+  athletes        Patient[]        @relation("UserAthletes")
 }
 
 model Evaluation {

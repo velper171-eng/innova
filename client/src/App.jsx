@@ -56,20 +56,24 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [addingAthleteForCreatorId, setAddingAthleteForCreatorId] = useState(null);
 
   useEffect(() => {
     if (isAuthenticated && currentUser) {
       if (currentUser.role === "admin") {
         fetchPatients();
       } else {
-        fetchPatientDetail(currentUser.id);
+        fetchPatients(currentUser.id);
       }
     }
   }, [isAuthenticated, currentUser]);
 
-  const fetchPatients = async () => {
+  const fetchPatients = async (creatorId = null) => {
     try {
-      const res = await fetch(`${API_BASE}/patients`);
+      const url = creatorId 
+        ? `${API_BASE}/patients?creatorId=${creatorId}` 
+        : `${API_BASE}/patients`;
+      const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
         setPatients(data);
@@ -96,15 +100,23 @@ function App() {
 
   const handleCreatePatient = async (patientData) => {
     try {
+      const creatorIdToUse = currentUser.role === "admin" 
+        ? addingAthleteForCreatorId 
+        : currentUser.id;
+
       const res = await fetch(`${API_BASE}/patients`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(patientData),
+        body: JSON.stringify({
+          ...patientData,
+          creatorId: creatorIdToUse
+        }),
       });
       if (res.ok) {
         const newPatient = await res.json();
         setIsAddingPatient(false);
-        fetchPatients();
+        setAddingAthleteForCreatorId(null);
+        fetchPatients(currentUser.role === "admin" ? null : currentUser.id);
         fetchPatientDetail(newPatient.id);
       } else {
         const errorData = await res.json().catch(() => ({}));
@@ -125,7 +137,7 @@ function App() {
       });
       if (res.ok) {
         setIsEditingPatient(false);
-        fetchPatients();
+        fetchPatients(currentUser.role === "admin" ? null : currentUser.id);
         fetchPatientDetail(selectedPatient.id);
       } else {
         const errorData = await res.json().catch(() => ({}));
@@ -137,8 +149,8 @@ function App() {
     }
   };
 
-  const handleDeletePatient = async (id) => {
-    if (!window.confirm("¿Estás seguro de que deseas eliminar este paciente y todo su historial?")) {
+  const handleDeletePatient = async (id, isSubAthlete = false, parentId = null) => {
+    if (!window.confirm("¿Estás seguro de que deseas eliminar este paciente/atleta y todo su historial?")) {
       return;
     }
     try {
@@ -146,8 +158,12 @@ function App() {
         method: "DELETE",
       });
       if (res.ok) {
-        setSelectedPatient(null);
-        fetchPatients();
+        fetchPatients(currentUser.role === "admin" ? null : currentUser.id);
+        if (isSubAthlete && parentId) {
+          fetchPatientDetail(parentId);
+        } else {
+          setSelectedPatient(null);
+        }
       } else {
         const errorData = await res.json().catch(() => ({}));
         alert(`Error al eliminar paciente: ${errorData.error || res.statusText}`);
@@ -168,7 +184,7 @@ function App() {
       if (res.ok) {
         setIsAddingEvaluation(false);
         fetchPatientDetail(selectedPatient.id);
-        fetchPatients();
+        fetchPatients(currentUser.role === "admin" ? null : currentUser.id);
       } else {
         const errorData = await res.json().catch(() => ({}));
         alert(`Error al guardar evaluación: ${errorData.error || res.statusText}`);
@@ -189,7 +205,7 @@ function App() {
       });
       if (res.ok) {
         fetchPatientDetail(selectedPatient.id);
-        fetchPatients();
+        fetchPatients(currentUser.role === "admin" ? null : currentUser.id);
       } else {
         const errorData = await res.json().catch(() => ({}));
         alert(`Error al eliminar evaluación: ${errorData.error || res.statusText}`);
@@ -273,7 +289,7 @@ function App() {
       >
         <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
           {/* Toggle Sidebar Button */}
-          {currentUser?.role === "admin" && (
+          {isAuthenticated && (
             <button
               type="button"
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -328,7 +344,7 @@ function App() {
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
           <div style={{ fontSize: "0.9rem", color: "var(--text-muted)" }}>
-            {currentUser?.role === "admin" ? "Modo Administrador" : `Atleta: ${currentUser?.name}`}
+            {currentUser?.role === "admin" ? "Modo Administrador" : `Usuario: ${currentUser?.name}`}
           </div>
           <button
             onClick={handleLogout}
@@ -358,7 +374,7 @@ function App() {
       </header>
 
       {/* Drawer Backdrop */}
-      {currentUser?.role === "admin" && isSidebarOpen && (
+      {isSidebarOpen && (
         <div className="drawer-backdrop" onClick={() => setIsSidebarOpen(false)} />
       )}
 
@@ -366,12 +382,14 @@ function App() {
       <div className={`main-layout ${selectedPatient || isAddingPatient || isEditingPatient || isAddingEvaluation || isAddingCycle ? "has-active-content" : ""}`}>
         
         {/* Sidebar Drawer: Patient List & Search */}
-        {currentUser?.role === "admin" && (
+        {isAuthenticated && (
           <aside className={`sidebar-drawer ${isSidebarOpen ? "open" : ""}`}>
           {/* Search bar & Add Button */}
           <div style={{ padding: "20px", borderBottom: "1px solid var(--border-color)", display: "flex", flexDirection: "column", gap: "12px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ fontSize: "0.9rem", fontWeight: "700", color: "var(--primary)" }}>Panel de Pacientes</span>
+              <span style={{ fontSize: "0.9rem", fontWeight: "700", color: "var(--primary)" }}>
+                {currentUser?.role === "admin" ? "Panel de Usuarios" : "Mis Atletas"}
+              </span>
               <button
                 type="button"
                 onClick={() => setIsSidebarOpen(false)}
@@ -390,7 +408,7 @@ function App() {
             <input
               type="text"
               className="form-input"
-              placeholder="Buscar paciente..."
+              placeholder={currentUser?.role === "admin" ? "Buscar usuario..." : "Buscar atleta..."}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -405,7 +423,7 @@ function App() {
                 setIsSidebarOpen(false);
               }}
             >
-              + Nuevo Paciente
+              {currentUser?.role === "admin" ? "+ Nuevo Usuario" : "+ Nuevo Atleta"}
             </button>
           </div>
 
@@ -432,7 +450,9 @@ function App() {
               >
                 <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                   <span style={{ fontSize: "1.2rem" }}>📁</span>
-                  <span style={{ fontWeight: "600", fontSize: "0.95rem" }}>Historial de Pacientes</span>
+                  <span style={{ fontWeight: "600", fontSize: "0.95rem" }}>
+                    {currentUser?.role === "admin" ? "Historial de Usuarios" : "Historial de Atletas"}
+                  </span>
                 </div>
                 <span style={{ fontSize: "0.8rem", color: "var(--accent)", fontWeight: "600" }}>Ver Historial</span>
               </button>
@@ -448,7 +468,9 @@ function App() {
                 }}
               >
                 <span style={{ fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: "600" }}>
-                  {searchQuery.trim() !== "" ? "Resultados de Búsqueda" : "Historial de Pacientes"}
+                  {searchQuery.trim() !== "" 
+                    ? "Resultados de Búsqueda" 
+                    : (currentUser?.role === "admin" ? "Historial de Usuarios" : "Historial de Atletas")}
                 </span>
                 {searchQuery.trim() === "" && (
                   <button
@@ -471,7 +493,7 @@ function App() {
               <div style={{ flex: 1, overflowY: "auto", padding: "10px" }}>
                 {filteredPatients.length === 0 ? (
                   <div style={{ color: "var(--text-dark)", textAlign: "center", padding: "20px", fontSize: "0.9rem" }}>
-                    No se encontraron pacientes
+                    No se encontraron {currentUser?.role === "admin" ? "usuarios" : "atletas"}
                   </div>
                 ) : (
                   filteredPatients.map((p) => (
@@ -499,6 +521,11 @@ function App() {
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                         <h4 style={{ color: selectedPatient?.id === p.id ? "var(--primary)" : "var(--text-main)", fontSize: "1rem" }}>
                           {p.name}
+                          {currentUser?.role === "admin" && (
+                            <span style={{ fontSize: "0.75rem", color: "var(--primary)", marginLeft: "6px", fontWeight: "normal" }}>
+                              ({p.athletes?.length || 0} {p.athletes?.length === 1 ? 'atleta' : 'atletas'})
+                            </span>
+                          )}
                         </h4>
                         <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", background: "var(--bg-main)", padding: "2px 6px", borderRadius: "4px", border: "1px solid var(--border-color)" }}>
                           {p.gender === "male" ? "M" : "F"}
@@ -519,7 +546,7 @@ function App() {
         {/* Content Area */}
         <main className="content-panel">
           {/* Mobile Back Button */}
-          {currentUser?.role === "admin" && (selectedPatient || isAddingPatient || isEditingPatient || isAddingEvaluation || isAddingCycle) && (
+          {(selectedPatient || isAddingPatient || isEditingPatient || isAddingEvaluation || isAddingCycle) && (
             <button
               className="btn btn-secondary mobile-back-btn"
               onClick={() => {
@@ -530,7 +557,7 @@ function App() {
                 setIsAddingCycle(false);
               }}
             >
-              ← Volver a Pacientes
+              ← Volver a {currentUser?.role === "admin" ? "Usuarios" : "Atletas"}
             </button>
           )}
           
@@ -572,167 +599,371 @@ function App() {
 
           {/* 5. Main Detail / History View */}
           {!isAddingPatient && !isEditingPatient && !isAddingEvaluation && !isAddingCycle && selectedPatient && (
-            <div className="animate-fade-in" style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-              {/* Header profile details */}
-              <div className="glass-card profile-header-card">
-                <div className="profile-details">
-                  <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
-                    <h2 className="profile-name">{selectedPatient.name}</h2>
-                    <span
-                      style={{
-                        background: "rgba(0,242,254,0.1)",
-                        color: "var(--primary)",
-                        padding: "4px 10px",
-                        borderRadius: "10px",
-                        fontSize: "0.8rem",
-                        fontWeight: 600,
-                        textTransform: "uppercase",
+            currentUser.role === "admin" && selectedPatient.creatorId === null ? (
+              // User Account Dashboard View
+              <div className="animate-fade-in" style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+                <div className="glass-card profile-header-card">
+                  <div className="profile-details">
+                    <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+                      <h2 className="profile-name">{selectedPatient.name}</h2>
+                      <span
+                        style={{
+                          background: "rgba(0,128,128,0.1)",
+                          color: "var(--primary)",
+                          padding: "4px 10px",
+                          borderRadius: "10px",
+                          fontSize: "0.8rem",
+                          fontWeight: 600,
+                          textTransform: "uppercase",
+                        }}
+                      >
+                        Cuenta de Usuario
+                      </span>
+                    </div>
+                    <div className="profile-info-row">
+                      {selectedPatient.email && <span>Email: <strong>{selectedPatient.email}</strong></span>}
+                      {selectedPatient.phone && <span>Teléfono: <strong>{selectedPatient.phone}</strong></span>}
+                      {selectedPatient.country && <span>País: <strong>{selectedPatient.country}</strong></span>}
+                    </div>
+                  </div>
+                  <div className="profile-actions">
+                    <button className="btn btn-secondary" onClick={() => setIsEditingPatient(true)}>
+                      Editar Perfil
+                    </button>
+                    <button className="btn btn-danger" onClick={() => handleDeletePatient(selectedPatient.id)}>
+                      Eliminar Cuenta
+                    </button>
+                  </div>
+                </div>
+
+                {/* Sub-athletes dashboard section */}
+                <div className="glass-card" style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px" }}>
+                    <div>
+                      <h3 className="glow-text" style={{ fontSize: "1.4rem" }}>Atletas Registrados</h3>
+                      <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginTop: "2px" }}>
+                        Perfiles de atletas creados y gestionados por este usuario.
+                      </p>
+                    </div>
+                    <button
+                      className="btn btn-primary"
+                      onClick={() => {
+                        setAddingAthleteForCreatorId(selectedPatient.id);
+                        setIsAddingPatient(true);
                       }}
                     >
-                      {selectedPatient.sport || "Sin Deporte"}
-                    </span>
-                  </div>
-                  <div className="profile-info-row">
-                    <span>Género: <strong>{selectedPatient.gender === "male" ? "Masculino" : "Femenino"}</strong></span>
-                    <span>Nacimiento: <strong>{selectedPatient.birthdate}</strong></span>
-                    {selectedPatient.email && <span>Email: <strong>{selectedPatient.email}</strong></span>}
-                  </div>
-                </div>
-
-                <div className="profile-actions">
-                  <button className="btn btn-secondary" style={{ border: "1px solid var(--primary)", color: "var(--primary)" }} onClick={() => setIsAthleteView(true)}>
-                    📱 Vista Móvil (Atleta PWA)
-                  </button>
-                  <button className="btn btn-secondary" onClick={() => setIsEditingPatient(true)}>
-                    Editar Perfil
-                  </button>
-                  {currentUser?.role === "admin" && (
-                    <button className="btn btn-danger" onClick={() => handleDeletePatient(selectedPatient.id)}>
-                      Eliminar Paciente
+                      + Registrar Nuevo Atleta
                     </button>
-                  )}
+                  </div>
+
+                  <div style={{ overflowX: "auto", marginTop: "10px" }}>
+                    {!selectedPatient.athletes || selectedPatient.athletes.length === 0 ? (
+                      <div style={{ color: "var(--text-dark)", textAlign: "center", padding: "40px", fontStyle: "italic", border: "1px dashed var(--border-color)", borderRadius: "12px" }}>
+                        Este usuario aún no ha registrado atletas.
+                      </div>
+                    ) : (
+                      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.9rem", color: "var(--text-muted)", textAlign: "left" }}>
+                        <thead>
+                          <tr style={{ borderBottom: "2px solid var(--border-color)", color: "var(--text-main)", fontWeight: "600" }}>
+                            <th style={{ padding: "12px 16px" }}>Nombre del Atleta</th>
+                            <th style={{ padding: "12px 16px" }}>Deporte</th>
+                            <th style={{ padding: "12px 16px" }}>Género</th>
+                            <th style={{ padding: "12px 16px" }}>Fecha Nacimiento</th>
+                            <th style={{ padding: "12px 16px" }}>Evaluaciones</th>
+                            <th style={{ padding: "12px 16px", textAlign: "right" }}>Acciones</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {selectedPatient.athletes.map((ath) => (
+                            <tr key={ath.id} style={{ borderBottom: "1px solid var(--border-color)", transition: "background 0.2s" }} className="table-row-hover">
+                              <td style={{ padding: "16px 16px", color: "var(--text-main)", fontWeight: 600 }}>{ath.name}</td>
+                              <td style={{ padding: "16px 16px" }}>
+                                <span style={{ background: "rgba(0,128,128,0.06)", color: "var(--primary)", padding: "4px 8px", borderRadius: "6px", fontSize: "0.8rem", fontWeight: "600" }}>
+                                  {ath.sport || "General"}
+                                </span>
+                              </td>
+                              <td style={{ padding: "16px 16px" }}>{ath.gender === "male" ? "Masculino" : "Femenino"}</td>
+                              <td style={{ padding: "16px 16px" }}>{ath.birthdate}</td>
+                              <td style={{ padding: "16px 16px", fontWeight: "600" }}>{ath._count?.evaluations || 0}</td>
+                              <td style={{ padding: "16px 16px", textAlign: "right" }}>
+                                <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
+                                  <button
+                                    className="btn btn-primary"
+                                    style={{ padding: "6px 14px", fontSize: "0.8rem" }}
+                                    onClick={() => fetchPatientDetail(ath.id)}
+                                  >
+                                    Ver Workspace
+                                  </button>
+                                  <button
+                                    className="btn btn-danger"
+                                    style={{ padding: "6px 14px", fontSize: "0.8rem" }}
+                                    onClick={() => handleDeletePatient(ath.id, true, selectedPatient.id)}
+                                  >
+                                    Eliminar
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
+                  </div>
                 </div>
               </div>
-
-              {/* CRM Section Toggles */}
-              <div className="tabs">
-                <button
-                  className={`tab-btn ${activeTab === "anthropometry" ? "active" : ""}`}
-                  onClick={() => setActiveTab("anthropometry")}
-                >
-                  Historial Antropométrico
-                </button>
-                <button
-                  className={`tab-btn ${activeTab === "supplementation" ? "active" : ""}`}
-                  onClick={() => setActiveTab("supplementation")}
-                >
-                  Ciclos de Suplementación
-                </button>
-                <button
-                  className={`tab-btn ${activeTab === "training" ? "active" : ""}`}
-                  onClick={() => setActiveTab("training")}
-                >
-                  🏋️ Plan de Entrenamiento
-                </button>
-                <button
-                  className={`tab-btn ${activeTab === "posture" ? "active" : ""}`}
-                  onClick={() => setActiveTab("posture")}
-                >
-                  Análisis Biomecánico
-                </button>
-                <button
-                  className={`tab-btn ${activeTab === "nutrition" ? "active" : ""}`}
-                  onClick={() => setActiveTab("nutrition")}
-                >
-                  Control de Nutrición
-                </button>
-              </div>
-
-              {/* Sub-section 1: Anthropometry */}
-              {activeTab === "anthropometry" && (
-                <div style={{ display: "flex", flexDirection: "column", gap: "20px" }} className="animate-fade-in">
-                  
-                  {/* Dynamic Somatotype Body Shape Visualizer */}
-                  <SomatotypeBodyVisualizer
-                    evaluations={selectedPatient.evaluations}
-                    activeTab={activeTab}
-                    setActiveTab={setActiveTab}
-                  />
-
-                  {/* Body Trend Chart */}
-                  {selectedPatient.evaluations?.length >= 2 && (
-                    <div className="glass-card">
-                      <h3 className="glow-text" style={{ fontSize: "1.15rem", marginBottom: "4px" }}>
-                        📈 Evolución Corporal
-                      </h3>
-                      <p style={{ fontSize: "0.82rem", color: "var(--text-muted)", marginBottom: "16px", marginTop: "-2px" }}>
-                        Tendencia de peso y porcentaje de grasa a lo largo del tiempo.
-                      </p>
-                      <BodyTrendChart evaluations={selectedPatient.evaluations} />
+            ) : (
+              // RENDER ATHLETE WORKSPACE (Standard tabs)
+              <div className="animate-fade-in" style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+                {/* Breadcrumb banner for admin to go back to user account details */}
+                {currentUser?.role === "admin" && selectedPatient.creatorId !== null && (
+                  <div
+                    className="glass-card animate-fade-in"
+                    style={{
+                      padding: "12px 20px",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      borderLeft: "4px solid var(--primary)",
+                      background: "rgba(0, 128, 128, 0.02)",
+                    }}
+                  >
+                    <span style={{ fontSize: "0.9rem", color: "var(--text-muted)" }}>
+                      👤 Atleta registrado por: <strong>{selectedPatient.creator?.name || "Usuario"}</strong> ({selectedPatient.creator?.email})
+                    </span>
+                    <button
+                      className="btn btn-secondary"
+                      style={{ padding: "6px 12px", fontSize: "0.8rem", height: "auto" }}
+                      onClick={() => fetchPatientDetail(selectedPatient.creatorId)}
+                    >
+                      ← Volver a Cuenta de {selectedPatient.creator?.name || "Usuario"}
+                    </button>
+                  </div>
+                )}
+                
+                {/* Header profile details */}
+                <div className="glass-card profile-header-card">
+                  <div className="profile-details">
+                    <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+                      <h2 className="profile-name">{selectedPatient.name}</h2>
+                      <span
+                        style={{
+                          background: "rgba(0,242,254,0.1)",
+                          color: "var(--primary)",
+                          padding: "4px 10px",
+                          borderRadius: "10px",
+                          fontSize: "0.8rem",
+                          fontWeight: 600,
+                          textTransform: "uppercase",
+                        }}
+                      >
+                        {selectedPatient.sport || "Sin Deporte"}
+                      </span>
                     </div>
-                  )}
-
-                  <div className="grid-1-2-cols">
-                    {/* Somatochart */}
-                    <div className="glass-card" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                      <h3 className="glow-text" style={{ fontSize: "1.25rem" }}>
-                        Somatocarta Histórica
-                      </h3>
-                      <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginTop: "-8px" }}>
-                        La línea de tendencia conecta tus evaluaciones de forma cronológica. Pasa el cursor por los puntos para ver el desglose.
-                      </p>
-                      <Somatochart evaluations={selectedPatient.evaluations} />
+                    <div className="profile-info-row">
+                      <span>Género: <strong>{selectedPatient.gender === "male" ? "Masculino" : "Femenino"}</strong></span>
+                      <span>Nacimiento: <strong>{selectedPatient.birthdate}</strong></span>
+                      {selectedPatient.email && <span>Email: <strong>{selectedPatient.email}</strong></span>}
                     </div>
+                  </div>
 
-                    {/* Evaluations timeline list */}
+                  <div className="profile-actions">
+                    <button className="btn btn-secondary" style={{ border: "1px solid var(--primary)", color: "var(--primary)" }} onClick={() => setIsAthleteView(true)}>
+                      📱 Vista Móvil (Atleta PWA)
+                    </button>
+                    <button className="btn btn-secondary" onClick={() => setIsEditingPatient(true)}>
+                      Editar Perfil
+                    </button>
+                    <button className="btn btn-danger" onClick={() => handleDeletePatient(selectedPatient.id, selectedPatient.creatorId !== null, selectedPatient.creatorId)}>
+                      Eliminar Atleta
+                    </button>
+                  </div>
+                </div>
+
+                {/* CRM Section Toggles */}
+                <div className="tabs">
+                  <button
+                    className={`tab-btn ${activeTab === "anthropometry" ? "active" : ""}`}
+                    onClick={() => setActiveTab("anthropometry")}
+                  >
+                    Historial Antropométrico
+                  </button>
+                  <button
+                    className={`tab-btn ${activeTab === "supplementation" ? "active" : ""}`}
+                    onClick={() => setActiveTab("supplementation")}
+                  >
+                    Ciclos de Suplementación
+                  </button>
+                  <button
+                    className={`tab-btn ${activeTab === "training" ? "active" : ""}`}
+                    onClick={() => setActiveTab("training")}
+                  >
+                    🏋️ Plan de Entrenamiento
+                  </button>
+                  <button
+                    className={`tab-btn ${activeTab === "posture" ? "active" : ""}`}
+                    onClick={() => setActiveTab("posture")}
+                  >
+                    Análisis Biomecánico
+                  </button>
+                  <button
+                    className={`tab-btn ${activeTab === "nutrition" ? "active" : ""}`}
+                    onClick={() => setActiveTab("nutrition")}
+                  >
+                    Control de Nutrición
+                  </button>
+                </div>
+
+                {/* Sub-section 1: Anthropometry */}
+                {activeTab === "anthropometry" && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "20px" }} className="animate-fade-in">
+                    
+                    {/* Dynamic Somatotype Body Shape Visualizer */}
+                    <SomatotypeBodyVisualizer
+                      evaluations={selectedPatient.evaluations}
+                      activeTab={activeTab}
+                      setActiveTab={setActiveTab}
+                    />
+
+                    {/* Body Trend Chart */}
+                    {selectedPatient.evaluations?.length >= 2 && (
+                      <div className="glass-card">
+                        <h3 className="glow-text" style={{ fontSize: "1.15rem", marginBottom: "4px" }}>
+                          📈 Evolución Corporal
+                        </h3>
+                        <p style={{ fontSize: "0.82rem", color: "var(--text-muted)", marginBottom: "16px", marginTop: "-2px" }}>
+                          Tendencia de peso y porcentaje de grasa a lo largo del tiempo.
+                        </p>
+                        <BodyTrendChart evaluations={selectedPatient.evaluations} />
+                      </div>
+                    )}
+
+                    <div className="grid-1-2-cols">
+                      {/* Somatochart */}
+                      <div className="glass-card" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                        <h3 className="glow-text" style={{ fontSize: "1.25rem" }}>
+                          Somatocarta Histórica
+                        </h3>
+                        <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginTop: "-8px" }}>
+                          La línea de tendencia conecta tus evaluaciones de forma cronológica. Pasa el cursor por los puntos para ver el desglose.
+                        </p>
+                        <Somatochart evaluations={selectedPatient.evaluations} />
+                      </div>
+
+                      {/* Evaluations timeline list */}
+                      <div className="glass-card" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <h3 className="glow-text" style={{ fontSize: "1.25rem" }}>
+                            Historial de Evaluaciones
+                          </h3>
+                          <button
+                            className="btn btn-primary"
+                            style={{ padding: "8px 16px", fontSize: "0.85rem" }}
+                            onClick={() => setIsAddingEvaluation(true)}
+                          >
+                            + Nueva Evaluación
+                          </button>
+                        </div>
+
+                        <div style={{ flex: 1, overflowX: "auto" }}>
+                          {selectedPatient.evaluations?.length === 0 ? (
+                            <div style={{ color: "var(--text-dark)", textAlign: "center", padding: "40px", fontStyle: "italic" }}>
+                              Aún no se han registrado evaluaciones para este paciente.
+                            </div>
+                          ) : (
+                            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.85rem", color: "var(--text-muted)", textAlign: "left" }}>
+                              <thead>
+                                <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.08)", color: "var(--text-main)" }}>
+                                  <th style={{ padding: "12px 8px" }}>Fecha</th>
+                                  <th style={{ padding: "12px 8px" }}>Peso</th>
+                                  <th style={{ padding: "12px 8px" }}>Grasa %</th>
+                                  <th style={{ padding: "12px 8px" }}>Somatotipo</th>
+                                  <th style={{ padding: "12px 8px" }}>Acción</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {selectedPatient.evaluations.map((ev) => (
+                                  <tr key={ev.id} style={{ borderBottom: "1px solid var(--border-color)" }}>
+                                    <td style={{ padding: "12px 8px", color: "var(--text-main)", fontWeight: 600 }}>{ev.date}</td>
+                                    <td style={{ padding: "12px 8px" }}>{ev.weight} kg</td>
+                                    <td style={{ padding: "12px 8px", color: "var(--warning)", fontWeight: 600 }}>
+                                      {ev.bodyFat ? `${ev.bodyFat}%` : "N/A"}
+                                    </td>
+                                    <td style={{ padding: "12px 8px" }}>
+                                      {ev.endomorphy.toFixed(1)} - {ev.mesomorphy.toFixed(1)} - {ev.ectomorphy.toFixed(1)}
+                                    </td>
+                                    <td style={{ padding: "12px 8px" }}>
+                                      <button
+                                        className="btn"
+                                        style={{ padding: "4px 8px", fontSize: "0.75rem", background: "rgba(255,69,0,0.1)", color: "var(--error)" }}
+                                        onClick={() => handleDeleteEvaluation(ev.id)}
+                                      >
+                                        Borrar
+                                      </button>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Sub-section 2: Supplementation Planner */}
+                {activeTab === "supplementation" && (
+                  <div className="grid-1-2-1-cols">
+                    
+                    {/* Cycles list */}
                     <div className="glass-card" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                         <h3 className="glow-text" style={{ fontSize: "1.25rem" }}>
-                          Historial de Evaluaciones
+                          Ciclos Activos y Protocolos
                         </h3>
                         <button
                           className="btn btn-primary"
                           style={{ padding: "8px 16px", fontSize: "0.85rem" }}
-                          onClick={() => setIsAddingEvaluation(true)}
+                          onClick={() => setIsAddingCycle(true)}
                         >
-                          + Nueva Evaluación
+                          + Programar Ciclo
                         </button>
                       </div>
 
                       <div style={{ flex: 1, overflowX: "auto" }}>
-                        {selectedPatient.evaluations?.length === 0 ? (
+                        {selectedPatient.cycles?.length === 0 ? (
                           <div style={{ color: "var(--text-dark)", textAlign: "center", padding: "40px", fontStyle: "italic" }}>
-                            Aún no se han registrado evaluaciones para este paciente.
+                            No hay ciclos de suplementación prescritos aún.
                           </div>
                         ) : (
                           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.85rem", color: "var(--text-muted)", textAlign: "left" }}>
                             <thead>
                               <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.08)", color: "var(--text-main)" }}>
-                                <th style={{ padding: "12px 8px" }}>Fecha</th>
-                                <th style={{ padding: "12px 8px" }}>Peso</th>
-                                <th style={{ padding: "12px 8px" }}>Grasa %</th>
-                                <th style={{ padding: "12px 8px" }}>Somatotipo</th>
+                                <th style={{ padding: "12px 8px" }}>Nombre Protocolo</th>
+                                <th style={{ padding: "12px 8px" }}>Fecha Inicio</th>
+                                <th style={{ padding: "12px 8px" }}>Suplemento</th>
+                                <th style={{ padding: "12px 8px" }}>Estado</th>
                                 <th style={{ padding: "12px 8px" }}>Acción</th>
                               </tr>
                             </thead>
                             <tbody>
-                              {selectedPatient.evaluations.map((ev) => (
-                                <tr key={ev.id} style={{ borderBottom: "1px solid var(--border-color)" }}>
-                                  <td style={{ padding: "12px 8px", color: "var(--text-main)", fontWeight: 600 }}>{ev.date}</td>
-                                  <td style={{ padding: "12px 8px" }}>{ev.weight} kg</td>
-                                  <td style={{ padding: "12px 8px", color: "var(--warning)", fontWeight: 600 }}>
-                                    {ev.bodyFat ? `${ev.bodyFat}%` : "N/A"}
-                                  </td>
+                              {selectedPatient.cycles.map((cyc) => (
+                                <tr key={cyc.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                                  <td style={{ padding: "12px 8px", color: "var(--text-main)", fontWeight: 600 }}>{cyc.name}</td>
+                                  <td style={{ padding: "12px 8px" }}>{cyc.startDate}</td>
+                                  <td style={{ padding: "12px 8px" }}>{cyc.supplement?.name || "Sin vincular"}</td>
                                   <td style={{ padding: "12px 8px" }}>
-                                    {ev.endomorphy.toFixed(1)} - {ev.mesomorphy.toFixed(1)} - {ev.ectomorphy.toFixed(1)}
+                                    <span style={{ color: cyc.isActive ? "var(--success)" : "var(--text-dark)" }}>
+                                      {cyc.isActive ? "Activo" : "Finalizado"}
+                                    </span>
                                   </td>
                                   <td style={{ padding: "12px 8px" }}>
                                     <button
                                       className="btn"
-                                      style={{ padding: "4px 8px", fontSize: "0.75rem", background: "rgba(255,69,0,0.1)", color: "var(--error)" }}
-                                      onClick={() => handleDeleteEvaluation(ev.id)}
+                                      style={{ padding: "4px 8px", fontSize: "0.75rem", background: "rgba(244,63,94,0.1)", color: "var(--error)" }}
+                                      onClick={() => handleDeleteCycle(cyc.id)}
                                     >
-                                      Borrar
+                                      Eliminar
                                     </button>
                                   </td>
                                 </tr>
@@ -742,185 +973,214 @@ function App() {
                         )}
                       </div>
                     </div>
-                  </div>
-                </div>
-              )}
 
-              {/* Sub-section 2: Supplementation Planner */}
-              {activeTab === "supplementation" && (
-                <div className="grid-1-2-1-cols animate-fade-in">
-                  
-                  {/* Cycles list */}
-                  <div className="glass-card" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    {/* Supplement Inventory Panel */}
+                    <div className="glass-card" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                       <h3 className="glow-text" style={{ fontSize: "1.25rem" }}>
-                        Ciclos Activos y Protocolos
+                        Inventario de Suplementos (Stock)
                       </h3>
-                      <button
-                        className="btn btn-primary"
-                        style={{ padding: "8px 16px", fontSize: "0.85rem" }}
-                        onClick={() => setIsAddingCycle(true)}
-                      >
-                        + Programar Ciclo
-                      </button>
-                    </div>
+                      <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginTop: "-8px" }}>
+                        Stock actual registrado del atleta. Los avisos de reposición automática se generan al quedar 5 días de consumo.
+                      </p>
 
-                    <div style={{ flex: 1, overflowX: "auto" }}>
-                      {selectedPatient.cycles?.length === 0 ? (
-                        <div style={{ color: "var(--text-dark)", textAlign: "center", padding: "40px", fontStyle: "italic" }}>
-                          No hay ciclos de suplementación prescritos aún.
-                        </div>
-                      ) : (
-                        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.85rem", color: "var(--text-muted)", textAlign: "left" }}>
-                          <thead>
-                            <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.08)", color: "var(--text-main)" }}>
-                              <th style={{ padding: "12px 8px" }}>Nombre Protocolo</th>
-                              <th style={{ padding: "12px 8px" }}>Fecha Inicio</th>
-                              <th style={{ padding: "12px 8px" }}>Suplemento</th>
-                              <th style={{ padding: "12px 8px" }}>Estado</th>
-                              <th style={{ padding: "12px 8px" }}>Acción</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {selectedPatient.cycles.map((cyc) => (
-                              <tr key={cyc.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-                                <td style={{ padding: "12px 8px", color: "var(--text-main)", fontWeight: 600 }}>{cyc.name}</td>
-                                <td style={{ padding: "12px 8px" }}>{cyc.startDate}</td>
-                                <td style={{ padding: "12px 8px" }}>{cyc.supplement?.name || "Sin vincular"}</td>
-                                <td style={{ padding: "12px 8px" }}>
-                                  <span style={{ color: cyc.isActive ? "var(--success)" : "var(--text-dark)" }}>
-                                    {cyc.isActive ? "Activo" : "Finalizado"}
-                                  </span>
-                                </td>
-                                <td style={{ padding: "12px 8px" }}>
-                                  <button
-                                    className="btn"
-                                    style={{ padding: "4px 8px", fontSize: "0.75rem", background: "rgba(244,63,94,0.1)", color: "var(--error)" }}
-                                    onClick={() => handleDeleteCycle(cyc.id)}
-                                  >
-                                    Eliminar
-                                  </button>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Supplement Inventory Panel */}
-                  <div className="glass-card" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                    <h3 className="glow-text" style={{ fontSize: "1.25rem" }}>
-                      Inventario de Suplementos (Stock)
-                    </h3>
-                    <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginTop: "-8px" }}>
-                      Stock actual registrado del atleta. Los avisos de reposición automática se generan al quedar 5 días de consumo.
-                    </p>
-
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))", gap: "12px", marginTop: "8px" }}>
-                      {selectedPatient.supplements?.length === 0 ? (
-                        <div style={{ color: "var(--text-dark)", textAlign: "center", padding: "20px", fontStyle: "italic", gridColumn: "1 / -1" }}>
-                          No hay suplementos registrados en inventario.
-                        </div>
-                      ) : (
-                        selectedPatient.supplements.map((sup) => {
-                          const percent = Math.min(100, Math.round((sup.remainingQuantity / sup.totalCapacity) * 100));
-                          const isLow = sup.remainingQuantity <= (sup.totalCapacity * 0.15) || percent <= 15;
-                          const r = 20;
-                          const strokeWidth = 4;
-                          const circ = 2 * Math.PI * r;
-                          const offset = circ - (percent / 100) * circ;
-                          return (
-                            <div
-                              key={sup.id}
-                              style={{
-                                border: `1px solid ${isLow ? "rgba(255, 69, 0, 0.2)" : "var(--border-color)"}`,
-                                borderRadius: "12px",
-                                padding: "12px",
-                                background: isLow ? "rgba(255, 69, 0, 0.02)" : "rgba(255,255,255,0.01)",
-                                display: "flex",
-                                flexDirection: "column",
-                                alignItems: "center",
-                                textAlign: "center"
-                              }}
-                            >
-                              <div style={{ position: "relative", width: "50px", height: "50px", marginBottom: "8px" }}>
-                                <svg width="50" height="50" style={{ transform: "rotate(-90deg)" }}>
-                                  <circle cx="25" cy="25" r={r} stroke="rgba(0, 0, 0, 0.05)" strokeWidth={strokeWidth} fill="transparent" />
-                                  <circle
-                                    cx="25"
-                                    cy="25"
-                                    r={r}
-                                    stroke={isLow ? "var(--error)" : "var(--primary)"}
-                                    strokeWidth={strokeWidth}
-                                    fill="transparent"
-                                    strokeDasharray={circ}
-                                    strokeDashoffset={offset}
-                                    strokeLinecap="round"
-                                    style={{
-                                      transition: "stroke-dashoffset 0.5s ease",
-                                      filter: `drop-shadow(0 0 3px ${isLow ? "var(--error)" : "var(--primary)"})`
-                                    }}
-                                  />
-                                </svg>
-                                <div style={{
-                                  position: "absolute", top: 0, left: 0, width: "100%", height: "100%",
-                                  display: "flex", alignItems: "center", justifyContent: "center",
-                                  fontSize: "0.8rem", fontWeight: "bold", color: isLow ? "var(--error)" : "var(--text-main)"
-                                }}>
-                                  {percent}%
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))", gap: "12px", marginTop: "8px" }}>
+                        {selectedPatient.supplements?.length === 0 ? (
+                          <div style={{ color: "var(--text-dark)", textAlign: "center", padding: "20px", fontStyle: "italic", gridColumn: "1 / -1" }}>
+                            No hay suplementos registrados en inventario.
+                          </div>
+                        ) : (
+                          selectedPatient.supplements.map((sup) => {
+                            const percent = Math.min(100, Math.round((sup.remainingQuantity / sup.totalCapacity) * 100));
+                            const isLow = sup.remainingQuantity <= (sup.totalCapacity * 0.15) || percent <= 15;
+                            const r = 20;
+                            const strokeWidth = 4;
+                            const circ = 2 * Math.PI * r;
+                            const offset = circ - (percent / 100) * circ;
+                            return (
+                              <div
+                                key={sup.id}
+                                style={{
+                                  border: `1px solid ${isLow ? "rgba(255, 69, 0, 0.2)" : "var(--border-color)"}`,
+                                  borderRadius: "12px",
+                                  padding: "12px",
+                                  background: isLow ? "rgba(255, 69, 0, 0.02)" : "rgba(255,255,255,0.01)",
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  alignItems: "center",
+                                  textAlign: "center"
+                                }}
+                              >
+                                <div style={{ position: "relative", width: "50px", height: "50px", marginBottom: "8px" }}>
+                                  <svg width="50" height="50" style={{ transform: "rotate(-90deg)" }}>
+                                    <circle cx="25" cy="25" r={r} stroke="rgba(0, 0, 0, 0.05)" strokeWidth={strokeWidth} fill="transparent" />
+                                    <circle
+                                      cx="25"
+                                      cy="25"
+                                      r={r}
+                                      stroke={isLow ? "var(--error)" : "var(--primary)"}
+                                      strokeWidth={strokeWidth}
+                                      fill="transparent"
+                                      strokeDasharray={circ}
+                                      strokeDashoffset={offset}
+                                      strokeLinecap="round"
+                                      style={{
+                                        transition: "stroke-dashoffset 0.5s ease",
+                                        filter: `drop-shadow(0 0 3px ${isLow ? "var(--error)" : "var(--primary)"})`
+                                      }}
+                                    />
+                                  </svg>
+                                  <div style={{
+                                    position: "absolute", top: 0, left: 0, width: "100%", height: "100%",
+                                    display: "flex", alignItems: "center", justifyContent: "center",
+                                    fontSize: "0.8rem", fontWeight: "bold", color: isLow ? "var(--error)" : "var(--text-main)"
+                                  }}>
+                                    {percent}%
+                                  </div>
                                 </div>
-                              </div>
-                              <span style={{ fontWeight: 600, fontSize: "0.85rem", color: "var(--text-main)", display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical", overflow: "hidden" }} title={sup.name}>
-                                {sup.name}
-                              </span>
-                              <span style={{ fontSize: "0.7rem", color: "var(--text-muted)", marginTop: "2px" }}>
-                                {sup.remainingQuantity} / {sup.totalCapacity} {sup.unit}
-                              </span>
-                              {isLow && (
-                                <span style={{
-                                  marginTop: "6px", fontSize: "0.6rem", padding: "1px 4px",
-                                  background: "rgba(255, 69, 0, 0.08)", color: "var(--error)",
-                                  borderRadius: "4px", border: "1px solid rgba(255, 69, 0, 0.15)",
-                                  fontWeight: 600
-                                }}>
-                                  STOCK BAJO
+                                <span style={{ fontWeight: 600, fontSize: "0.85rem", color: "var(--text-main)", display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical", overflow: "hidden" }} title={sup.name}>
+                                  {sup.name}
                                 </span>
-                              )}
-                            </div>
-                          );
-                        })
-                      )}
+                                <span style={{ fontSize: "0.7rem", color: "var(--text-muted)", marginTop: "2px" }}>
+                                  {sup.remainingQuantity} / {sup.totalCapacity} {sup.unit}
+                                </span>
+                                {isLow && (
+                                  <span style={{
+                                    marginTop: "6px", fontSize: "0.6rem", padding: "1px 4px",
+                                    background: "rgba(255, 69, 0, 0.08)", color: "var(--error)",
+                                    borderRadius: "4px", border: "1px solid rgba(255, 69, 0, 0.15)",
+                                    fontWeight: 600
+                                  }}>
+                                    STOCK BAJO
+                                  </span>
+                                )}
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
                     </div>
+
                   </div>
+                )}
 
-                </div>
-              )}
+                {/* Sub-section 3: Training Plan */}
+                {activeTab === "training" && (
+                  <TrainingPlanner patientId={selectedPatient.id} isAdminMode={currentUser?.role === "admin"} />
+                )}
 
-              {/* Sub-section 3: Training Plan */}
-              {activeTab === "training" && (
-                <TrainingPlanner patientId={selectedPatient.id} isAdminMode={currentUser?.role === "admin"} />
-              )}
+                {/* Sub-section 4: Posture Biomechanics */}
+                {activeTab === "posture" && (
+                  <PostureAnalyzer patientId={selectedPatient.id} />
+                )}
 
-              {/* Sub-section 4: Posture Biomechanics */}
-              {activeTab === "posture" && (
-                <PostureAnalyzer patientId={selectedPatient.id} />
-              )}
-
-              {/* Sub-section 5: Nutrition Control */}
-              {activeTab === "nutrition" && (
-                <CalorieCounter patientId={selectedPatient.id} isAdminMode={currentUser?.role === "admin"} />
-              )}
-
-            </div>
+                {/* Sub-section 5: Nutrition Control */}
+                {activeTab === "nutrition" && (
+                  <CalorieCounter patientId={selectedPatient.id} isAdminMode={currentUser?.role === "admin"} />
+                )}
+              </div>
+            )
           )}
 
-          {/* Patient loading view */}
-          {currentUser?.role !== "admin" && !selectedPatient && (
-            <div className="glass-card" style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "50vh", color: "var(--text-muted)", fontSize: "1.1rem" }}>
-              <div style={{ width: "20px", height: "20px", border: "3px solid rgba(0, 128, 128, 0.2)", borderTopColor: "var(--primary)", borderRadius: "50%", animation: "spin 0.8s linear infinite", marginRight: "10px" }}></div>
-              Cargando tu perfil de atleta...
+          {/* Patient welcome view for normal users */}
+          {currentUser?.role !== "admin" && !selectedPatient && !isAddingPatient && !isEditingPatient && !isAddingEvaluation && !isAddingCycle && (
+            <div className="glass-card animate-fade-in" style={{ display: "flex", flexDirection: "column", gap: "24px", padding: "40px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "16px" }}>
+                <div>
+                  <h2 className="glow-text" style={{ fontSize: "2.2rem", marginBottom: "8px" }}>
+                    Bienvenido, {currentUser?.name || "Usuario"} ✨
+                  </h2>
+                  <p style={{ fontSize: "1.05rem", color: "var(--text-muted)" }}>
+                    Gestiona los atletas y perfiles de rendimiento bajo tu cuenta.
+                  </p>
+                </div>
+                <button
+                  className="btn btn-primary"
+                  onClick={() => {
+                    setSelectedPatient(null);
+                    setIsAddingPatient(true);
+                  }}
+                >
+                  + Registrar Nuevo Atleta
+                </button>
+              </div>
+
+              {loading ? (
+                <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "30vh", color: "var(--text-muted)" }}>
+                  <div style={{ width: "20px", height: "20px", border: "3px solid rgba(0, 128, 128, 0.2)", borderTopColor: "var(--primary)", borderRadius: "50%", animation: "spin 0.8s linear infinite", marginRight: "10px" }}></div>
+                  Cargando...
+                </div>
+              ) : patients.length === 0 ? (
+                <div style={{ textAlign: "center", padding: "40px 20px", border: "1px dashed var(--border-color)", borderRadius: "12px", background: "rgba(255,255,255,0.01)" }}>
+                  <p style={{ color: "var(--text-muted)", fontSize: "1.1rem", marginBottom: "16px" }}>
+                    Aún no has registrado ningún atleta.
+                  </p>
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => {
+                      setSelectedPatient(null);
+                      setIsAddingPatient(true);
+                    }}
+                  >
+                    Crea tu primer atleta
+                  </button>
+                </div>
+              ) : (
+                <div className="grid-3-cols" style={{ gap: "20px", marginTop: "12px" }}>
+                  {patients.map((ath) => (
+                    <div
+                      key={ath.id}
+                      className="glass-card table-row-hover animate-fade-in"
+                      style={{
+                        padding: "24px",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "16px",
+                        background: "rgba(255, 255, 255, 0.02)",
+                        border: "1px solid var(--border-color)",
+                        borderRadius: "16px",
+                        transition: "transform 0.2s, border-color 0.2s",
+                        cursor: "pointer",
+                      }}
+                      onClick={() => fetchPatientDetail(ath.id)}
+                    >
+                      <div>
+                        <h3 className="glow-text" style={{ fontSize: "1.3rem", fontWeight: "700", marginBottom: "4px" }}>
+                          {ath.name}
+                        </h3>
+                        <span
+                          style={{
+                            background: "rgba(0, 128, 128, 0.1)",
+                            color: "var(--primary)",
+                            padding: "2px 8px",
+                            borderRadius: "6px",
+                            fontSize: "0.8rem",
+                            fontWeight: "600",
+                          }}
+                        >
+                          {ath.sport || "General"}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: "0.9rem", color: "var(--text-muted)", display: "flex", flexDirection: "column", gap: "6px" }}>
+                        <div>Género: <strong>{ath.gender === "male" ? "Masculino" : "Femenino"}</strong></div>
+                        <div>Nacimiento: <strong>{ath.birthdate}</strong></div>
+                        <div>Evaluaciones: <strong>{ath.evaluations?.length || ath._count?.evaluations || 0}</strong></div>
+                      </div>
+                      <div style={{ marginTop: "auto", paddingTop: "12px", borderTop: "1px solid rgba(255, 255, 255, 0.05)", display: "flex", justifyContent: "flex-end" }}>
+                        <button
+                          className="btn btn-secondary"
+                          style={{ width: "100%", padding: "8px" }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            fetchPatientDetail(ath.id);
+                          }}
+                        >
+                          Ingresar al Workspace →
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
