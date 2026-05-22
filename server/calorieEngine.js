@@ -386,13 +386,17 @@ function simulateCalorieEstimation(foodName = "", ingredients = "", preparation 
  * Main function to analyze food and estimate calories.
  * Uses Google Gemini API if GEMINI_API_KEY is defined, otherwise falls back to local simulation.
  */
-export async function analyzeCalories({ imagePath, mimeType, foodName, ingredients, preparation }) {
-  const apiKey = process.env.GEMINI_API_KEY;
+export async function analyzeCalories({ imagePath, mimeType, foodName, ingredients, preparation, customApiKey }) {
+  const apiKey = customApiKey || process.env.GEMINI_API_KEY;
 
   if (!apiKey) {
     console.log("Calorie Engine: GEMINI_API_KEY not found. Using local heuristic simulation...");
-    return simulateCalorieEstimation(foodName, ingredients, preparation);
+    return {
+      ...simulateCalorieEstimation(foodName, ingredients, preparation),
+      error: "GEMINI_API_KEY no configurada. Por favor configúrala en las variables de entorno para activar la IA real."
+    };
   }
+
 
   const systemInstructions = `Nutriólogo experto. Devuelve JSON en español:
 {
@@ -447,7 +451,8 @@ Preparación: ${preparation || ""}`;
     }
   };
 
-  const models = ["gemini-2.5-flash-lite", "gemini-2.5-flash", "gemini-2.0-flash", "gemini-2.0-flash-lite"];
+  const models = ["gemini-2.5-flash-lite", "gemini-2.5-flash", "gemini-1.5-flash", "gemini-2.0-flash", "gemini-2.0-flash-lite"];
+
   let lastError = null;
 
   for (const model of models) {
@@ -503,20 +508,54 @@ Preparación: ${preparation || ""}`;
 
       let nutritionData = JSON.parse(processedText);
 
-      // Normalize ingredients array to string format with bullet points if returned as array
-      if (Array.isArray(nutritionData.ingredients)) {
-        nutritionData.ingredients = nutritionData.ingredients
-          .map(item => item.trim())
+      // Normalize keys to standard Spanish/English properties
+      const getVal = (keys, obj) => {
+        for (const k of keys) {
+          if (obj[k] !== undefined && obj[k] !== null) return obj[k];
+        }
+        return null;
+      };
+
+      const normalized = {
+        foodName: getVal(["foodName", "nombre", "dishName", "food", "plato"], nutritionData) || foodName || "Plato de Comida",
+        calories: parseInt(getVal(["calories", "calorias", "kcal", "calorías"], nutritionData)) || 0,
+        protein: parseFloat(getVal(["protein", "proteina", "proteínas", "proteins", "proteinas"], nutritionData)) || 0,
+        carbs: parseFloat(getVal(["carbs", "carbohidratos", "carbohydrates", "carb"], nutritionData)) || 0,
+        fat: parseFloat(getVal(["fat", "grasa", "grasas", "fats"], nutritionData)) || 0,
+        sugar: parseFloat(getVal(["sugar", "azucar", "azúcares", "sugars", "azucares"], nutritionData)) || 0,
+        sodium: parseFloat(getVal(["sodium", "sodio"], nutritionData)) || 0,
+        ingredients: getVal(["ingredients", "ingredientes", "ingredientsList", "desglose"], nutritionData) || "",
+        preparation: getVal(["preparation", "preparacion", "preparación", "prep"], nutritionData) || ""
+      };
+
+      // Normalize ingredients format to bullet-pointed multi-line string
+      if (Array.isArray(normalized.ingredients)) {
+        normalized.ingredients = normalized.ingredients
+          .map(item => String(item).trim())
           .filter(item => item.length > 0)
           .map(item => item.startsWith("•") ? item : `• ${item}`)
           .join("\n");
+      } else if (typeof normalized.ingredients === "string") {
+        let rawIng = normalized.ingredients.trim();
+        if (rawIng) {
+          if (!rawIng.includes("•") && !rawIng.includes("\n") && rawIng.includes(",")) {
+            normalized.ingredients = rawIng.split(",").map(i => `• ${i.trim()}`).join("\n");
+          } else {
+            normalized.ingredients = rawIng.split("\n")
+              .map(i => i.trim())
+              .filter(i => i.length > 0)
+              .map(i => i.startsWith("•") ? i : `• ${i}`)
+              .join("\n");
+          }
+        }
       }
 
       console.log(`Calorie Engine: Successfully obtained response using model ${model}`);
       return {
-        ...nutritionData,
+        ...normalized,
         simulated: false
       };
+
     } catch (error) {
       console.warn(`Calorie Engine: Model ${model} failed:`, error.message);
       lastError = error;
@@ -524,8 +563,19 @@ Preparación: ${preparation || ""}`;
   }
 
   console.error("Calorie Engine: All Gemini models failed. Falling back to local simulation. Last error:", lastError?.message);
+
+  // Build a user-friendly error message in Spanish
+  let friendlyError = "Todos los modelos de IA fallaron. Se usó el simulador local.";
+  if (lastError?.message?.includes("429") || lastError?.message?.includes("RESOURCE_EXHAUSTED")) {
+    friendlyError = "⚠️ La cuota de la API de Gemini se ha agotado (límite gratuito excedido). " +
+      "El resultado mostrado es una estimación local simulada y NO proviene del análisis de IA real de la imagen. " +
+      "Para obtener el desglose real de ingredientes basado en la foto, puedes: " +
+      "(1) Escribir el nombre del plato en el campo de texto para que el simulador lo identifique, o " +
+      "(2) Configurar tu propia API Key de Google AI Studio en el icono ⚙️ de arriba.";
+  }
+
   return {
     ...simulateCalorieEstimation(foodName, ingredients, preparation),
-    error: lastError ? lastError.message : "All Gemini API models failed"
+    error: friendlyError
   };
 }

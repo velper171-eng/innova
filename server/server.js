@@ -978,13 +978,15 @@ app.post("/api/patients/:id/calories/analyze", uploadCalorie.single("image"), as
 
     const { foodName, ingredients, preparation } = req.body;
     const file = req.file;
+    const customApiKey = req.headers["x-gemini-key"] || null;
 
     const result = await analyzeCalories({
       imagePath: file ? file.path : null,
       mimeType: file ? file.mimetype : null,
       foodName,
       ingredients,
-      preparation
+      preparation,
+      customApiKey
     });
 
     if (file) {
