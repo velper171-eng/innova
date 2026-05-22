@@ -181,7 +181,7 @@ export async function analyzeCalories({ imagePath, mimeType, foodName, ingredien
   "fat": 8.5,
   "sugar": 2.1,
   "sodium": 350,
-  "ingredients": "• Lista de ingredientes con solo el nombre del ingrediente y su cantidad aproximada (ej. '• Pechuga de pollo, 150g'). NO agregues explicaciones, calorías, proteínas u otros aportes nutricionales al final del ingrediente.",
+  "ingredients": "• Lista de ingredientes con solo el nombre del ingrediente y su cantidad aproximada (ej. '• Pechuga de pollo, 150g' o '• Huevo, 2 unidades'). Queda estrictamente PROHIBIDO incluir el aporte calórico, proteínas, carbohidratos, grasas o cualquier otra información nutricional al final de cada ingrediente del desglose. Solo pon nombre y cantidad.",
   "preparation": "Detalle breve del método de preparación"
 }
 Prioriza texto manual de ingredientes si está provisto.`;
