@@ -13,6 +13,11 @@
       "use": "@vercel/node"
     }
   ],
+  "functions": {
+    "server/vercel-entry.js": {
+      "includeFiles": "server/recommendedProducts.json"
+    }
+  },
   "routes": [
     {
       "src": "/api/(.*)",

@@ -5,6 +5,7 @@ import fs from "fs";
 import path from "path";
 import multer from "multer";
 import crypto from "crypto";
+import { fileURLToPath } from "url";
 let prismaInstance = null;
 const prisma = new Proxy({}, {
   get(target, prop) {
@@ -1274,10 +1275,11 @@ app.get("/api/products/recommended", async (req, res) => {
   try {
     const { category, region } = req.query;
     
-    // Read the recommendedProducts.json file with local/production path resolution fallback
+    // Read the recommendedProducts.json file with robust local/production path resolution fallback
     let productsPath = path.join(process.cwd(), "recommendedProducts.json");
     if (!fs.existsSync(productsPath)) {
-      productsPath = path.join(process.cwd(), "server", "recommendedProducts.json");
+      const serverDir = path.dirname(fileURLToPath(import.meta.url));
+      productsPath = path.join(serverDir, "recommendedProducts.json");
     }
     if (!fs.existsSync(productsPath)) {
       return res.json([]);
@@ -1313,7 +1315,8 @@ app.post("/api/products/recommended", uploadCalorie.single("image"), async (req,
 
     let productsPath = path.join(process.cwd(), "recommendedProducts.json");
     if (!fs.existsSync(productsPath)) {
-      productsPath = path.join(process.cwd(), "server", "recommendedProducts.json");
+      const serverDir = path.dirname(fileURLToPath(import.meta.url));
+      productsPath = path.join(serverDir, "recommendedProducts.json");
     }
     let products = [];
     if (fs.existsSync(productsPath)) {
