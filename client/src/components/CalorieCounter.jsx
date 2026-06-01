@@ -193,10 +193,12 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
 
   // Generator form inputs
   const [latestEval, setLatestEval] = useState(null);
+  const [patientProfile, setPatientProfile] = useState(null);
+  const [showGeneratorForm, setShowGeneratorForm] = useState(false);
   const [planGoal, setPlanGoal] = useState("maintenance");
   const [planActivityLevel, setPlanActivityLevel] = useState("1.55");
   const [planFormula, setPlanFormula] = useState("mifflin_st_jeor");
-  const [planProteinFactor, setPlanProteinFactor] = useState("2.2");
+  const [planProteinFactor, setPlanProteinFactor] = useState("1.8");
   const [planFatFactor, setPlanFatFactor] = useState("0.8");
   const [planName, setPlanName] = useState("Plan de Nutrición Personalizado");
   
@@ -249,6 +251,7 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
       const resEval = await fetch(`${API_BASE}/patients/${patientId}`);
       if (resEval.ok) {
         const patientData = await resEval.json();
+        setPatientProfile(patientData);
         if (patientData.evaluations && patientData.evaluations.length > 0) {
           // Get latest
           const latest = [...patientData.evaluations].sort((a, b) => new Date(b.date) - new Date(a.date))[0];
@@ -274,6 +277,44 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
       console.error("Error loading patient data:", err);
     }
   };
+
+  // Automatically calculate metabolic factors based on user goal, body fat, and active training days
+  useEffect(() => {
+    if (!patientId) return;
+
+    // 1. Calculate Activity Level (PAL) from patient profile's active training days
+    let calculatedPAL = "1.55"; // default Moderadamente Activo
+    if (patientProfile && patientProfile.workoutSchedule && patientProfile.workoutSchedule.activeDays) {
+      const activeDaysStr = patientProfile.workoutSchedule.activeDays || "";
+      const activeDaysCount = activeDaysStr.split(",").filter(d => d.trim().length > 0).length;
+      if (activeDaysCount === 0) calculatedPAL = "1.2";
+      else if (activeDaysCount <= 2) calculatedPAL = "1.375";
+      else if (activeDaysCount <= 5) calculatedPAL = "1.55";
+      else calculatedPAL = "1.725";
+    }
+    setPlanActivityLevel(calculatedPAL);
+
+    // 2. Determine best BMR Formula (Katch-McArdle if % fat is available, Mifflin otherwise)
+    const bfVal = parseFloat(customBodyFat);
+    if (!isNaN(bfVal) && bfVal > 0) {
+      setPlanFormula("katch_mcardle");
+    } else {
+      setPlanFormula("mifflin_st_jeor");
+    }
+
+    // 3. Set Protein and Fat Factors depending on the specific goal
+    if (planGoal === "hypertrophy") {
+      setPlanProteinFactor("2.0");
+      setPlanFatFactor("1.0");
+    } else if (planGoal === "fat_loss") {
+      setPlanProteinFactor("2.3");
+      setPlanFatFactor("0.7");
+    } else {
+      // maintenance
+      setPlanProteinFactor("1.8");
+      setPlanFatFactor("0.8");
+    }
+  }, [planGoal, customBodyFat, patientProfile, patientId]);
 
   const fetchLogs = async () => {
     try {
@@ -318,6 +359,40 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
       }
     } catch (err) {
       console.error("Error loading plan history:", err);
+    }
+  };
+
+  const handleDeleteMealPlan = async (id) => {
+    if (!window.confirm("¿Seguro que deseas eliminar este plan de alimentación?")) return;
+    try {
+      const res = await fetch(`${API_BASE}/mealplans/${id}`, {
+        method: "DELETE"
+      });
+      if (res.ok) {
+        await fetchPlanHistory();
+        await fetchActivePlan();
+      } else {
+        alert("Error al eliminar el plan.");
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleActivateMealPlan = async (id) => {
+    try {
+      const res = await fetch(`${API_BASE}/mealplans/${id}/active`, {
+        method: "POST"
+      });
+      if (res.ok) {
+        await fetchPlanHistory();
+        await fetchActivePlan();
+        setShowGeneratorForm(false);
+      } else {
+        alert("Error al activar el plan.");
+      }
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -1147,11 +1222,199 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
       {/* --- TAB 2: PERSONAL MEAL PLAN --- */}
       {subTab === "plan" && (
         <div className="animate-fade-in" style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+          
+          {/* Plan Management Header Control */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+            <div>
+              <h3 className="glow-text" style={{ fontSize: "1.3rem", margin: 0 }}>Gestión del Plan de Nutrición</h3>
+              <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", margin: 0, marginTop: "2px" }}>
+                Genera, activa o elimina planes alimenticios basados en el objetivo antropométrico del atleta.
+              </p>
+            </div>
+            {activePlan && (
+              <button
+                className="btn btn-primary"
+                onClick={() => setShowGeneratorForm(!showGeneratorForm)}
+                style={{ padding: "8px 16px", fontSize: "0.8rem", borderRadius: "20px", background: showGeneratorForm ? "rgba(255,255,255,0.05)" : "var(--primary)", borderColor: "var(--primary)" }}
+              >
+                {showGeneratorForm ? "📋 Ver Plan Activo" : "➕ Crear Nuevo Plan"}
+              </button>
+            )}
+          </div>
+
           {loadingPlan ? (
             <div className="glass-card" style={{ display: "flex", justifyContent: "center", padding: "40px", color: "var(--text-muted)" }}>
               <span>Buscando plan de alimentación activo...</span>
             </div>
-          ) : activePlan ? (
+          ) : (showGeneratorForm || !activePlan) ? (
+            // Setup Form block (if toggled open OR if there's no active plan)
+            <form onSubmit={handleGenerateMealPlan} className="glass-card animate-fade-in" style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+              <div style={{ borderBottom: "1px solid var(--border-color)", paddingBottom: "12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div>
+                  <h3 className="glow-text" style={{ fontSize: "1.3rem", margin: 0 }}>Configurar Plan de Alimentación</h3>
+                  <p style={{ fontSize: "0.82rem", color: "var(--text-muted)", marginTop: "4px", margin: 0 }}>
+                    Calcularemos la tasa metabólica basal (TMB), el gasto calórico total diario (GET) y las porciones de intercambio.
+                  </p>
+                </div>
+                {activePlan && (
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => setShowGeneratorForm(false)}
+                    style={{ padding: "4px 10px", fontSize: "0.75rem" }}
+                  >
+                    Regresar al Plan
+                  </button>
+                )}
+              </div>
+
+              {latestEval ? (
+                <div style={{ padding: "10px 14px", borderRadius: "10px", background: "rgba(0, 242, 254, 0.05)", border: "1px solid rgba(0, 242, 254, 0.15)", fontSize: "0.8rem", color: "var(--text-main)", display: "flex", alignItems: "center", gap: "8px" }}>
+                  <span>📊 <strong>Última Evaluación Cargada:</strong> Peso: {latestEval.weight}kg | Estatura: {latestEval.height}cm | % Grasa: {latestEval.bodyFat ? `${latestEval.bodyFat}%` : "N/A"}</span>
+                </div>
+              ) : (
+                <div style={{ padding: "10px 14px", borderRadius: "10px", background: "rgba(255, 69, 0, 0.05)", border: "1px solid rgba(255, 69, 0, 0.1)", fontSize: "0.8rem", color: "var(--text-muted)" }}>
+                  ⚠️ No se encontraron evaluaciones antropométricas previas. Completa los campos manuales a continuación.
+                </div>
+              )}
+
+              <div className="grid-2-cols" style={{ gap: "16px" }}>
+                <div className="form-group">
+                  <label className="form-label">Nombre del Plan</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    value={planName}
+                    onChange={(e) => setPlanName(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Objetivo Físico *</label>
+                  <select
+                    className="form-input"
+                    value={planGoal}
+                    onChange={(e) => setPlanGoal(e.target.value)}
+                  >
+                    <option value="maintenance">Mantenimiento Corporal (5 comidas/día)</option>
+                    <option value="hypertrophy">Aumento de Masa Muscular (6 comidas/día - Superávit)</option>
+                    <option value="fat_loss">Pérdida de Grasa (4 comidas/día - Déficit Saciante)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid-4-cols" style={{ gap: "12px" }}>
+                <div className="form-group">
+                  <label className="form-label">Peso (kg)</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    className="form-input"
+                    value={customWeight}
+                    onChange={(e) => setCustomWeight(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Estatura (cm)</label>
+                  <input
+                    type="number"
+                    className="form-input"
+                    value={customHeight}
+                    onChange={(e) => setCustomHeight(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Edad (años)</label>
+                  <input
+                    type="number"
+                    className="form-input"
+                    value={customAge}
+                    onChange={(e) => setCustomAge(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">% Grasa (Opcional)</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    className="form-input"
+                    value={customBodyFat}
+                    onChange={(e) => setCustomBodyFat(e.target.value)}
+                    placeholder="Opcional"
+                  />
+                </div>
+              </div>
+
+              <div className="grid-2-cols" style={{ gap: "16px", borderTop: "1px solid var(--border-color)", paddingTop: "16px" }}>
+                <div className="form-group">
+                  <label className="form-label">Factor de Actividad Física (PAL) [Auto]</label>
+                  <select
+                    className="form-input"
+                    value={planActivityLevel}
+                    onChange={(e) => setPlanActivityLevel(e.target.value)}
+                  >
+                    <option value="1.2">Sedentario (Poco o nada de ejercicio)</option>
+                    <option value="1.375">Ligeramente Activo (Ejercicio 1-3 días/semana)</option>
+                    <option value="1.55">Moderadamente Activo (Ejercicio 3-5 días/semana) [Recomendado]</option>
+                    <option value="1.725">Muy Activo (Entrenamiento intenso 6-7 días/semana)</option>
+                    <option value="1.9">Extremadamente Activo (Culturismo intenso / Doble turno)</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Fórmula Metabólica Basal (BMR) [Auto]</label>
+                  <select
+                    className="form-input"
+                    value={planFormula}
+                    onChange={(e) => setPlanFormula(e.target.value)}
+                  >
+                    <option value="mifflin_st_jeor">Mifflin-St Jeor (Estándar Clínico)</option>
+                    <option value="harris_benedict">Harris-Benedict Revisada (Clásica)</option>
+                    <option value="katch_mcardle">Katch-McArdle (Basada en Masa Magra - Requiere %Grasa)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid-2-cols" style={{ gap: "16px", borderTop: "1px solid var(--border-color)", paddingTop: "16px" }}>
+                <div className="form-group">
+                  <label className="form-label">Factor de Proteína (g / kg) [Auto]</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    className="form-input"
+                    value={planProteinFactor}
+                    onChange={(e) => setPlanProteinFactor(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Factor de Grasas (g / kg) [Auto]</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    className="form-input"
+                    value={planFatFactor}
+                    onChange={(e) => setPlanFatFactor(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+
+              {errorMsg && <div style={{ padding: "10px", borderRadius: "8px", background: "rgba(255, 69, 0, 0.08)", border: "1px solid rgba(255, 69, 0, 0.2)", color: "var(--error)", fontSize: "0.85rem" }}>⚠️ {errorMsg}</div>}
+
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={generatingPlan}
+                style={{ padding: "12px", fontSize: "1rem", marginTop: "10px" }}
+              >
+                {generatingPlan ? "Generando Pautas y Distribuyendo..." : "⚡ Generar Plan de Alimentación y Pautas"}
+              </button>
+            </form>
+          ) : (
+            // Active Plan view (if not showing generator form and an active plan exists)
             <>
               {/* Profile Metabolic Dashboard */}
               <div className="glass-card" style={{ display: "grid", gridTemplateColumns: "1fr 1.5fr", gap: "20px" }}>
@@ -1265,212 +1528,123 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
                 </div>
               </div>
 
-              {/* Schedule and Meal Timeline */}
-              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                <h4 className="glow-text" style={{ fontSize: "1.2rem", margin: 0 }}>Estructura y Horario del Día</h4>
-                
-                {activePlan.planJson?.meals?.map((meal, idx) => {
-                  const mPortions = Object.entries(meal.portions)
-                    .filter(([_, qty]) => qty > 0)
-                    .map(([name, qty]) => {
-                      const icon = name === "lacteos" ? "🥛" : name === "sustitutos" ? "🍳" : name === "carnes" ? "🍗" : name === "harinas" ? "🥞" : name === "frutas" ? "🍎" : name === "verduras" ? "🥦" : name === "nueces" ? "🥜" : "🥑";
-                      const text = name === "lacteos" ? "Lácteo" : name === "sustitutos" ? "Sustituto" : name === "carnes" ? "Carne" : name === "harinas" ? "Harina" : name === "frutas" ? "Fruta" : name === "verduras" ? "Verdura" : name === "nueces" ? "Nuez" : "Grasa";
-                      return `${icon} ${qty} ${text}${qty > 1 ? "s" : ""}`;
-                    }).join("  |  ");
+              {/* Dynamic Day Plan Schedule (dynamic number of meals depending on goal) */}
+              <div className="glass-card" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                <h4 className="glow-text" style={{ fontSize: "1.2rem", margin: 0 }}>Cronograma Diario del Plan ({activePlan.planJson?.meals?.length || 5} Comidas)</h4>
+                <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "-12px", margin: 0 }}>
+                  Comidas sugeridas distribuidas a lo largo del día para el objetivo de {
+                    activePlan.goal === "hypertrophy" ? "Aumento de Masa (Volumen)" :
+                    activePlan.goal === "fat_loss" ? "Definición (Pérdida Grasa)" : "Mantenimiento"
+                  }.
+                </p>
 
-                  return (
-                    <div key={idx} className="glass-card table-row-hover" style={{ display: "flex", gap: "16px", alignItems: "flex-start", padding: "16px", background: "rgba(255, 255, 255, 0.02)" }}>
-                      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "80px", borderRight: "2px solid var(--primary)", paddingRight: "12px", flexShrink: 0 }}>
-                        <span style={{ fontSize: "0.75rem", color: "var(--primary)", fontWeight: 800 }}>{meal.time}</span>
-                        <span style={{ fontSize: "0.95rem", color: "var(--text-main)", fontWeight: 700, marginTop: "2px", textAlign: "center" }}>{meal.name}</span>
+                <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+                  {activePlan.planJson?.meals?.map((meal, idx) => (
+                    <div
+                      key={idx}
+                      style={{
+                        background: "rgba(255,255,255,0.01)",
+                        border: "1px solid var(--border-color)",
+                        borderRadius: "12px",
+                        padding: "16px",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "10px"
+                      }}
+                    >
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "6px" }}>
+                        <h5 style={{ fontSize: "1.05rem", color: "var(--text-main)", fontWeight: 700, margin: 0 }}>
+                          🍽️ {meal.name}
+                        </h5>
+                        <span style={{ fontSize: "0.8rem", color: "var(--primary)", fontWeight: "bold", background: "var(--primary-glow)", padding: "2px 8px", borderRadius: "10px" }}>
+                          ⏱️ {meal.time}
+                        </span>
                       </div>
-                      
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: "0.75rem", color: "var(--text-dark)", background: "rgba(0,242,254,0.04)", padding: "4px 10px", borderRadius: "6px", display: "inline-block", fontWeight: 600, border: "1px solid rgba(0,242,254,0.1)" }}>
-                          {mPortions || "Sin porciones calculadas"}
+
+                      <div style={{ fontSize: "0.85rem", color: "var(--text-muted)", background: "rgba(0,0,0,0.1)", padding: "10px", borderRadius: "8px" }}>
+                        <strong>Porciones: </strong>
+                        {Object.entries(meal.portions || {})
+                          .filter(([_, val]) => val > 0)
+                          .map(([key, val]) => `${val} ${key}`)
+                          .join(" | ") || "Sin porciones registradas"}
+                      </div>
+
+                      <div style={{ fontSize: "0.9rem", color: "var(--text-main)", whiteSpace: "pre-line", lineHeight: "1.4", paddingLeft: "6px" }}>
+                        {meal.foods}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Meal Plans History Section */}
+          <div className="glass-card" style={{ marginTop: "20px" }}>
+            <h4 className="glow-text" style={{ fontSize: "1.2rem", marginBottom: "12px" }}>Historial de Planes Nutricionales</h4>
+            {planHistory.length === 0 ? (
+              <div style={{ color: "var(--text-muted)", fontStyle: "italic", textAlign: "center", padding: "20px" }}>
+                No hay planes en el historial. Crea uno para comenzar.
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                {planHistory.map((plan) => {
+                  const isPlanActive = activePlan && activePlan.id === plan.id;
+                  return (
+                    <div
+                      key={plan.id}
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        padding: "12px 16px",
+                        background: isPlanActive ? "rgba(0, 242, 254, 0.03)" : "rgba(255,255,255,0.01)",
+                        border: `1px solid ${isPlanActive ? "var(--primary)" : "var(--border-color)"}`,
+                        borderRadius: "12px",
+                        gap: "12px",
+                        flexWrap: "wrap"
+                      }}
+                    >
+                      <div style={{ flex: 1, minWidth: "200px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                          <strong style={{ color: "var(--text-main)", fontSize: "0.95rem" }}>{plan.name}</strong>
+                          {isPlanActive ? (
+                            <span style={{ fontSize: "0.7rem", color: "var(--success)", background: "rgba(16,185,129,0.15)", padding: "2px 8px", borderRadius: "10px", fontWeight: "bold" }}>
+                              Activo
+                            </span>
+                          ) : null}
                         </div>
-                        <div style={{ marginTop: "10px", fontSize: "0.85rem", color: "var(--text-main)", whiteSpace: "pre-line", lineHeight: "1.5" }}>
-                          {meal.foods}
+                        <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "4px" }}>
+                          Calorías: <strong style={{ color: "var(--text-main)" }}>{plan.calories} kcal</strong> | Objetivo: <strong>{
+                            plan.goal === "hypertrophy" ? "Aumento de Masa (6 comidas)" :
+                            plan.goal === "fat_loss" ? "Pérdida de Grasa (4 comidas)" : "Mantenimiento (5 comidas)"
+                          }</strong>
                         </div>
+                      </div>
+                      <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                        {!isPlanActive && (
+                          <button
+                            className="btn btn-secondary"
+                            onClick={() => handleActivateMealPlan(plan.id)}
+                            style={{ padding: "6px 12px", fontSize: "0.75rem", borderRadius: "10px" }}
+                          >
+                            ✓ Activar
+                          </button>
+                        )}
+                        <button
+                          className="btn"
+                          onClick={() => handleDeleteMealPlan(plan.id)}
+                          style={{ padding: "6px 10px", fontSize: "0.75rem", background: "rgba(244,63,94,0.05)", color: "var(--error)", border: "1px solid rgba(244,63,94,0.15)", borderRadius: "10px" }}
+                        >
+                          🗑️
+                        </button>
                       </div>
                     </div>
                   );
                 })}
               </div>
-
-              {/* Regenerate Plan Button (if Coach/Admin, or let Athlete do it) */}
-              {!isAdminMode && (
-                <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                  <button
-                    className="btn btn-secondary"
-                    onClick={() => {
-                      if (window.confirm("¿Seguro que deseas sobrescribir este plan de alimentación?")) {
-                        setActivePlan(null);
-                      }
-                    }}
-                    style={{ border: "1px dashed var(--error)", color: "var(--error)", padding: "8px 16px", fontSize: "0.8rem" }}
-                  >
-                    🔄 Recalcular y Sobrescribir Plan
-                  </button>
-                </div>
-              )}
-            </>
-          ) : (
-            // Form to generate meal plan if none is active
-            <form onSubmit={handleGenerateMealPlan} className="glass-card" style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-              <div style={{ borderBottom: "1px solid var(--border-color)", paddingBottom: "12px" }}>
-                <h3 className="glow-text" style={{ fontSize: "1.4rem", margin: 0 }}>Configurar Plan de Alimentación Personalizado</h3>
-                <p style={{ fontSize: "0.82rem", color: "var(--text-muted)", marginTop: "4px", margin: 0 }}>
-                  Calcularemos tu tasa metabólica basal (TMB), gasto calórico total diario (GET) y porciones de intercambio basadas en tu cuerpo.
-                </p>
-              </div>
-
-              {latestEval ? (
-                <div style={{ padding: "10px 14px", borderRadius: "10px", background: "rgba(0, 242, 254, 0.05)", border: "1px solid rgba(0, 242, 254, 0.15)", fontSize: "0.8rem", color: "var(--text-main)", display: "flex", alignItems: "center", gap: "8px" }}>
-                  <span>📊 <strong>Última Evaluación Cargada:</strong> Peso: {latestEval.weight}kg | Estatura: {latestEval.height}cm | % Grasa: {latestEval.bodyFat ? `${latestEval.bodyFat}%` : "N/A"}</span>
-                </div>
-              ) : (
-                <div style={{ padding: "10px 14px", borderRadius: "10px", background: "rgba(255, 69, 0, 0.05)", border: "1px solid rgba(255, 69, 0, 0.1)", fontSize: "0.8rem", color: "var(--text-muted)" }}>
-                  ⚠️ No se encontraron evaluaciones antropométricas previas. Completa los campos manuales a continuación.
-                </div>
-              )}
-
-              <div className="grid-2-cols" style={{ gap: "16px" }}>
-                <div className="form-group">
-                  <label className="form-label">Nombre del Plan</label>
-                  <input
-                    type="text"
-                    className="form-input"
-                    value={planName}
-                    onChange={(e) => setPlanName(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Objetivo Físico</label>
-                  <select
-                    className="form-input"
-                    value={planGoal}
-                    onChange={(e) => setPlanGoal(e.target.value)}
-                  >
-                    <option value="maintenance">Mantenimiento Corporal</option>
-                    <option value="hypertrophy">Aumento de Masa Muscular (Superávit)</option>
-                    <option value="fat_loss">Pérdida de Grasa (Déficit)</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid-4-cols" style={{ gap: "12px" }}>
-                <div className="form-group">
-                  <label className="form-label">Peso (kg)</label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    className="form-input"
-                    value={customWeight}
-                    onChange={(e) => setCustomWeight(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Estatura (cm)</label>
-                  <input
-                    type="number"
-                    className="form-input"
-                    value={customHeight}
-                    onChange={(e) => setCustomHeight(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Edad</label>
-                  <input
-                    type="number"
-                    className="form-input"
-                    value={customAge}
-                    onChange={(e) => setCustomAge(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Porcentaje Grasa (%)</label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    className="form-input"
-                    value={customBodyFat}
-                    onChange={(e) => setCustomBodyFat(e.target.value)}
-                    placeholder="Opcional"
-                  />
-                </div>
-              </div>
-
-              <div className="grid-2-cols" style={{ gap: "16px", borderTop: "1px solid var(--border-color)", paddingTop: "16px" }}>
-                <div className="form-group">
-                  <label className="form-label">Factor de Actividad Física (PAL)</label>
-                  <select
-                    className="form-input"
-                    value={planActivityLevel}
-                    onChange={(e) => setPlanActivityLevel(e.target.value)}
-                  >
-                    <option value="1.2">Sedentario (Poco o nada de ejercicio)</option>
-                    <option value="1.375">Ligeramente Activo (Ejercicio 1-3 días/semana)</option>
-                    <option value="1.55">Moderadamente Activo (Ejercicio 3-5 días/semana) [Recomendado]</option>
-                    <option value="1.725">Muy Activo (Entrenamiento intenso 6-7 días/semana)</option>
-                    <option value="1.9">Extremadamente Activo (Culturismo intenso / Doble turno)</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Fórmula Metabólica Basal (BMR)</label>
-                  <select
-                    className="form-input"
-                    value={planFormula}
-                    onChange={(e) => setPlanFormula(e.target.value)}
-                  >
-                    <option value="mifflin_st_jeor">Mifflin-St Jeor (Estándar Clínico)</option>
-                    <option value="harris_benedict">Harris-Benedict Revisada (Clásica)</option>
-                    <option value="katch_mcardle">Katch-McArdle (Basada en Masa Magra - Requiere %Grasa)</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid-2-cols" style={{ gap: "16px", borderTop: "1px solid var(--border-color)", paddingTop: "16px" }}>
-                <div className="form-group">
-                  <label className="form-label">Factor de Proteína (g / kg)</label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    className="form-input"
-                    value={planProteinFactor}
-                    onChange={(e) => setPlanProteinFactor(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Factor de Grasas (g / kg)</label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    className="form-input"
-                    value={planFatFactor}
-                    onChange={(e) => setPlanFatFactor(e.target.value)}
-                    required
-                  />
-                </div>
-              </div>
-
-              {errorMsg && <div style={{ padding: "10px", borderRadius: "8px", background: "rgba(255, 69, 0, 0.08)", border: "1px solid rgba(255, 69, 0, 0.2)", color: "var(--error)", fontSize: "0.85rem" }}>⚠️ {errorMsg}</div>}
-
-              <button
-                type="submit"
-                className="btn btn-primary"
-                disabled={generatingPlan}
-                style={{ padding: "12px", fontSize: "1rem", marginTop: "10px" }}
-              >
-                {generatingPlan ? "Generando Pautas y Distribuyendo..." : "⚡ Generar Plan de Alimentación y Pautas"}
-              </button>
-            </form>
-          )}
+            )}
+          </div>
         </div>
       )}
 

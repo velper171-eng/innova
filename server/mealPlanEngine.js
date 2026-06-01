@@ -170,10 +170,220 @@ export function generateExchangePortions(macros) {
  * Distributes portion exchanges and assigns meals with recipes / suggestions
  */
 export function buildMealPlanSchedule(portions, goal) {
-  // We distribute portions into 5 meals
   const p = { ...portions };
-  
-  // Desayuno (Breakfast)
+
+  // 1. PÉRDIDA DE GRASA / DEFINICIÓN (4 COMIDAS AL DÍA - Más saciante para déficit calórico)
+  if (goal === "fat_loss") {
+    // Desayuno
+    const bLact = p.lacteos >= 1.5 ? 1 : 0;
+    p.lacteos -= bLact;
+    const bSust = Math.min(p.sustitutos, 2);
+    p.sustitutos -= bSust;
+    const bHar = Math.min(p.harinas, 2);
+    p.harinas -= bHar;
+    const bFr = p.frutas >= 1.5 ? 1 : 0.5;
+    p.frutas -= bFr;
+    const bVer = 1;
+    p.verduras -= bVer;
+    const bGr = p.grasas >= 2 ? 1 : 0.5;
+    p.grasas -= bGr;
+
+    // Almuerzo
+    const lCar = Math.min(p.carnes, p.carnes >= 3 ? 2.5 : 2);
+    p.carnes -= lCar;
+    const lHar = Math.min(p.harinas, p.harinas >= 3 ? 2.5 : 2);
+    p.harinas -= lHar;
+    const lVer = Math.min(p.verduras, 2);
+    p.verduras -= lVer;
+    const lGr = p.grasas >= 2 ? 1 : 0.5;
+    p.grasas -= lGr;
+
+    // Media Tarde
+    const mtCar = p.carnes >= 1 ? 1 : 0;
+    p.carnes -= mtCar;
+    const mtFr = p.frutas > 0 ? p.frutas : 0;
+    p.frutas = 0;
+    const mtNuece = p.nueces > 0 ? p.nueces : 0;
+    p.nueces = 0;
+
+    // Cena
+    const dLact = p.lacteos > 0 ? p.lacteos : 0;
+    p.lacteos = 0;
+    const dSust = p.sustitutos > 0 ? p.sustitutos : 0;
+    p.sustitutos = 0;
+    const dCar = p.carnes > 0 ? p.carnes : 1;
+    p.carnes = 0;
+    const dHar = p.harinas > 0 ? p.harinas : 1;
+    p.harinas = 0;
+    const dVer = p.verduras > 0 ? p.verduras : 1;
+    p.verduras = 0;
+    const dGr = p.grasas > 0 ? p.grasas : 0.5;
+    p.grasas = 0;
+
+    return [
+      {
+        name: "Desayuno",
+        time: "08:00 AM",
+        portions: { lacteos: bLact, sustitutos: bSust, carnes: 0, harinas: bHar, frutas: bFr, verduras: bVer, nueces: 0, grasas: bGr },
+        foods: `• 3 claras de huevo y 1 huevo entero revueltos con espinacas y tomate.
+• ${bHar} tajadas de pan integral tostado o 1 arepa pequeña.
+• ${bFr} taza de papaya picada o melón.
+• Café tinto o infusión aromática sin azúcar.`
+      },
+      {
+        name: "Almuerzo",
+        time: "01:30 PM",
+        portions: { lacteos: 0, sustitutos: 0, carnes: lCar, harinas: lHar, frutas: 0, verduras: lVer, nueces: 0, grasas: lGr },
+        foods: `• ${Math.round(lCar * 80)}g de pechuga de pollo a la plancha o lomo de res magro.
+• ${Math.round(lHar * 70)}g de arroz integral o quinua cocida.
+• Ensalada fresca abundante (${Math.round(lVer * 150)}g) de lechuga, pepino y brócoli.
+• Aderezo: 1 cucharadita de aceite de oliva y limón.`
+      },
+      {
+        name: "Media Tarde",
+        time: "05:00 PM",
+        portions: { lacteos: 0, sustitutos: 0, carnes: mtCar, harinas: 0, frutas: mtFr, verduras: 0, nueces: mtNuece, grasas: 0 },
+        foods: `• ${mtCar > 0 ? "1 batido de proteína en agua (1 scoop)." : "2 claras de huevo cocidas."}
+• ${mtFr > 0 ? `${mtFr} taza de fresas picadas o manzana verde.` : ""}
+• ${mtNuece > 0 ? `${Math.round(mtNuece * 10)}g de almendras tostadas.` : ""}`
+      },
+      {
+        name: "Cena",
+        time: "08:00 PM",
+        portions: { lacteos: dLact, sustitutos: dSust, carnes: dCar, harinas: dHar, frutas: 0, verduras: dVer, nueces: 0, grasas: dGr },
+        foods: `• ${Math.round(dCar * 80)}g de pescado blanco (tilapia o merluza) asado o pechuga de pollo.
+• ${dHar > 0 ? `${Math.round(dHar * 70)}g de camote cocido.` : ""}
+• Ensalada mixta templada de champiñones y espárragos al vapor.
+• Aderezo: 1 cucharadita de aceite de oliva.`
+      }
+    ];
+  }
+
+  // 2. AUMENTO DE MASA MUSCULAR / HIPERTROFIA (6 COMIDAS AL DÍA - Estimulación constante de síntesis proteica)
+  if (goal === "hypertrophy") {
+    // Desayuno
+    const bLact = p.lacteos >= 2 ? 1 : 0;
+    p.lacteos -= bLact;
+    const bSust = Math.min(p.sustitutos, 3);
+    p.sustitutos -= bSust;
+    const bHar = Math.min(p.harinas, p.harinas >= 8 ? 3 : 2);
+    p.harinas -= bHar;
+    const bFr = p.frutas >= 2 ? 1 : 0.5;
+    p.frutas -= bFr;
+    const bVer = 1;
+    p.verduras -= bVer;
+    const bGr = p.grasas >= 3 ? 1 : 0.5;
+    p.grasas -= bGr;
+
+    // Media Mañana
+    const mmLact = p.lacteos >= 1 ? 1 : 0;
+    p.lacteos -= mmLact;
+    const mmHar = Math.min(p.harinas, 2);
+    p.harinas -= mmHar;
+    const mmFr = p.frutas >= 1 ? 1 : 0.5;
+    p.frutas -= mmFr;
+
+    // Almuerzo
+    const lCar = Math.min(p.carnes, p.carnes >= 4 ? 2.5 : 2);
+    p.carnes -= lCar;
+    const lHar = Math.min(p.harinas, p.harinas >= 5 ? 3 : 2.5);
+    p.harinas -= lHar;
+    const lVer = Math.min(p.verduras, 2);
+    p.verduras -= lVer;
+    const lGr = p.grasas >= 2 ? 1 : 0.5;
+    p.grasas -= lGr;
+
+    // Media Tarde
+    const mtCar = p.carnes >= 2 ? 1.5 : 1;
+    p.carnes -= mtCar;
+    const mtHar = Math.min(p.harinas, 2);
+    p.harinas -= mtHar;
+    const mtFr = p.frutas >= 1 ? 1 : 0;
+    p.frutas -= mtFr;
+
+    // Cena
+    const dCar = Math.min(p.carnes, p.carnes > 0 ? p.carnes : 1);
+    p.carnes -= dCar;
+    const dHar = Math.min(p.harinas, p.harinas > 0 ? p.harinas : 1);
+    p.harinas -= dHar;
+    const dVer = Math.min(p.verduras, p.verduras > 0 ? p.verduras : 1);
+    p.verduras -= dVer;
+    const dGr = p.grasas >= 1.5 ? 1 : 0.5;
+    p.grasas -= dGr;
+
+    // Merienda Nocturna (Antes de Dormir)
+    const nLact = p.lacteos > 0 ? p.lacteos : 0;
+    p.lacteos = 0;
+    const nSust = p.sustitutos > 0 ? p.sustitutos : 0;
+    p.sustitutos = 0;
+    const nCar = p.carnes > 0 ? p.carnes : 0;
+    p.carnes = 0;
+    const nHar = p.harinas > 0 ? p.harinas : 0;
+    p.harinas = 0;
+    const nFr = p.frutas > 0 ? p.frutas : 0;
+    p.frutas = 0;
+    const nVer = p.verduras > 0 ? p.verduras : 0;
+    p.verduras = 0;
+    const nNuece = p.nueces > 0 ? p.nueces : 1;
+    p.nueces = 0;
+    const nGr = p.grasas > 0 ? p.grasas : 0.5;
+    p.grasas = 0;
+
+    return [
+      {
+        name: "Desayuno",
+        time: "07:00 AM",
+        portions: { lacteos: bLact, sustitutos: bSust, carnes: 0, harinas: bHar, frutas: bFr, verduras: bVer, nueces: 0, grasas: bGr },
+        foods: `• 3 huevos enteros revueltos con espinacas y cebolla.
+• ${bHar} tajadas de pan integral o 1 arepa mediana.
+• ${bFr} taza de papaya picada o piña.
+• Café con leche descremada o yogurt.`
+      },
+      {
+        name: "Media Mañana",
+        time: "10:00 AM",
+        portions: { lacteos: mmLact, sustitutos: 0, carnes: 0, harinas: mmHar, frutas: mmFr, verduras: 0, nueces: 0, grasas: 0 },
+        foods: `• 200g de yogurt griego sin azúcar o kéfir.
+• ${mmHar * 30}g de avena en hojuelas cocida con canela.
+• ${mmFr} porción de fruta fresca picada (kiwi o melón).`
+      },
+      {
+        name: "Almuerzo",
+        time: "01:30 PM",
+        portions: { lacteos: 0, sustitutos: 0, carnes: lCar, harinas: lHar, frutas: 0, verduras: lVer, nueces: 0, grasas: lGr },
+        foods: `• ${Math.round(lCar * 80)}g de pechuga de pollo asada o carne magra.
+• ${Math.round(lHar * 70)}g de arroz integral o pasta integral cocida.
+• Porción generosa de ensalada mixta y brócoli al vapor.
+• 1 cucharadita de aceite de oliva virgen extra.`
+      },
+      {
+        name: "Media Tarde",
+        time: "04:30 PM",
+        portions: { lacteos: 0, sustitutos: 0, carnes: mtCar, harinas: mtHar, frutas: mtFr, verduras: 0, nueces: 0, grasas: 0 },
+        foods: `• 1 scoop de proteína de suero (whey) en agua o bebida vegetal.
+• ${mtHar} waffles saludables de avena o tostadas.
+• ${mtFr > 0 ? "1 banano mediano en rodajas." : ""}`
+      },
+      {
+        name: "Cena",
+        time: "07:30 PM",
+        portions: { lacteos: 0, sustitutos: 0, carnes: dCar, harinas: dHar, frutas: 0, verduras: dVer, nueces: 0, grasas: dGr },
+        foods: `• ${Math.round(dCar * 80)}g de salmón, trucha o filete de pechuga.
+• ${Math.round(dHar * 70)}g de puré de papa o yuca cocida.
+• Vegetales salteados en ${dGr} cucharadita de aceite de oliva.`
+      },
+      {
+        name: "Merienda Nocturna",
+        time: "10:00 PM",
+        portions: { lacteos: nLact, sustitutos: nSust, carnes: nCar, harinas: nHar, frutas: nFr, verduras: nVer, nueces: nNuece, grasas: nGr },
+        foods: `• ${nSust > 0 ? `${Math.round(nSust * 30)}g de queso ricotta o mozzarella bajo en grasa.` : "2 claras de huevo cocidas."}
+• ${nNuece * 10}g de almendras, nueces o crema de maní 100% natural.
+• Té de manzanilla tibio antes de dormir.`
+      }
+    ];
+  }
+
+  // 3. MANTENIMIENTO O FALLBACK (5 COMIDAS AL DÍA - Excelente estándar metabólico)
   const bLact = p.lacteos >= 2 ? 1 : 0;
   const bSust = Math.min(p.sustitutos, 3);
   p.sustitutos -= bSust;
@@ -186,7 +396,6 @@ export function buildMealPlanSchedule(portions, goal) {
   const bGr = p.grasas >= 3 ? 1 : 0;
   p.grasas -= bGr;
 
-  // Media Mañana (Mid-Morning Snack)
   const mmLact = p.lacteos >= 1 ? 1 : 0;
   p.lacteos -= mmLact;
   const mmHar = Math.min(p.harinas, 2);
@@ -196,7 +405,6 @@ export function buildMealPlanSchedule(portions, goal) {
   const mmNuece = Math.min(p.nueces, 0.5);
   p.nueces -= mmNuece;
 
-  // Almuerzo (Lunch)
   const lCar = Math.min(p.carnes, p.carnes >= 4 ? 2.5 : 2);
   p.carnes -= lCar;
   const lHar = Math.min(p.harinas, p.harinas >= 5 ? 3.5 : 2.5);
@@ -206,10 +414,9 @@ export function buildMealPlanSchedule(portions, goal) {
   const lGr = p.grasas >= 2 ? 1 : 0.5;
   p.grasas -= lGr;
 
-  // Media Tarde (Mid-Afternoon Snack)
   const mtLact = p.lacteos > 0 ? p.lacteos : 0;
   p.lacteos = 0;
-  const mtCar = p.carnes >= 2 ? 1 : 0; // standard 1 scoop whey/protein
+  const mtCar = p.carnes >= 2 ? 1 : 0;
   p.carnes -= mtCar;
   const mtHar = Math.min(p.harinas, 2);
   p.harinas -= mtHar;
@@ -218,7 +425,6 @@ export function buildMealPlanSchedule(portions, goal) {
   const mtNuece = p.nueces > 0 ? p.nueces : 0;
   p.nueces = 0;
 
-  // Cena (Dinner)
   const dSust = p.sustitutos > 0 ? p.sustitutos : 0;
   const dCar = p.carnes > 0 ? p.carnes : 1;
   const dHar = p.harinas > 0 ? p.harinas : 1;
@@ -229,94 +435,47 @@ export function buildMealPlanSchedule(portions, goal) {
     {
       name: "Desayuno",
       time: "07:00 AM",
-      portions: {
-        lacteos: bLact,
-        sustitutos: bSust,
-        carnes: 0,
-        harinas: bHar,
-        frutas: bFr,
-        verduras: bVer,
-        nueces: 0,
-        grasas: bGr
-      },
-      foods: `• 3 huevos enteros revueltos con vegetales (espinacas, champiñones o tomate/cebolla).
-• ${bHar} tajadas de pan integral tostado o 1 arepa de maíz blanco mediana.
-• ${bFr} taza de fresas picadas o melón.
-• Café tinto o infusión aromática caliente endulzada con Stevia.`
+      portions: { lacteos: bLact, sustitutos: bSust, carnes: 0, harinas: bHar, frutas: bFr, verduras: bVer, nueces: 0, grasas: bGr },
+      foods: `• 3 huevos revueltos con espinacas y cebolla.
+• ${bHar} tajadas de pan integral o 1 arepa mediana.
+• ${bFr} taza de papaya picada.
+• Café tinto o infusión caliente.`
     },
     {
       name: "Media Mañana",
       time: "10:00 AM",
-      portions: {
-        lacteos: mmLact,
-        sustitutos: 0,
-        carnes: 0,
-        harinas: mmHar,
-        frutas: mmFr,
-        verduras: 0,
-        nueces: mmNuece,
-        grasas: 0
-      },
-      foods: `• 200g de yogurt griego natural sin dulce o 1 vaso de kéfir.
-• ${mmHar * 30}g de avena en hojuelas (aproximadamente 4 cucharadas soperas) remojada.
-• ${mmFr} porción de fruta picada (ej: manzana verde o kiwi).
+      portions: { lacteos: mmLact, sustitutos: 0, carnes: 0, harinas: mmHar, frutas: mmFr, verduras: 0, nueces: mmNuece, grasas: 0 },
+      foods: `• 200g de yogurt griego natural sin dulce.
+• ${mmHar * 30}g de avena en hojuelas.
+• ${mmFr} porción de fruta picada.
 • ${mmNuece > 0 ? "5 almendras o 10g de maní sin sal." : ""}`
     },
     {
       name: "Almuerzo",
       time: "01:30 PM",
-      portions: {
-        lacteos: 0,
-        sustitutos: 0,
-        carnes: lCar,
-        harinas: lHar,
-        frutas: 0,
-        verduras: lVer,
-        nueces: 0,
-        grasas: lGr
-      },
-      foods: `• ${Math.round(lCar * 80)}g de pechuga de pollo a la plancha (o lomo de res magro).
-• ${Math.round(lHar * 70)}g de arroz integral o puré de papa criolla/común.
-• Ensalada fresca abundante (${Math.round(lVer * 150)}g) de lechuga, pepino, zanahoria y brócoli.
-• Aderezo: 1 cucharadita de aceite de oliva y limón.
-• Bebida: Vaso de agua saborizada fría o infusión helada.`
+      portions: { lacteos: 0, sustitutos: 0, carnes: lCar, harinas: lHar, frutas: 0, verduras: lVer, nueces: 0, grasas: lGr },
+      foods: `• ${Math.round(lCar * 80)}g de pechuga de pollo a la plancha.
+• ${Math.round(lHar * 70)}g de arroz integral cocido.
+• Ensalada fresca abundante de lechuga, pepino y zanahoria.
+• 1 cucharadita de aceite de oliva y limón.`
     },
     {
       name: "Media Tarde",
       time: "04:30 PM",
-      portions: {
-        lacteos: mtLact,
-        sustitutos: 0,
-        carnes: mtCar,
-        harinas: mtHar,
-        frutas: mtFr,
-        verduras: 0,
-        nueces: mtNuece,
-        grasas: 0
-      },
-      foods: `• 1 batido de proteína en agua (1 scoop / ${Math.round(mtCar * 30 || 30)}g de proteína en polvo).
-• ${mtHar} tostadas horneadas de arroz o maíz soplado.
-• ${mtFr > 0 ? `1 manzana mediana picada o porción de piña.` : "1 porción pequeña de fruta."}
-• ${mtNuece > 0 ? "5 almendras tostadas o semillas de chía espolvoreadas." : ""}`
+      portions: { lacteos: mtLact, sustitutos: 0, carnes: mtCar, harinas: mtHar, frutas: mtFr, verduras: 0, nueces: mtNuece, grasas: 0 },
+      foods: `• 1 batido de proteína en agua (1 scoop).
+• ${mtHar} tostadas horneadas de maíz.
+• ${mtFr > 0 ? "1 manzana mediana." : ""}
+• ${mtNuece > 0 ? "5 almendras o semillas de chía." : ""}`
     },
     {
       name: "Cena",
       time: "07:30 PM",
-      portions: {
-        lacteos: 0,
-        sustitutos: dSust,
-        carnes: dCar,
-        harinas: dHar,
-        frutas: 0,
-        verduras: dVer,
-        nueces: 0,
-        grasas: dGr
-      },
-      foods: `• ${Math.round(dCar * 80)}g de pechuga de pollo desmechada o filete de pescado blanco asado.
-• ${dSust > 0 ? `${Math.round(dSust * 30)}g de queso ricotta o mozzarella bajo en grasa.` : ""}
-• ${Math.round(dHar * 70)}g de camote (batata) o arepa de maíz delgada.
-• Ensalada mixta templada (rúgula, tomate cherry y espárragos al vapor) con aguacate.
-• Bebida: Infusión tibia de manzanilla o diente de león antes de dormir.`
+      portions: { lacteos: 0, sustitutos: dSust, carnes: dCar, harinas: dHar, frutas: 0, verduras: dVer, nueces: 0, grasas: dGr },
+      foods: `• ${Math.round(dCar * 80)}g de pechuga de pollo desmechada o filete de pescado asado.
+• ${dSust > 0 ? `${Math.round(dSust * 30)}g de queso ricotta bajo en grasa.` : ""}
+• ${Math.round(dHar * 70)}g de camote cocido o arepa de maíz delgada.
+• Ensalada mixta templada con aguacate.`
     }
   ];
 }

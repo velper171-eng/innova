@@ -274,6 +274,12 @@ const AthleteView = ({ patientId, onBack, isPublicShare = false }) => {
           💊 Plan de Suplementos
         </button>
         <button
+          className={`athlete-tab-btn ${athleteTab === "calories" ? "active" : ""}`}
+          onClick={() => setAthleteTab("calories")}
+        >
+          🥗 Control Nutricional
+        </button>
+        <button
           className={`athlete-tab-btn ${athleteTab === "somatotype" ? "active" : ""}`}
           onClick={() => setAthleteTab("somatotype")}
         >
@@ -284,12 +290,6 @@ const AthleteView = ({ patientId, onBack, isPublicShare = false }) => {
           onClick={() => setAthleteTab("training")}
         >
           🏋️ Entrenamiento
-        </button>
-        <button
-          className={`athlete-tab-btn ${athleteTab === "calories" ? "active" : ""}`}
-          onClick={() => setAthleteTab("calories")}
-        >
-          🥗 Conteo de Calorías
         </button>
       </div>
 

@@ -1270,6 +1270,64 @@ app.get("/api/patients/:id/mealplans", async (req, res) => {
   }
 });
 
+// 4b. Delete a specific meal plan
+app.delete("/api/mealplans/:id", async (req, res) => {
+  try {
+    const planId = parseInt(req.params.id);
+    if (isNaN(planId)) return res.status(400).json({ error: "ID de plan inválido" });
+
+    const plan = await prisma.mealPlan.findUnique({
+      where: { id: planId }
+    });
+
+    if (!plan) {
+      return res.status(404).json({ error: "Plan de alimentación no encontrado" });
+    }
+
+    await prisma.mealPlan.delete({
+      where: { id: planId }
+    });
+
+    res.json({ message: "Plan de alimentación eliminado con éxito" });
+  } catch (error) {
+    console.error("Error deleting meal plan:", error);
+    res.status(500).json({ error: "Error al eliminar el plan de alimentación" });
+  }
+});
+
+// 4c. Set a specific meal plan as active (cambiar el plan activo o su objetivo)
+app.post("/api/mealplans/:id/active", async (req, res) => {
+  try {
+    const planId = parseInt(req.params.id);
+    if (isNaN(planId)) return res.status(400).json({ error: "ID de plan inválido" });
+
+    const plan = await prisma.mealPlan.findUnique({
+      where: { id: planId }
+    });
+
+    if (!plan) {
+      return res.status(404).json({ error: "Plan de alimentación no encontrado" });
+    }
+
+    // Deactivate all plans for this patient
+    await prisma.mealPlan.updateMany({
+      where: { patientId: plan.patientId },
+      data: { isActive: false }
+    });
+
+    // Activate this specific plan
+    const updatedPlan = await prisma.mealPlan.update({
+      where: { id: planId },
+      data: { isActive: true }
+    });
+
+    res.json(updatedPlan);
+  } catch (error) {
+    console.error("Error activating meal plan:", error);
+    res.status(500).json({ error: "Error al activar el plan de alimentación" });
+  }
+});
+
 // 5. Get recommended products list with filter support
 app.get("/api/products/recommended", async (req, res) => {
   try {
