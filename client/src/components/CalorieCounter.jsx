@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
+
 
 const API_BASE = "/api";
 
@@ -1658,14 +1660,9 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
           )}
 
           {/* --- ADD RECOMMENDED PRODUCT MODAL --- */}
-          {showAddProductModal && (
+          {showAddProductModal && createPortal(
             <div
               className="modal-backdrop animate-fade-in"
-              style={{
-                position: "fixed", top: 0, left: 0, width: "100%", height: "100%",
-                background: "rgba(47, 79, 79, 0.4)", backdropFilter: "blur(6px)",
-                display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000
-              }}
               onClick={() => setShowAddProductModal(false)}
             >
               <div
@@ -1829,14 +1826,16 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
                   </div>
                 </form>
               </div>
-            </div>
+            </div>,
+            document.body
           )}
+
         </div>
       )}
 
 
       {/* --- EQUIVALENCES / EXCHANGE MODAL --- */}
-      {showExchangeModal && (
+      {showExchangeModal && createPortal(
         <div
           className="modal-backdrop animate-fade-in"
           style={{
@@ -1981,7 +1980,8 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
     </div>
