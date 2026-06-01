@@ -59,7 +59,7 @@
     "category": "Esparcibles y Dulces",
     "region": "Medellín, Colombia",
     "isLocalStore": true,
-    "purchaseLink": "https://wa.me/573117774625?text=Hola,%20quiero%20ordenar%20una%20porcion%20de%20Crema%20de%20Mani%20Artesanal",
+    "purchaseLink": "",
     "description": "Elaborada localmente con maní tostado premium, libre de aceites añadidos, conservantes o azúcares."
   },
   {
@@ -68,7 +68,7 @@
     "category": "Lácteos y Quesos",
     "region": "Medellín, Colombia",
     "isLocalStore": true,
-    "purchaseLink": "https://wa.me/573117774625?text=Hola,%20quiero%20ordenar%20un%20Yogurt%20Griego%20Artesanal",
+    "purchaseLink": "",
     "description": "Yogurt natural con alto contenido de proteína por porción, libre de conservantes y espesantes artificiales."
   },
   {
@@ -176,7 +176,7 @@
     "category": "Cereales y Harinas",
     "region": "Medellín, Colombia",
     "isLocalStore": true,
-    "purchaseLink": "https://wa.me/573117774625?text=Hola,%20quiero%20ordenar%20Waffles%20de%20Pandebono%20y%20Chia",
+    "purchaseLink": "",
     "description": "Waffles saludables de pandebono artesanal enriquecidos con chía. Libres de azúcares y altos en fibra."
   },
   {

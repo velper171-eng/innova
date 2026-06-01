@@ -372,7 +372,7 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
     formData.append("category", newProdCategory);
     formData.append("region", newProdRegion);
     formData.append("isLocalStore", newProdIsLocal);
-    formData.append("purchaseLink", newProdLink || (newProdIsLocal ? "https://wa.me/573117774625?text=Hola,%20quiero%20ordenar%20este%20producto" : ""));
+    formData.append("purchaseLink", newProdLink || "");
     formData.append("description", newProdDescription);
     if (newProdImageFile) {
       formData.append("image", newProdImageFile);

@@ -10,14 +10,12 @@
     },
     {
       "src": "server/vercel-entry.js",
-      "use": "@vercel/node"
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": ["server/recommendedProducts.json", "recommendedProducts.json"]
+      }
     }
   ],
-  "functions": {
-    "server/vercel-entry.js": {
-      "includeFiles": "server/recommendedProducts.json"
-    }
-  },
   "routes": [
     {
       "src": "/api/(.*)",
