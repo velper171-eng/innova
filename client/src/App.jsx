@@ -818,6 +818,12 @@ function App() {
                     Ciclos de Suplementación
                   </button>
                   <button
+                    className={`tab-btn ${activeTab === "nutrition" ? "active" : ""}`}
+                    onClick={() => setActiveTab("nutrition")}
+                  >
+                    Control de Nutrición
+                  </button>
+                  <button
                     className={`tab-btn ${activeTab === "training" ? "active" : ""}`}
                     onClick={() => setActiveTab("training")}
                   >
@@ -828,12 +834,6 @@ function App() {
                     onClick={() => setActiveTab("posture")}
                   >
                     Análisis Biomecánico
-                  </button>
-                  <button
-                    className={`tab-btn ${activeTab === "nutrition" ? "active" : ""}`}
-                    onClick={() => setActiveTab("nutrition")}
-                  >
-                    Control de Nutrición
                   </button>
                 </div>
 
