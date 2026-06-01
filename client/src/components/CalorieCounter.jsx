@@ -1663,6 +1663,11 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
           {showAddProductModal && createPortal(
             <div
               className="modal-backdrop animate-fade-in"
+              style={{
+                position: "fixed", top: 0, left: 0, width: "100%", height: "100%",
+                background: "rgba(47, 79, 79, 0.4)", backdropFilter: "blur(6px)",
+                display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000
+              }}
               onClick={() => setShowAddProductModal(false)}
             >
               <div

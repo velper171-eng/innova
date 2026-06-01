@@ -232,5 +232,131 @@
     "isLocalStore": false,
     "purchaseLink": "https://www.exito.com",
     "description": "Bebida aromática caliente antioxidante enriquecida con spirulina para el soporte celular diario."
+  },
+  {
+    "id": 27,
+    "name": "Galletas Multicereal Sin Gluten (Natri)",
+    "category": "Cereales y Harinas",
+    "region": "Colombia",
+    "isLocalStore": false,
+    "purchaseLink": "https://www.exito.com",
+    "description": "Galletas multicereal libres de gluten, ideales para acompañar tus colaciones o meriendas saludables."
+  },
+  {
+    "id": 28,
+    "name": "Mezcla de Avena para Pancakes y Waffles",
+    "category": "Cereales y Harinas",
+    "region": "Colombia",
+    "isLocalStore": false,
+    "purchaseLink": "https://www.exito.com",
+    "description": "Mezcla lista a base de avena molida sin azúcares añadidos, excelente para desayunos altos en fibra."
+  },
+  {
+    "id": 29,
+    "name": "Pan Pita / Árabe Integral (Mamá Inés)",
+    "category": "Cereales y Harinas",
+    "region": "Colombia",
+    "isLocalStore": false,
+    "purchaseLink": "https://www.exito.com",
+    "description": "Pan árabe integral muy bajo en grasa y sodio, ideal para preparar bolsillos rellenos de pollo y verduras."
+  },
+  {
+    "id": 30,
+    "name": "Semillas de Chía Orgánicas",
+    "category": "Snacks y Frutos Secos",
+    "region": "Colombia",
+    "isLocalStore": false,
+    "purchaseLink": "https://www.exito.com",
+    "description": "Semillas de chía ricas en Omega-3, antioxidantes y fibra digestiva. Excelente adición para avenas y yogures."
+  },
+  {
+    "id": 31,
+    "name": "Pistachos Salados con Cáscara",
+    "category": "Snacks y Frutos Secos",
+    "region": "Colombia",
+    "isLocalStore": false,
+    "purchaseLink": "https://www.exito.com",
+    "description": "Frutos secos crujientes y salados con cáscara. Excelente snack proteico rico en grasas cardiosaludables."
+  },
+  {
+    "id": 32,
+    "name": "Esparcible de Almendras y Avellanas",
+    "category": "Esparcibles y Dulces",
+    "region": "Colombia",
+    "isLocalStore": false,
+    "purchaseLink": "https://www.exito.com",
+    "description": "Crema esparcible artesanal a base de almendras y avellanas naturales, sin aceites vegetales añadidos."
+  },
+  {
+    "id": 33,
+    "name": "Mantequilla Clarificada en Spray (Ghee Spray)",
+    "category": "Esparcibles y Dulces",
+    "region": "Colombia",
+    "isLocalStore": false,
+    "purchaseLink": "https://www.exito.com",
+    "description": "Mantequilla ghee purificada en spray para dosificar con precisión y evitar exceder las porciones de grasa."
+  },
+  {
+    "id": 34,
+    "name": "Syrup Sin Azúcar Añadida (Konfyt)",
+    "category": "Esparcibles y Dulces",
+    "region": "Colombia",
+    "isLocalStore": false,
+    "purchaseLink": "https://www.exito.com",
+    "description": "Syrup dulce de consistencia tradicional libre de azúcares y calorías, ideal para bañar tus pancakes de avena."
+  },
+  {
+    "id": 35,
+    "name": "Queso Ricotta Premium (Finesse)",
+    "category": "Lácteos y Quesos",
+    "region": "Colombia",
+    "isLocalStore": false,
+    "purchaseLink": "https://www.exito.com",
+    "description": "Queso ricotta muy bajo en grasas y sodio, rico en proteínas de suero de excelente digestibilidad."
+  },
+  {
+    "id": 36,
+    "name": "Crema de Leche Ligera (Finesse)",
+    "category": "Lácteos y Quesos",
+    "region": "Colombia",
+    "isLocalStore": false,
+    "purchaseLink": "https://www.exito.com",
+    "description": "Crema de leche reducida en grasa para aderezar tus platos de forma gourmet sin exceder macros."
+  },
+  {
+    "id": 37,
+    "name": "Cacao en Polvo Sin Azúcar Añadida (Tosh)",
+    "category": "Bebidas e Infusiones",
+    "region": "Colombia",
+    "isLocalStore": false,
+    "purchaseLink": "https://www.exito.com",
+    "description": "Cacao puro en polvo con antioxidantes naturales, sin azúcares y endulzado sutilmente."
+  },
+  {
+    "id": 38,
+    "name": "Chocolate ChocoLYNE Sin Azúcar",
+    "category": "Bebidas e Infusiones",
+    "region": "Colombia",
+    "isLocalStore": false,
+    "purchaseLink": "https://www.exito.com",
+    "description": "Bebida de chocolate baja en calorías, libre de azúcares añadidos y de endulzantes artificiales densos."
+  },
+  {
+    "id": 39,
+    "name": "Bebida Verde 100% Natural",
+    "category": "Bebidas e Infusiones",
+    "region": "Colombia",
+    "isLocalStore": false,
+    "purchaseLink": "https://www.exito.com",
+    "description": "Mezcla deshidratada de vegetales verdes y piña para batidos verdes diuréticos y antioxidantes."
+  },
+  {
+    "id": 40,
+    "name": "Gelatina sin Sabor Pura",
+    "category": "Snacks y Frutos Secos",
+    "region": "Colombia",
+    "isLocalStore": false,
+    "purchaseLink": "https://www.exito.com",
+    "description": "Gelatina pura sin azúcar ni saborizantes, ideal para preparar postres proteicos con colágeno limpio."
   }
 ]
