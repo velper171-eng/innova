@@ -47,7 +47,7 @@
   {
     "id": 6,
     "name": "Granola Fit (Gran / Tosh)",
-    "category": "Cereales y Snacks",
+    "category": "Cereales y Harinas",
     "region": "Colombia",
     "isLocalStore": false,
     "purchaseLink": "https://www.exito.com",
@@ -169,5 +169,68 @@
     "isLocalStore": false,
     "purchaseLink": "https://www.exito.com",
     "description": "Bebidas calientes antioxidantes y digestivas que asisten a la desinflamación celular."
+  },
+  {
+    "id": 20,
+    "name": "Waffles de Pandebono y Chía",
+    "category": "Cereales y Harinas",
+    "region": "Medellín, Colombia",
+    "isLocalStore": true,
+    "purchaseLink": "https://wa.me/573117774625?text=Hola,%20quiero%20ordenar%20Waffles%20de%20Pandebono%20y%20Chia",
+    "description": "Waffles saludables de pandebono artesanal enriquecidos con chía. Libres de azúcares y altos en fibra."
+  },
+  {
+    "id": 21,
+    "name": "Arepas con Semillas de Quinua (Sary)",
+    "category": "Cereales y Harinas",
+    "region": "Colombia",
+    "isLocalStore": false,
+    "purchaseLink": "https://www.exito.com",
+    "description": "Arepas de maíz blanco fortificadas con granos enteros de quinua. Deliciosas y fuente limpia de carbohidratos."
+  },
+  {
+    "id": 22,
+    "name": "Harina de Almendras 100% Pura",
+    "category": "Cereales y Harinas",
+    "region": "Colombia",
+    "isLocalStore": false,
+    "purchaseLink": "https://www.exito.com",
+    "description": "Harina fina de almendras seleccionadas, ideal para repostería saludable y dietas bajas en carbohidratos."
+  },
+  {
+    "id": 23,
+    "name": "Yogurt Griego descremado San Martín",
+    "category": "Lácteos y Quesos",
+    "region": "Colombia",
+    "isLocalStore": false,
+    "purchaseLink": "https://www.exito.com",
+    "description": "Yogurt griego descremado de consistencia cremosa tradicional, libre de endulzantes artificiales."
+  },
+  {
+    "id": 24,
+    "name": "Chocolate Orgánico Oscuro 82% Cacao",
+    "category": "Snacks y Frutos Secos",
+    "region": "Colombia",
+    "isLocalStore": false,
+    "purchaseLink": "https://www.exito.com",
+    "description": "Barra de cacao orgánico extra amargo, excelente fuente de antioxidantes y energía para media tarde."
+  },
+  {
+    "id": 25,
+    "name": "Gelatina sin Azúcar con Stevia (Konfyt)",
+    "category": "Snacks y Frutos Secos",
+    "region": "Colombia",
+    "isLocalStore": false,
+    "purchaseLink": "https://www.exito.com",
+    "description": "Gelatina ligera endulzada con stevia natural. El snack perfecto para saciar antojos y mejorar el aporte de colágeno."
+  },
+  {
+    "id": 26,
+    "name": "Infusión de Té Verde con Spirulina (Tosh)",
+    "category": "Bebidas e Infusiones",
+    "region": "Colombia",
+    "isLocalStore": false,
+    "purchaseLink": "https://www.exito.com",
+    "description": "Bebida aromática caliente antioxidante enriquecida con spirulina para el soporte celular diario."
   }
 ]

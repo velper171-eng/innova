@@ -2,6 +2,99 @@ import React, { useState, useEffect, useRef } from "react";
 
 const API_BASE = "/api";
 
+const EXCHANGE_GROUPS = [
+  {
+    category: "Cereales y Harinas",
+    icon: "🥞",
+    color: "#fbbf24",
+    title: "Cereales, Tubérculos e Harinas",
+    description: "Aporte principal de carbohidratos complejos para energía muscular.",
+    items: [
+      { name: "Arroz blanco o integral cocido", portion: "80g", details: "6 cucharadas colmadas" },
+      { name: "Avena en hojuelas", portion: "24g", details: "4 cucharadas colmadas" },
+      { name: "Papa común cocida", portion: "83g", details: "1 unidad mediana" },
+      { name: "Papa criolla", portion: "108g", details: "3 unidades medianas" },
+      { name: "Yuca blanca cocida", portion: "62g", details: "1 trozo mediano" },
+      { name: "Pan integral", portion: "32g", details: "1 tajada mediana" },
+      { name: "Arepa delgada de maíz blanco", portion: "56g", details: "1 unidad pequeña" },
+      { name: "Tortilla de maíz", portion: "30g", details: "1 unidad pequeña" }
+    ]
+  },
+  {
+    category: "Sustitutos",
+    icon: "🍳",
+    color: "#f97316",
+    title: "Sustitutos de Huevo y Queso",
+    description: "Fuentes de proteína y grasas saludables secundarias.",
+    items: [
+      { name: "Huevo de gallina entero", portion: "50g", details: "1 unidad" },
+      { name: "Huevos de codorniz", portion: "50g", details: "5 unidades" },
+      { name: "Queso campesino o cuajada", portion: "30g", details: "1 tajada pequeña" },
+      { name: "Queso parmesano rallado", portion: "14g", details: "2 cucharadas colmadas" },
+      { name: "Jamón de pavo cocido", portion: "46g", details: "2 tajadas delgadas" }
+    ]
+  },
+  {
+    category: "Carnes Magras",
+    icon: "🍗",
+    color: "#ef4444",
+    title: "Carnes Magras y Pescados",
+    description: "Fuentes de proteína pura para reparación e hipertrofia.",
+    items: [
+      { name: "Pechuga de pollo cocida (sin piel)", portion: "80g", details: "1/4 de unidad grande" },
+      { name: "Lomo de cerdo magro", portion: "100g", details: "1/5 de libra" },
+      { name: "Lomo de res a la plancha", portion: "100g", details: "1/5 de libra" },
+      { name: "Atún enlatado en agua", portion: "120g", details: "1 lata entera" },
+      { name: "Salmón rosado crudo", portion: "73g", details: "1 trozo pequeño" },
+      { name: "Proteína de soya texturizada", portion: "60g", details: "2 cucharadas colmadas" }
+    ]
+  },
+  {
+    category: "Lácteos",
+    icon: "🥛",
+    color: "#3b82f6",
+    title: "Lácteos y Yogures",
+    description: "Aporte de calcio, probióticos y proteínas digestivas.",
+    items: [
+      { name: "Yogurt griego natural descremado (sin dulce)", portion: "200g", details: "1 vaso mediano" },
+      { name: "Yogurt descremado Kéfir", portion: "200g", details: "1 vaso pequeño" },
+      { name: "Bebida de soya sin dulce", portion: "200g", details: "1 vaso pequeño" },
+      { name: "Leche de vaca semidescremada", portion: "200g", details: "1 vaso pequeño" }
+    ]
+  },
+  {
+    category: "Frutas",
+    icon: "🍎",
+    color: "#10b981",
+    title: "Frutas Frescas",
+    description: "Carbohidratos simples, vitaminas y antioxidantes limpios.",
+    items: [
+      { name: "Banano común", portion: "65g", details: "1 unidad pequeña" },
+      { name: "Fresas frescas", portion: "161g", details: "9 unidades medianas" },
+      { name: "Manzana con cáscara", portion: "112g", details: "1 unidad pequeña" },
+      { name: "Kiwi", portion: "82g", details: "1 unidad mediana" },
+      { name: "Guayaba manzana", portion: "169g", details: "1 unidad mediana" },
+      { name: "Naranja fresca", portion: "147g", details: "1 unidad pequeña" }
+    ]
+  },
+  {
+    category: "Grasas y Nueces",
+    icon: "🥑",
+    color: "#84cc16",
+    title: "Grasas y Nueces Saludables",
+    description: "Ácidos grasos esenciales y soporte hormonal.",
+    items: [
+      { name: "Aceite de oliva o canola", portion: "5g", details: "1 cucharada sopera" },
+      { name: "Aguacate Hass o común", portion: "30g", details: "1/4 unidad mediana" },
+      { name: "Almendras tostadas sin sal", portion: "9g", details: "3 unidades medianas" },
+      { name: "Maní sin sal tostado", portion: "10g", details: "1 cucharada sopera colmada" },
+      { name: "Mantequilla de maní natural", portion: "8g", details: "1 cucharada dulcera colmada" },
+      { name: "Pistacho tostado y salado", portion: "9g", details: "1 cucharada sopera colmada" }
+    ]
+  }
+];
+
+
 // Utility to compress and resize image before upload
 const compressImage = (file, maxWidth = 1024, maxHeight = 1024, quality = 0.8) => {
   return new Promise((resolve, reject) => {
@@ -116,6 +209,24 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
   const [productCategory, setProductCategory] = useState("Todos");
   const [productRegion, setProductRegion] = useState("Todos");
 
+  // --- EXCHANGE SEARCH & FILTER STATE ---
+  const [exchangeSearchQuery, setExchangeSearchQuery] = useState("");
+  const [activeExchangeTab, setActiveExchangeTab] = useState("Todos");
+
+  // --- ADD PRODUCT STATE ---
+  const [showAddProductModal, setShowAddProductModal] = useState(false);
+  const [newProdName, setNewProdName] = useState("");
+  const [newProdCategory, setNewProdCategory] = useState("Cereales y Harinas");
+  const [newProdRegion, setNewProdRegion] = useState("Colombia");
+  const [newProdIsLocal, setNewProdIsLocal] = useState(false);
+  const [newProdLink, setNewProdLink] = useState("");
+  const [newProdDescription, setNewProdDescription] = useState("");
+  const [newProdImageFile, setNewProdImageFile] = useState(null);
+  const [newProdImagePreview, setNewProdImagePreview] = useState(null);
+  const [addingProduct, setAddingProduct] = useState(false);
+  const productFileRef = useRef(null);
+
+
   useEffect(() => {
     fetchLogs();
     fetchActivePlan();
@@ -217,6 +328,81 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
       }
     } catch (err) {
       console.error("Error loading recommended products:", err);
+    }
+  };
+
+  const handleProductImageChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      try {
+        const { compressedFile, previewUrl } = await compressImage(file);
+        setNewProdImageFile(compressedFile);
+        setNewProdImagePreview(previewUrl);
+      } catch (err) {
+        console.error("Compression failed, using original:", err);
+        setNewProdImageFile(file);
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setNewProdImagePreview(reader.result);
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+  };
+
+  const handleClearProductImage = () => {
+    setNewProdImageFile(null);
+    setNewProdImagePreview(null);
+    if (productFileRef.current) {
+      productFileRef.current.value = "";
+    }
+  };
+
+  const handleAddProductSubmit = async (e) => {
+    e.preventDefault();
+    if (!newProdName || !newProdCategory || !newProdDescription) {
+      alert("Por favor llena todos los campos obligatorios.");
+      return;
+    }
+    setAddingProduct(true);
+    const formData = new FormData();
+    formData.append("name", newProdName);
+    formData.append("category", newProdCategory);
+    formData.append("region", newProdRegion);
+    formData.append("isLocalStore", newProdIsLocal);
+    formData.append("purchaseLink", newProdLink || (newProdIsLocal ? "https://wa.me/573117774625?text=Hola,%20quiero%20ordenar%20este%20producto" : "https://www.exito.com"));
+    formData.append("description", newProdDescription);
+    if (newProdImageFile) {
+      formData.append("image", newProdImageFile);
+    }
+
+    try {
+      const res = await fetch(`${API_BASE}/products/recommended`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (res.ok) {
+        await fetchRecommendedProducts();
+        setShowAddProductModal(false);
+        // Reset form
+        setNewProdName("");
+        setNewProdCategory("Cereales y Harinas");
+        setNewProdRegion("Colombia");
+        setNewProdIsLocal(false);
+        setNewProdLink("");
+        setNewProdDescription("");
+        setNewProdImageFile(null);
+        setNewProdImagePreview(null);
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        alert(errData.error || "Error al agregar producto.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error al conectar con el servidor.");
+    } finally {
+      setAddingProduct(false);
     }
   };
 
@@ -521,29 +707,32 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
     <div style={{ display: "flex", flexDirection: "column", gap: "24px" }} className="animate-fade-in">
       
       {/* Premium subtabs navigation */}
-      <div className="glass-card" style={{ padding: "8px", display: "flex", gap: "8px", borderRadius: "12px", border: "1px solid var(--border-color)", background: "rgba(255,255,255,0.01)" }}>
-        <button
-          className={`tab-btn ${subTab === "diary" ? "active" : ""}`}
-          onClick={() => setSubTab("diary")}
-          style={{ flex: 1, padding: "8px", fontSize: "0.85rem", fontWeight: 600, border: "none", borderRadius: "8px" }}
-        >
-          📖 Diario de Alimentación
-        </button>
-        <button
-          className={`tab-btn ${subTab === "plan" ? "active" : ""}`}
-          onClick={() => setSubTab("plan")}
-          style={{ flex: 1, padding: "8px", fontSize: "0.85rem", fontWeight: 600, border: "none", borderRadius: "8px" }}
-        >
-          📋 Plan de Alimentación
-        </button>
-        <button
-          className={`tab-btn ${subTab === "products" ? "active" : ""}`}
-          onClick={() => setSubTab("products")}
-          style={{ flex: 1, padding: "8px", fontSize: "0.85rem", fontWeight: 600, border: "none", borderRadius: "8px" }}
-        >
-          🛒 Productos Recomendados
-        </button>
+      <div className="scroll-mask-container">
+        <div className="glass-card subtabs-nav" style={{ padding: "8px", display: "flex", gap: "8px", borderRadius: "12px", border: "1px solid var(--border-color)", background: "rgba(255,255,255,0.01)" }}>
+          <button
+            className={`tab-btn ${subTab === "diary" ? "active" : ""}`}
+            onClick={() => setSubTab("diary")}
+            style={{ padding: "8px 16px", fontSize: "0.85rem", fontWeight: 600, border: "none", borderRadius: "8px", flexShrink: 0 }}
+          >
+            📖 Diario de Alimentación
+          </button>
+          <button
+            className={`tab-btn ${subTab === "plan" ? "active" : ""}`}
+            onClick={() => setSubTab("plan")}
+            style={{ padding: "8px 16px", fontSize: "0.85rem", fontWeight: 600, border: "none", borderRadius: "8px", flexShrink: 0 }}
+          >
+            📋 Plan de Alimentación
+          </button>
+          <button
+            className={`tab-btn ${subTab === "products" ? "active" : ""}`}
+            onClick={() => setSubTab("products")}
+            style={{ padding: "8px 16px", fontSize: "0.85rem", fontWeight: 600, border: "none", borderRadius: "8px", flexShrink: 0 }}
+          >
+            🛒 Productos Recomendados
+          </button>
+        </div>
       </div>
+
 
       {/* --- TAB 1: DIARY --- */}
       {subTab === "diary" && (
@@ -1289,10 +1478,22 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
           
           {/* Filters Bar */}
           <div className="glass-card" style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-            <h4 className="glow-text" style={{ fontSize: "1.15rem", margin: 0 }}>Catálogo de Recomendados Nutricionales</h4>
-            <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", margin: 0, marginTop: "-4px" }}>
-              Productos validados que facilitan tu alimentación. Abierto a filtros por regiones para apoyar marcas locales.
-            </p>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "12px" }}>
+              <div>
+                <h4 className="glow-text" style={{ fontSize: "1.15rem", margin: 0 }}>Catálogo de Recomendados Nutricionales</h4>
+                <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", margin: 0, marginTop: "-4px" }}>
+                  Productos validados que facilitan tu alimentación. Abierto a filtros por regiones para apoyar marcas locales.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => setShowAddProductModal(true)}
+                style={{ padding: "8px 16px", fontSize: "0.8rem", borderRadius: "20px", display: "inline-flex", alignItems: "center", gap: "6px" }}
+              >
+                ➕ Agregar Producto
+              </button>
+            </div>
             
             <div style={{ display: "flex", gap: "16px", flexWrap: "wrap", borderTop: "1px solid var(--border-color)", paddingTop: "12px" }}>
               <div className="form-group" style={{ flex: 1, minWidth: "200px", margin: 0 }}>
@@ -1328,103 +1529,311 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
             </div>
           ) : (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "20px" }}>
-              {filteredProducts.map((p) => (
-                <div
-                  key={p.id}
-                  className="glass-card table-row-hover animate-fade-in"
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "12px",
-                    padding: "16px",
-                    background: p.isLocalStore ? "rgba(0, 242, 254, 0.02)" : "rgba(255,255,255,0.01)",
-                    border: p.isLocalStore ? "1px solid rgba(0, 242, 254, 0.25)" : "1px solid var(--border-color)",
-                    borderRadius: "14px",
-                    position: "relative"
-                  }}
-                >
-                  {/* Category icon header */}
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                    <span style={{
-                      fontSize: "0.7rem",
-                      padding: "2px 8px",
-                      borderRadius: "6px",
-                      background: "rgba(255,255,255,0.05)",
-                      color: "var(--text-muted)",
-                      fontWeight: 600
-                    }}>
-                      {p.category}
-                    </span>
-                    {p.isLocalStore && (
+              {filteredProducts.map((p) => {
+                // Get category emoji
+                const categoryEmoji = p.category === "Cereales y Harinas" ? "🥞" :
+                                      p.category === "Lácteos y Quesos" ? "🥛" :
+                                      p.category === "Snacks y Frutos Secos" ? "🥜" :
+                                      p.category === "Esparcibles y Dulces" ? "🍯" :
+                                      p.category === "Bebidas e Infusiones" ? "🍵" :
+                                      p.category === "Suplementos y Proteínas" ? "⚡" : "🛒";
+
+                return (
+                  <div
+                    key={p.id}
+                    className="glass-card product-card-hover animate-fade-in"
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "12px",
+                      padding: "14px",
+                      background: p.isLocalStore ? "rgba(0, 242, 254, 0.02)" : "rgba(255,255,255,0.01)",
+                      border: p.isLocalStore ? "1px solid rgba(0, 242, 254, 0.25)" : "1px solid var(--border-color)",
+                      borderRadius: "16px",
+                      position: "relative"
+                    }}
+                  >
+                    {/* Visual Card Image */}
+                    <div className="product-card-image-container">
+                      {p.imagePath ? (
+                        <img
+                          src={`${API_BASE}${p.imagePath}`}
+                          className="product-card-image"
+                          alt={p.name}
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.style.display = "none";
+                            e.target.parentNode.innerHTML = `<div class="product-placeholder-gradient"><span class="product-placeholder-icon">${categoryEmoji}</span></div>`;
+                          }}
+                        />
+                      ) : (
+                        <div className="product-placeholder-gradient">
+                          <span className="product-placeholder-icon">{categoryEmoji}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Category icon header */}
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginTop: "4px" }}>
                       <span style={{
-                        fontSize: "0.65rem",
+                        fontSize: "0.7rem",
                         padding: "2px 8px",
                         borderRadius: "6px",
-                        background: "rgba(0, 242, 254, 0.15)",
-                        color: "var(--primary)",
-                        fontWeight: 800,
-                        border: "1px solid rgba(0, 242, 254, 0.3)"
+                        background: "rgba(255,255,255,0.05)",
+                        color: "var(--text-muted)",
+                        fontWeight: 600
                       }}>
-                        ✨ TIENDA LOCAL
+                        {p.category}
                       </span>
-                    )}
-                  </div>
+                      {p.isLocalStore && (
+                        <span style={{
+                          fontSize: "0.65rem",
+                          padding: "2px 8px",
+                          borderRadius: "6px",
+                          background: "rgba(0, 242, 254, 0.15)",
+                          color: "var(--primary)",
+                          fontWeight: 800,
+                          border: "1px solid rgba(0, 242, 254, 0.3)"
+                        }}>
+                          ✨ TIENDA LOCAL
+                        </span>
+                      )}
+                    </div>
 
-                  <div style={{ flex: 1 }}>
-                    <h5 style={{ fontSize: "1.05rem", color: "var(--text-main)", fontWeight: 700, margin: 0 }}>
-                      {p.name}
-                    </h5>
-                    <span style={{ fontSize: "0.7rem", color: "var(--text-dark)", marginTop: "2px", display: "inline-block" }}>
-                      📍 Ubicación: <strong>{p.region}</strong>
-                    </span>
-                    <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "8px", lineHeight: "1.4" }}>
-                      {p.description}
-                    </p>
-                  </div>
+                    <div style={{ flex: 1 }}>
+                      <h5 style={{ fontSize: "1rem", color: "var(--text-main)", fontWeight: 700, margin: 0, lineHeight: "1.3" }}>
+                        {p.name}
+                      </h5>
+                      <span style={{ fontSize: "0.7rem", color: "var(--text-dark)", marginTop: "3px", display: "inline-block" }}>
+                        📍 Ubicación: <strong>{p.region}</strong>
+                      </span>
+                      <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "6px", lineHeight: "1.4" }}>
+                        {p.description}
+                      </p>
+                    </div>
 
-                  {/* Actions buttons */}
-                  <div style={{ borderTop: "1px solid var(--border-color)", paddingTop: "12px", marginTop: "4px" }}>
-                    {p.isLocalStore ? (
-                      <a
-                        href={p.purchaseLink}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="btn btn-primary"
-                        style={{
-                          width: "100%",
-                          textAlign: "center",
-                          fontSize: "0.8rem",
-                          padding: "8px",
-                          display: "inline-block",
-                          boxShadow: "0 0 10px rgba(0, 242, 254, 0.25)"
-                        }}
-                      >
-                        🛍️ Ordenar Directo (WhatsApp)
-                      </a>
-                    ) : (
-                      <a
-                        href={p.purchaseLink}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="btn btn-secondary"
-                        style={{
-                          width: "100%",
-                          textAlign: "center",
-                          fontSize: "0.8rem",
-                          padding: "8px",
-                          display: "inline-block"
-                        }}
-                      >
-                        🛒 Buscar en Supermercados
-                      </a>
-                    )}
+                    {/* Actions buttons */}
+                    <div style={{ borderTop: "1px solid var(--border-color)", paddingTop: "12px", marginTop: "4px" }}>
+                      {p.isLocalStore ? (
+                        <a
+                          href={p.purchaseLink}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="btn btn-primary"
+                          style={{
+                            width: "100%",
+                            textAlign: "center",
+                            fontSize: "0.8rem",
+                            padding: "8px",
+                            display: "inline-block",
+                            boxShadow: "0 0 10px rgba(0, 242, 254, 0.25)",
+                            borderRadius: "20px"
+                          }}
+                        >
+                          🛍️ Ordenar Directo (WhatsApp)
+                        </a>
+                      ) : (
+                        <a
+                          href={p.purchaseLink}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="btn btn-secondary"
+                          style={{
+                            width: "100%",
+                            textAlign: "center",
+                            fontSize: "0.8rem",
+                            padding: "8px",
+                            display: "inline-block",
+                            borderRadius: "20px"
+                          }}
+                        >
+                          🛒 Buscar en Supermercados
+                        </a>
+                      )}
+                    </div>
                   </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* --- ADD RECOMMENDED PRODUCT MODAL --- */}
+          {showAddProductModal && (
+            <div
+              className="modal-backdrop animate-fade-in"
+              style={{
+                position: "fixed", top: 0, left: 0, width: "100%", height: "100%",
+                background: "rgba(47, 79, 79, 0.4)", backdropFilter: "blur(6px)",
+                display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000
+              }}
+              onClick={() => setShowAddProductModal(false)}
+            >
+              <div
+                className="glass-card exchange-modal-card animate-scale-in"
+                style={{
+                  width: "90%", maxWidth: "500px", padding: "24px",
+                  display: "flex", flexDirection: "column", gap: "16px",
+                  borderRadius: "20px", overflowY: "auto", maxHeight: "90vh"
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--border-color)", paddingBottom: "12px" }}>
+                  <h3 className="glow-text" style={{ fontSize: "1.25rem", margin: 0 }}>Agregar Producto Recomendado</h3>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => setShowAddProductModal(false)}
+                    style={{ padding: "4px 8px", fontSize: "0.8rem", height: "auto" }}
+                  >
+                    ✕
+                  </button>
                 </div>
-              ))}
+
+                <form onSubmit={handleAddProductSubmit} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label className="form-label" style={{ fontSize: "0.75rem" }}>Nombre del Producto *</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      placeholder="Ej: Avena en Hojuelas Tosh"
+                      value={newProdName}
+                      onChange={(e) => setNewProdName(e.target.value)}
+                      required
+                      style={{ padding: "8px 12px", fontSize: "0.9rem" }}
+                    />
+                  </div>
+
+                  <div className="grid-2-cols" style={{ gap: "12px" }}>
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label className="form-label" style={{ fontSize: "0.75rem" }}>Categoría / Tipo *</label>
+                      <select
+                        className="form-input"
+                        value={newProdCategory}
+                        onChange={(e) => setNewProdCategory(e.target.value)}
+                        style={{ padding: "8px 12px", fontSize: "0.9rem" }}
+                      >
+                        {categories.filter(c => c !== "Todos").map((c, i) => (
+                          <option key={i} value={c}>{c}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label className="form-label" style={{ fontSize: "0.75rem" }}>Región / Ubicación</label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        placeholder="Ej: Colombia, Medellín"
+                        value={newProdRegion}
+                        onChange={(e) => setNewProdRegion(e.target.value)}
+                        style={{ padding: "8px 12px", fontSize: "0.9rem" }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-group" style={{ margin: 0, flexDirection: "row", alignItems: "center", gap: "8px" }}>
+                    <input
+                      type="checkbox"
+                      id="newProdIsLocal"
+                      checked={newProdIsLocal}
+                      onChange={(e) => setNewProdIsLocal(e.target.checked)}
+                      style={{ width: "16px", height: "16px", cursor: "pointer" }}
+                    />
+                    <label htmlFor="newProdIsLocal" className="form-label" style={{ margin: 0, fontSize: "0.8rem", textTransform: "none", cursor: "pointer" }}>
+                      ¿Es marca local / venta por WhatsApp?
+                    </label>
+                  </div>
+
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label className="form-label" style={{ fontSize: "0.75rem" }}>
+                      {newProdIsLocal ? "Enlace de WhatsApp (Opcional)" : "Enlace de Compra (Opcional)"}
+                    </label>
+                    <input
+                      type="url"
+                      className="form-input"
+                      placeholder={newProdIsLocal ? "https://wa.me/..." : "https://www.exito.com/..."}
+                      value={newProdLink}
+                      onChange={(e) => setNewProdLink(e.target.value)}
+                      style={{ padding: "8px 12px", fontSize: "0.9rem" }}
+                    />
+                  </div>
+
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label className="form-label" style={{ fontSize: "0.75rem" }}>Descripción del Producto *</label>
+                    <textarea
+                      className="form-input"
+                      placeholder="Describe el producto, sus propiedades y aporte nutricional..."
+                      value={newProdDescription}
+                      onChange={(e) => setNewProdDescription(e.target.value)}
+                      rows={3}
+                      required
+                      style={{ padding: "8px 12px", fontSize: "0.9rem", resize: "none" }}
+                    />
+                  </div>
+
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label className="form-label" style={{ fontSize: "0.75rem" }}>Foto del Producto (Opcional)</label>
+                    <div
+                      className="product-upload-box"
+                      onClick={() => productFileRef.current?.click()}
+                    >
+                      {newProdImagePreview ? (
+                        <div style={{ width: "100%", height: "100%", position: "relative" }}>
+                          <img src={newProdImagePreview} className="product-upload-preview" alt="Product Preview" />
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); handleClearProductImage(); }}
+                            style={{
+                              position: "absolute", top: "8px", right: "8px", background: "rgba(0,0,0,0.7)",
+                              color: "white", border: "none", borderRadius: "50%", width: "24px", height: "24px",
+                              cursor: "pointer", fontSize: "11px", display: "flex", alignItems: "center", justifyContent: "center"
+                            }}
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ) : (
+                        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px" }}>
+                          <span style={{ fontSize: "1.8rem" }}>📷</span>
+                          <span style={{ fontSize: "0.8rem", color: "var(--text-main)", fontWeight: 500 }}>Subir foto del producto</span>
+                          <span style={{ fontSize: "0.68rem", color: "var(--text-muted)" }}>Haz clic para elegir una imagen</span>
+                        </div>
+                      )}
+                    </div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      ref={productFileRef}
+                      style={{ display: "none" }}
+                      onChange={handleProductImageChange}
+                    />
+                  </div>
+
+                  <div style={{ display: "flex", gap: "12px", borderTop: "1px solid var(--border-color)", paddingTop: "12px", marginTop: "4px" }}>
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={() => setShowAddProductModal(false)}
+                      style={{ flex: 1, padding: "8px 16px", fontSize: "0.85rem", borderRadius: "20px" }}
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="submit"
+                      className="btn btn-primary"
+                      disabled={addingProduct}
+                      style={{ flex: 2, padding: "8px 16px", fontSize: "0.85rem", borderRadius: "20px" }}
+                    >
+                      {addingProduct ? "Guardando..." : "✓ Registrar Producto"}
+                    </button>
+                  </div>
+                </form>
+              </div>
             </div>
           )}
         </div>
       )}
+
 
       {/* --- EQUIVALENCES / EXCHANGE MODAL --- */}
       {showExchangeModal && (
@@ -1435,14 +1844,17 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
             background: "rgba(47, 79, 79, 0.4)", backdropFilter: "blur(6px)",
             display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000
           }}
-          onClick={() => setShowExchangeModal(false)}
+          onClick={() => {
+            setShowExchangeModal(false);
+            setExchangeSearchQuery("");
+            setActiveExchangeTab("Todos");
+          }}
         >
           <div
-            className="glass-card animate-scale-in"
+            className="glass-card exchange-modal-card animate-scale-in"
             style={{
-              width: "90%", maxWidth: "650px", height: "80vh", padding: "24px",
+              width: "95%", maxWidth: "680px", height: "82vh", padding: "24px",
               display: "flex", flexDirection: "column", gap: "16px",
-              background: "#ffffff", border: "1px solid var(--border-color)",
               borderRadius: "20px", overflow: "hidden"
             }}
             onClick={(e) => e.stopPropagation()}
@@ -1451,103 +1863,118 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
               <h3 className="glow-text" style={{ fontSize: "1.3rem", margin: 0 }}>Lista de Intercambios y Sustitutos</h3>
               <button
                 className="btn btn-secondary"
-                onClick={() => setShowExchangeModal(false)}
+                onClick={() => {
+                  setShowExchangeModal(false);
+                  setExchangeSearchQuery("");
+                  setActiveExchangeTab("Todos");
+                }}
                 style={{ padding: "4px 8px", fontSize: "0.8rem", height: "auto" }}
               >
                 Cerrar
               </button>
             </div>
 
+            {/* Search and Category Filter pills */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px", flexShrink: 0 }}>
+              <div className="exchange-search-box">
+                <span className="exchange-search-icon">🔍</span>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="Buscar alimento (ej: Arroz, Huevo, Aguacate...)"
+                  value={exchangeSearchQuery}
+                  onChange={(e) => setExchangeSearchQuery(e.target.value)}
+                  style={{ width: "100%", padding: "10px 16px" }}
+                />
+              </div>
+
+              <div className="exchange-pills-nav">
+                {["Todos", "Cereales y Harinas", "Sustitutos", "Carnes Magras", "Lácteos", "Frutas", "Grasas y Nueces"].map((groupName, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    className={`exchange-pill ${activeExchangeTab === groupName ? "active" : ""}`}
+                    onClick={() => setActiveExchangeTab(groupName)}
+                  >
+                    {groupName}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div style={{ flex: 1, overflowY: "auto", paddingRight: "8px", display: "flex", flexDirection: "column", gap: "16px" }}>
               <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", margin: 0 }}>
-                ¿No tienes a la mano un alimento recomendado en tu plan? ¡Sustitúyelo por otro equivalente del mismo grupo de alimentos respetando su porción!
+                ¿No tienes a la mano un alimento recomendado? ¡Sustitúyelo por otro equivalente del mismo grupo de alimentos respetando su porción!
               </p>
 
-              {/* Category list details */}
-              <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-                {/* Cereales / Harinas */}
-                <div style={{ padding: "10px", background: "rgba(0,0,0,0.01)", border: "1px solid var(--border-color)", borderRadius: "10px" }}>
-                  <h5 style={{ fontSize: "0.9rem", color: "var(--text-main)", fontWeight: 700, margin: "0 0 6px 0" }}>🥞 Cereales, Tubérculos e Harinas (1 porción equivale a):</h5>
-                  <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", lineHeight: "1.4" }}>
-                    • 80g de Arroz blanco o integral cocido (6 cucharadas colmadas)<br />
-                    • 24g de Avena en hojuelas (4 cucharadas colmadas)<br />
-                    • 83g de Papa común cocida (1 unidad mediana)<br />
-                    • 108g de Papa criolla (3 unidades medianas)<br />
-                    • 62g de Yuca blanca cocida (1 trozo mediano)<br />
-                    • 32g de Pan integral (1 tajada mediana)<br />
-                    • 56g de Arepa delgada de maíz blanco (1 unidad pequeña)<br />
-                    • 30g de Tortilla de maíz (1 unidad pequeña)
-                  </div>
-                </div>
+              {/* Categorías e items filtrados */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+                {EXCHANGE_GROUPS
+                  .filter(group => activeExchangeTab === "Todos" || group.category === activeExchangeTab)
+                  .map((group, groupIdx) => {
+                    // Filter items based on search query
+                    const filteredItems = group.items.filter(item =>
+                      item.name.toLowerCase().includes(exchangeSearchQuery.toLowerCase())
+                    );
 
-                {/* Sustitutos */}
-                <div style={{ padding: "10px", background: "rgba(0,0,0,0.01)", border: "1px solid var(--border-color)", borderRadius: "10px" }}>
-                  <h5 style={{ fontSize: "0.9rem", color: "var(--text-main)", fontWeight: 700, margin: "0 0 6px 0" }}>🍳 Sustitutos de Huevo y Queso (1 porción equivale a):</h5>
-                  <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", lineHeight: "1.4" }}>
-                    • 50g de Huevo de gallina crudo/entero (1 unidad)<br />
-                    • 50g de Huevos de codorniz crudos (5 unidades)<br />
-                    • 30g de Queso campesino o cuajada (1 tajada pequeña)<br />
-                    • 14g de Queso parmesano rallado (2 cucharadas colmadas)<br />
-                    • 46g de Jamón de pavo cocido (2 tajadas delgadas)
-                  </div>
-                </div>
+                    if (filteredItems.length === 0) return null;
 
-                {/* Carnes */}
-                <div style={{ padding: "10px", background: "rgba(0,0,0,0.01)", border: "1px solid var(--border-color)", borderRadius: "10px" }}>
-                  <h5 style={{ fontSize: "0.9rem", color: "var(--text-main)", fontWeight: 700, margin: "0 0 6px 0" }}>🍗 Carnes Magras y Pescados (1 porción equivale a):</h5>
-                  <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", lineHeight: "1.4" }}>
-                    • 80g de Pechuga de pollo cocida y sin piel (1/4 de unidad grande)<br />
-                    • 100g de Lomo de cerdo magro (1/5 de libra)<br />
-                    • 100g de Lomo de res a la plancha (1/5 de libra)<br />
-                    • 120g de Atún enlatado en agua (1 lata)<br />
-                    • 73g de Salmón rosado crudo (1 trozo pequeño)<br />
-                    • 60g de Proteína de soya texturizada (2 cucharadas colmadas)
-                  </div>
-                </div>
+                    return (
+                      <div key={groupIdx} style={{ borderBottom: "1px solid var(--border-color)", paddingBottom: "16px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
+                          <span style={{ fontSize: "1.2rem" }}>{group.icon}</span>
+                          <h4 style={{ fontSize: "0.95rem", color: "var(--text-main)", fontWeight: 700, margin: 0 }}>
+                            {group.title}
+                          </h4>
+                        </div>
+                        <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", margin: "0 0 10px 0" }}>
+                          {group.description}
+                        </p>
 
-                {/* Lacteos */}
-                <div style={{ padding: "10px", background: "rgba(0,0,0,0.01)", border: "1px solid var(--border-color)", borderRadius: "10px" }}>
-                  <h5 style={{ fontSize: "0.9rem", color: "var(--text-main)", fontWeight: 700, margin: "0 0 6px 0" }}>🥛 Lácteos y Yogures (1 porción equivale a):</h5>
-                  <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", lineHeight: "1.4" }}>
-                    • 200g de Yogurt griego natural descremado y sin dulce<br />
-                    • 200g de Yogurt descremado Kéfir (1 vaso pequeño)<br />
-                    • 200g de Bebida de soya comercial sin dulce (1 vaso pequeño)<br />
-                    • 200g de Leche de vaca semidescremada (1 vaso pequeño)
-                  </div>
-                </div>
+                        <div className="exchange-grid">
+                          {filteredItems.map((item, itemIdx) => (
+                            <div
+                              key={itemIdx}
+                              className="exchange-card"
+                              style={{ borderLeft: `3px solid ${group.color}` }}
+                            >
+                              <span
+                                className="exchange-card-portion"
+                                style={{ backgroundColor: `${group.color}15`, color: group.color, border: `1px solid ${group.color}35` }}
+                              >
+                                {item.portion}
+                              </span>
+                              <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--text-main)", marginTop: "4px" }}>
+                                {item.name}
+                              </div>
+                              <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
+                                {item.details}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
 
-                {/* Frutas */}
-                <div style={{ padding: "10px", background: "rgba(0,0,0,0.01)", border: "1px solid var(--border-color)", borderRadius: "10px" }}>
-                  <h5 style={{ fontSize: "0.9rem", color: "var(--text-main)", fontWeight: 700, margin: "0 0 6px 0" }}>🍎 Frutas Frescas (1 porción equivale a):</h5>
-                  <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", lineHeight: "1.4" }}>
-                    • 65g de Banano común (1 unidad pequeña)<br />
-                    • 161g de Fresas frescas (9 unidades medianas)<br />
-                    • 112g de Manzana con cáscara (1 unidad pequeña)<br />
-                    • 82g de Kiwi (1 unidad mediana)<br />
-                    • 169g de Guayaba manzana (1 unidad mediana)<br />
-                    • 147g de Naranja fresca (1 unidad pequeña)
-                  </div>
-                </div>
-
-                {/* Grasas y Nueces */}
-                <div style={{ padding: "10px", background: "rgba(0,0,0,0.01)", border: "1px solid var(--border-color)", borderRadius: "10px" }}>
-                  <h5 style={{ fontSize: "0.9rem", color: "var(--text-main)", fontWeight: 700, margin: "0 0 6px 0" }}>🥑 Grasas y Nueces Saludables (1 porción equivale a):</h5>
-                  <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", lineHeight: "1.4" }}>
-                    • 5g de Aceite de oliva o canola (1 cucharada sopera)<br />
-                    • 30g de Aguacate Hass o común (1/4 unidad mediana)<br />
-                    • 9g de Almendras tostadas sin sal (3 unidades medianas)<br />
-                    • 10g de Maní sin sal tostado (1 cucharada sopera colmada)<br />
-                    • 8g de Mantequilla de maní natural (1 cucharada dulcera colmada)<br />
-                    • 9g de Pistacho tostado y salado (1 cucharada sopera colmada)
-                  </div>
-                </div>
+                {/* If all groups are empty due to filter */}
+                {EXCHANGE_GROUPS.filter(group => activeExchangeTab === "Todos" || group.category === activeExchangeTab)
+                  .every(group => group.items.filter(item => item.name.toLowerCase().includes(exchangeSearchQuery.toLowerCase())).length === 0) && (
+                    <div style={{ textAlign: "center", padding: "40px", color: "var(--text-muted)", fontStyle: "italic", fontSize: "0.85rem" }}>
+                      No se encontraron alimentos que coincidan con la búsqueda.
+                    </div>
+                  )}
               </div>
             </div>
             
             <div style={{ borderTop: "1px solid var(--border-color)", paddingTop: "12px", display: "flex", justifyContent: "flex-end", flexShrink: 0 }}>
               <button
                 className="btn btn-primary"
-                onClick={() => setShowExchangeModal(false)}
+                onClick={() => {
+                  setShowExchangeModal(false);
+                  setExchangeSearchQuery("");
+                  setActiveExchangeTab("Todos");
+                }}
                 style={{ padding: "8px 24px" }}
               >
                 Entendido

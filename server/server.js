@@ -1298,6 +1298,66 @@ app.get("/api/products/recommended", async (req, res) => {
   }
 });
 
+// 5b. Add a new recommended product with image upload and Supabase backup
+app.post("/api/products/recommended", uploadCalorie.single("image"), async (req, res) => {
+  try {
+    const { name, category, region, isLocalStore, purchaseLink, description } = req.body;
+    const file = req.file;
+
+    if (!name || !category || !description) {
+      return res.status(400).json({ error: "El nombre, categoría y descripción son obligatorios" });
+    }
+
+    const productsPath = path.join(process.cwd(), "recommendedProducts.json");
+    let products = [];
+    if (fs.existsSync(productsPath)) {
+      const rawData = fs.readFileSync(productsPath, "utf-8");
+      products = JSON.parse(rawData);
+    }
+
+    const newId = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1;
+    
+    let imagePath = null;
+    if (file) {
+      imagePath = `/uploads/${file.filename}`;
+      try {
+        const fileData = fs.readFileSync(file.path);
+        await prisma.uploadedFile.create({
+          data: {
+            filename: file.filename,
+            mimeType: file.mimetype,
+            data: fileData.toString("base64")
+          }
+        });
+        // Delete local temporary file from serverless environment
+        fs.unlinkSync(file.path);
+      } catch (err) {
+        console.error("Error backing up product image to database:", err);
+      }
+    }
+
+    const newProduct = {
+      id: newId,
+      name,
+      category,
+      region: region || "Colombia",
+      isLocalStore: isLocalStore === "true" || isLocalStore === true,
+      purchaseLink: purchaseLink || "https://www.exito.com",
+      description,
+      imagePath
+    };
+
+    products.push(newProduct);
+    fs.writeFileSync(productsPath, JSON.stringify(products, null, 2), "utf-8");
+
+    res.status(201).json(newProduct);
+  } catch (error) {
+    console.error("Error adding recommended product:", error);
+    res.status(500).json({ error: "Error al registrar el producto recomendado" });
+  }
+});
+
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TRAINING PLANS — CRUD
