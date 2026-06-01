@@ -1351,7 +1351,7 @@ app.post("/api/products/recommended", uploadCalorie.single("image"), async (req,
       category,
       region: region || "Colombia",
       isLocalStore: isLocalStore === "true" || isLocalStore === true,
-      purchaseLink: purchaseLink || "https://www.exito.com",
+      purchaseLink: purchaseLink || "",
       description,
       imagePath
     };

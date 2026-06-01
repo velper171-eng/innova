@@ -372,7 +372,7 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
     formData.append("category", newProdCategory);
     formData.append("region", newProdRegion);
     formData.append("isLocalStore", newProdIsLocal);
-    formData.append("purchaseLink", newProdLink || (newProdIsLocal ? "https://wa.me/573117774625?text=Hola,%20quiero%20ordenar%20este%20producto" : "https://www.exito.com"));
+    formData.append("purchaseLink", newProdLink || (newProdIsLocal ? "https://wa.me/573117774625?text=Hola,%20quiero%20ordenar%20este%20producto" : ""));
     formData.append("description", newProdDescription);
     if (newProdImageFile) {
       formData.append("image", newProdImageFile);
@@ -1615,44 +1615,52 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
                     </div>
 
                     {/* Actions buttons */}
-                    <div style={{ borderTop: "1px solid var(--border-color)", paddingTop: "12px", marginTop: "4px" }}>
-                      {p.isLocalStore ? (
-                        <a
-                          href={p.purchaseLink}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="btn btn-primary"
-                          style={{
-                            width: "100%",
-                            textAlign: "center",
-                            fontSize: "0.8rem",
-                            padding: "8px",
-                            display: "inline-block",
-                            boxShadow: "0 0 10px rgba(0, 242, 254, 0.25)",
-                            borderRadius: "20px"
-                          }}
-                        >
-                          🛍️ Ordenar Directo (WhatsApp)
-                        </a>
-                      ) : (
-                        <a
-                          href={p.purchaseLink}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="btn btn-secondary"
-                          style={{
-                            width: "100%",
-                            textAlign: "center",
-                            fontSize: "0.8rem",
-                            padding: "8px",
-                            display: "inline-block",
-                            borderRadius: "20px"
-                          }}
-                        >
-                          🛒 Buscar en Supermercados
-                        </a>
-                      )}
-                    </div>
+                    {p.purchaseLink ? (
+                      <div style={{ borderTop: "1px solid var(--border-color)", paddingTop: "12px", marginTop: "4px" }}>
+                        {p.isLocalStore ? (
+                          <a
+                            href={p.purchaseLink}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="btn btn-primary"
+                            style={{
+                              width: "100%",
+                              textAlign: "center",
+                              fontSize: "0.8rem",
+                              padding: "8px",
+                              display: "inline-block",
+                              boxShadow: "0 0 10px rgba(0, 242, 254, 0.25)",
+                              borderRadius: "20px"
+                            }}
+                          >
+                            🛍️ Ordenar Directo (WhatsApp)
+                          </a>
+                        ) : (
+                          <a
+                            href={p.purchaseLink}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="btn btn-secondary"
+                            style={{
+                              width: "100%",
+                              textAlign: "center",
+                              fontSize: "0.8rem",
+                              padding: "8px",
+                              display: "inline-block",
+                              borderRadius: "20px"
+                            }}
+                          >
+                            🛒 Buscar en Supermercados
+                          </a>
+                        )}
+                      </div>
+                    ) : (
+                      <div style={{ borderTop: "1px solid var(--border-color)", paddingTop: "12px", marginTop: "4px", textAlign: "center" }}>
+                        <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", display: "block", padding: "6px" }}>
+                          🔗 Sin enlace de compra asignado
+                        </span>
+                      </div>
+                    )}
                   </div>
                 );
               })}
