@@ -1274,8 +1274,11 @@ app.get("/api/products/recommended", async (req, res) => {
   try {
     const { category, region } = req.query;
     
-    // Read the recommendedProducts.json file
-    const productsPath = path.join(process.cwd(), "recommendedProducts.json");
+    // Read the recommendedProducts.json file with local/production path resolution fallback
+    let productsPath = path.join(process.cwd(), "recommendedProducts.json");
+    if (!fs.existsSync(productsPath)) {
+      productsPath = path.join(process.cwd(), "server", "recommendedProducts.json");
+    }
     if (!fs.existsSync(productsPath)) {
       return res.json([]);
     }
@@ -1308,7 +1311,10 @@ app.post("/api/products/recommended", uploadCalorie.single("image"), async (req,
       return res.status(400).json({ error: "El nombre, categoría y descripción son obligatorios" });
     }
 
-    const productsPath = path.join(process.cwd(), "recommendedProducts.json");
+    let productsPath = path.join(process.cwd(), "recommendedProducts.json");
+    if (!fs.existsSync(productsPath)) {
+      productsPath = path.join(process.cwd(), "server", "recommendedProducts.json");
+    }
     let products = [];
     if (fs.existsSync(productsPath)) {
       const rawData = fs.readFileSync(productsPath, "utf-8");
