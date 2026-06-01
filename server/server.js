@@ -29,6 +29,7 @@ import { getSupplementPresetPhases, checkInventoryAlert } from "./supplementEngi
 import { enqueuePostureJob, getQueueStatus } from "./queue.js";
 import { analyzeCalories } from "./calorieEngine.js";
 import { generateTrainingPlanWithAI } from "./trainingEngine.js";
+import { generateMealPlan } from "./mealPlanEngine.js";
 
 
 const app = express();
@@ -1127,6 +1128,173 @@ app.delete("/api/calories/logs/:id", async (req, res) => {
   } catch (error) {
     console.error("Error deleting calorie log:", error);
     res.status(500).json({ error: "Error al eliminar el registro del diario" });
+  }
+});
+
+// --- MEAL PLANS & RECOMMENDED PRODUCTS MODULE ---
+
+// 1. Generate custom meal plan based on body parameters and objective
+app.post("/api/patients/:id/mealplans/generate", async (req, res) => {
+  try {
+    const patientId = parseInt(req.params.id);
+    if (isNaN(patientId)) return res.status(400).json({ error: "ID de paciente inválido" });
+
+    const patient = await prisma.patient.findUnique({ where: { id: patientId } });
+    if (!patient) return res.status(404).json({ error: "Paciente no encontrado" });
+
+    // Fetch latest evaluation for fallback anthropometric metrics
+    const latestEval = await prisma.evaluation.findFirst({
+      where: { patientId },
+      orderBy: { date: "desc" }
+    });
+
+    const {
+      weight = latestEval ? latestEval.weight : 70,
+      height = latestEval ? latestEval.height : 170,
+      age = latestEval ? latestEval.age : 30,
+      gender = patient.gender || "male",
+      goal = "maintenance",
+      activityLevel = 1.55,
+      formula = latestEval && latestEval.bodyFat > 0 ? "katch_mcardle" : "mifflin_st_jeor",
+      bodyFat = latestEval ? latestEval.bodyFat : 15,
+      proteinFactor = 2.2,
+      fatFactor = 0.8
+    } = req.body;
+
+    const plan = generateMealPlan({
+      weight: parseFloat(weight),
+      height: parseFloat(height),
+      age: parseInt(age, 10),
+      gender,
+      goal,
+      activityLevel: parseFloat(activityLevel),
+      formula,
+      bodyFat: parseFloat(bodyFat),
+      proteinFactor: parseFloat(proteinFactor),
+      fatFactor: parseFloat(fatFactor)
+    });
+
+    res.json(plan);
+  } catch (error) {
+    console.error("Error generating meal plan:", error);
+    res.status(500).json({ error: "Error al generar el plan de alimentación personalizado" });
+  }
+});
+
+// 2. Save meal plan to Database
+app.post("/api/patients/:id/mealplans", async (req, res) => {
+  try {
+    const patientId = parseInt(req.params.id);
+    if (isNaN(patientId)) return res.status(400).json({ error: "ID de paciente inválido" });
+
+    const { name, goal, calories, protein, carbs, fat, planJson } = req.body;
+
+    if (!name || !goal || !calories || !planJson) {
+      return res.status(400).json({ error: "Nombre, objetivo, calorías y datos del plan son requeridos" });
+    }
+
+    // Deactivate previous meal plans for this patient
+    await prisma.mealPlan.updateMany({
+      where: { patientId },
+      data: { isActive: false }
+    });
+
+    // Create the new active meal plan
+    const createdPlan = await prisma.mealPlan.create({
+      data: {
+        patientId,
+        name,
+        goal,
+        calories: parseInt(calories, 10),
+        protein: parseFloat(protein),
+        carbs: parseFloat(carbs),
+        fat: parseFloat(fat),
+        planJson: typeof planJson === "string" ? planJson : JSON.stringify(planJson),
+        isActive: true
+      }
+    });
+
+    res.status(201).json(createdPlan);
+  } catch (error) {
+    console.error("Error saving meal plan:", error);
+    res.status(500).json({ error: "Error al guardar el plan de alimentación" });
+  }
+});
+
+// 3. Get active meal plan
+app.get("/api/patients/:id/mealplans/active", async (req, res) => {
+  try {
+    const patientId = parseInt(req.params.id);
+    if (isNaN(patientId)) return res.status(400).json({ error: "ID de paciente inválido" });
+
+    const activePlan = await prisma.mealPlan.findFirst({
+      where: { patientId, isActive: true },
+      orderBy: { createdAt: "desc" }
+    });
+
+    if (!activePlan) {
+      return res.status(404).json({ error: "No hay un plan de alimentación activo registrado para este paciente" });
+    }
+
+    res.json({
+      ...activePlan,
+      planJson: JSON.parse(activePlan.planJson)
+    });
+  } catch (error) {
+    console.error("Error fetching active meal plan:", error);
+    res.status(500).json({ error: "Error al obtener el plan activo" });
+  }
+});
+
+// 4. Get all meal plans
+app.get("/api/patients/:id/mealplans", async (req, res) => {
+  try {
+    const patientId = parseInt(req.params.id);
+    if (isNaN(patientId)) return res.status(400).json({ error: "ID de paciente inválido" });
+
+    const plans = await prisma.mealPlan.findMany({
+      where: { patientId },
+      orderBy: { createdAt: "desc" }
+    });
+
+    const parsedPlans = plans.map(p => ({
+      ...p,
+      planJson: JSON.parse(p.planJson)
+    }));
+
+    res.json(parsedPlans);
+  } catch (error) {
+    console.error("Error fetching meal plans list:", error);
+    res.status(500).json({ error: "Error al obtener el historial de planes" });
+  }
+});
+
+// 5. Get recommended products list with filter support
+app.get("/api/products/recommended", async (req, res) => {
+  try {
+    const { category, region } = req.query;
+    
+    // Read the recommendedProducts.json file
+    const productsPath = path.join(process.cwd(), "recommendedProducts.json");
+    if (!fs.existsSync(productsPath)) {
+      return res.json([]);
+    }
+
+    const rawData = fs.readFileSync(productsPath, "utf-8");
+    let products = JSON.parse(rawData);
+
+    if (category) {
+      products = products.filter(p => p.category.toLowerCase() === String(category).toLowerCase());
+    }
+
+    if (region) {
+      products = products.filter(p => p.region.toLowerCase().includes(String(region).toLowerCase()));
+    }
+
+    res.json(products);
+  } catch (error) {
+    console.error("Error fetching recommended products:", error);
+    res.status(500).json({ error: "Error al obtener la lista de productos recomendados" });
   }
 });
 

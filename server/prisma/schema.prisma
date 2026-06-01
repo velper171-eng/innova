@@ -25,6 +25,7 @@ model Patient {
   postureJobs     PostureAnalysisJob[]
   calorieLogs     CalorieLog[]
   trainingPlans   TrainingPlan[]
+  mealPlans       MealPlan[]
   
   creatorId       Int?
   creator         Patient?         @relation("UserAthletes", fields: [creatorId], references: [id], onDelete: Cascade)
@@ -221,4 +222,19 @@ model UploadedFile {
   mimeType  String
   data      String   // Base64-encoded file data
   createdAt DateTime @default(now())
+}
+
+model MealPlan {
+  id          Int      @id @default(autoincrement())
+  patientId   Int
+  patient     Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  name        String
+  goal        String
+  calories    Int
+  protein     Float
+  carbs       Float
+  fat         Float
+  planJson    String   // JSON stringified with meals, portions, schedules, and food suggestions
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
 }
