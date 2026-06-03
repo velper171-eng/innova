@@ -1,4 +1,73 @@
 import fs from "fs";
+import { fileURLToPath } from "url";
+import path from "path";
+
+function adjustExerciseVariables(goal, originalEx, aiEx = {}) {
+  const result = {
+    sets: aiEx.sets || originalEx.sets || 3,
+    reps: aiEx.reps || originalEx.reps || "8-12",
+    rest: originalEx.rest || "2'",
+    rir: originalEx.rir || "2",
+    notes: originalEx.notes || ""
+  };
+
+  const nameUpper = (originalEx.name || "").toUpperCase();
+  const isCompound = 
+    nameUpper.includes("PRESS") || 
+    nameUpper.includes("HACK") || 
+    nameUpper.includes("SQUAT") || 
+    nameUpper.includes("REMO") || 
+    nameUpper.includes("ROW") || 
+    nameUpper.includes("JALÓN") || 
+    nameUpper.includes("PULLDOWN") || 
+    nameUpper.includes("FONDOS") || 
+    nameUpper.includes("DEADLIFT") || 
+    nameUpper.includes("MUERTO") ||
+    nameUpper.includes("T-BAR");
+
+  if (goal === "strength") {
+    // Fuerza Máxima: 1-5 reps compound, 6-8 isolation. 3-5 min rests.
+    if (isCompound) {
+      result.sets = 5;
+      result.reps = "1-5";
+      result.rest = "3-5'";
+      result.rir = "1-2";
+    } else {
+      result.sets = 3;
+      result.reps = "6-8";
+      result.rest = "2'";
+      result.rir = "2";
+    }
+  } else if (goal === "endurance") {
+    // Resistencia: 15-20 reps compound, 20-25 isolation. 30-60s rest.
+    result.sets = 3;
+    result.reps = isCompound ? "15-20" : "20-25";
+    result.rest = isCompound ? "60s" : "30-45s";
+    result.rir = "2-3";
+  } else if (goal === "fat_loss" || goal === "definition") {
+    // Definición / Pérdida de Grasa: reduced sets, heavy weights kept.
+    if (isCompound) {
+      result.sets = 3;
+      result.reps = "6-8";
+      result.rest = "2-3'";
+      result.rir = "1-2";
+    } else {
+      result.sets = 2;
+      result.reps = "10-12";
+      result.rest = "1.5'";
+      result.rir = "1-2";
+    }
+    result.notes = (result.notes ? result.notes + ". " : "") + "Intensidad alta para preservar tejido muscular.";
+  } else {
+    // Hypertrophy / Development (default)
+    result.sets = aiEx.sets || originalEx.sets || 3;
+    result.reps = aiEx.reps || originalEx.reps || "8-12";
+    result.rest = originalEx.rest || "2-3'";
+    result.rir = originalEx.rir || "2-3";
+  }
+
+  return result;
+}
 
 /**
  * Heuristic simulator for training plan generation based on goal.
@@ -243,53 +312,168 @@ function simulateTrainingPlan(goal = "hypertrophy", planName = "") {
   return days;
 }
 
+function simulateTrainingPlanFromTemplates(daysPerWeek, goal) {
+  console.log(`Training Engine: Simulating workout plan from templates. Days per week: ${daysPerWeek}, Goal: ${goal}`);
+  try {
+    const templatesPath = path.join(path.dirname(fileURLToPath(import.meta.url)), "trainingTemplates.json");
+    const templateData = JSON.parse(fs.readFileSync(templatesPath, "utf-8"));
+    const days = [];
+
+    const addRestDay = (dayIndex, name) => {
+      days.push({
+        dayIndex,
+        name,
+        muscleGroup: "rest",
+        exercises: []
+      });
+    };
+
+    const getExercises = (key) => {
+      return (templateData.days[key] || []).map((ex) => {
+        const adjusted = adjustExerciseVariables(goal, ex, {});
+        return {
+          name: ex.name,
+          sets: adjusted.sets,
+          reps: adjusted.reps,
+          weight: null,
+          muscleGroup: ex.muscleGroup === "arms" ? "arms, triceps, biceps" : (ex.muscleGroup === "legs" ? "legs, quads, glutes" : ex.muscleGroup === "chest" ? "chest, triceps" : ex.muscleGroup === "back" ? "back, lats" : ex.muscleGroup),
+          videoUrl: ex.videoUrl || "",
+          technique: ex.technique || "",
+          notes: adjusted.notes,
+          rest: adjusted.rest,
+          rir: adjusted.rir,
+          alternatives: ex.alternatives || []
+        };
+      });
+    };
+
+    if (daysPerWeek === 6) {
+      days.push({ dayIndex: 0, name: "Lunes: Empuje 1 (Pecho/Hombro/Tríceps)", muscleGroup: "chest", exercises: getExercises("push 1") });
+      days.push({ dayIndex: 1, name: "Martes: Tracción 1 (Espalda/Bíceps)", muscleGroup: "back", exercises: getExercises("pull 1") });
+      days.push({ dayIndex: 2, name: "Miércoles: Pierna 1 (Enfoque Cuádriceps)", muscleGroup: "legs", exercises: getExercises("legs 1") });
+      days.push({ dayIndex: 3, name: "Jueves: Empuje 2 (Pecho/Hombro/Tríceps)", muscleGroup: "chest", exercises: getExercises("push 2") });
+      days.push({ dayIndex: 4, name: "Viernes: Tracción 2 (Espalda/Bíceps)", muscleGroup: "back", exercises: getExercises("pull 2") });
+      days.push({ dayIndex: 5, name: "Sábado: Pierna 2 (Enfoque Cadena Posterior)", muscleGroup: "legs", exercises: getExercises("legs 2") });
+      addRestDay(6, "Domingo: Descanso");
+    } else if (daysPerWeek === 3) {
+      days.push({ dayIndex: 0, name: "Lunes: Empuje (Pecho/Hombro/Tríceps)", muscleGroup: "chest", exercises: getExercises("push 1") });
+      addRestDay(1, "Martes: Descanso");
+      days.push({ dayIndex: 2, name: "Miércoles: Tracción (Espalda/Bíceps)", muscleGroup: "back", exercises: getExercises("pull 1") });
+      addRestDay(3, "Jueves: Descanso");
+      days.push({ dayIndex: 4, name: "Viernes: Pierna (Enfoque Cuádriceps)", muscleGroup: "legs", exercises: getExercises("legs 1") });
+      addRestDay(5, "Sábado: Descanso");
+      addRestDay(6, "Domingo: Descanso");
+    } else if (daysPerWeek === 5) {
+      days.push({ dayIndex: 0, name: "Lunes: Empuje 1 (Pecho/Hombro/Tríceps)", muscleGroup: "chest", exercises: getExercises("push 1") });
+      days.push({ dayIndex: 1, name: "Martes: Tracción 1 (Espalda/Bíceps)", muscleGroup: "back", exercises: getExercises("pull 1") });
+      days.push({ dayIndex: 2, name: "Miércoles: Pierna 1 (Enfoque Cuádriceps)", muscleGroup: "legs", exercises: getExercises("legs 1") });
+      addRestDay(3, "Jueves: Descanso");
+      days.push({ dayIndex: 4, name: "Viernes: Empuje 2 (Pecho/Hombro/Tríceps)", muscleGroup: "chest", exercises: getExercises("push 2") });
+      days.push({ dayIndex: 5, name: "Sábado: Tracción 2 (Espalda/Bíceps)", muscleGroup: "back", exercises: getExercises("pull 2") });
+      addRestDay(6, "Domingo: Descanso");
+    } else {
+      // 4 days (default)
+      days.push({ dayIndex: 0, name: "Lunes: Empuje 1 (Pecho/Hombro/Tríceps)", muscleGroup: "chest", exercises: getExercises("push 1") });
+      days.push({ dayIndex: 1, name: "Martes: Tracción 1 (Espalda/Bíceps)", muscleGroup: "back", exercises: getExercises("pull 1") });
+      addRestDay(2, "Miércoles: Descanso");
+      days.push({ dayIndex: 3, name: "Jueves: Pierna 1 (Enfoque Cuádriceps)", muscleGroup: "legs", exercises: getExercises("legs 1") });
+      days.push({ dayIndex: 4, name: "Viernes: Empuje 2 (Pecho/Hombro/Tríceps)", muscleGroup: "chest", exercises: getExercises("push 2") });
+      addRestDay(5, "Sábado: Descanso");
+      addRestDay(6, "Domingo: Descanso");
+    }
+    return days;
+  } catch (error) {
+    console.error("Error in simulateTrainingPlanFromTemplates:", error);
+    return simulateTrainingPlan(goal, "");
+  }
+}
+
 /**
  * Generates a full 7-day training plan utilizing Google Gemini API, with fallback to simulation.
  */
-export async function generateTrainingPlanWithAI({ goal, planName, patientInfo }) {
+export async function generateTrainingPlanWithAI({ goal, planName, patientInfo, daysPerWeek }) {
+  const targetDays = daysPerWeek ? parseInt(daysPerWeek) : 4;
   const apiKey = process.env.GEMINI_API_KEY;
 
-  if (!apiKey) {
-    console.log("Training Engine: GEMINI_API_KEY not found. Using local simulation...");
-    return simulateTrainingPlan(goal, planName);
+  if (targetDays === 6) {
+    console.log("Training Engine: 6 days per week requested. Bypassing Gemini to use Excel template directly.");
+    return simulateTrainingPlanFromTemplates(6, goal);
   }
 
-  console.log("Training Engine: Querying Google Gemini API for plan generation...");
+  if (!apiKey) {
+    console.log("Training Engine: GEMINI_API_KEY not found. Using template-based simulator...");
+    return simulateTrainingPlanFromTemplates(targetDays, goal);
+  }
+
+  console.log(`Training Engine: Querying Google Gemini API for ${targetDays}-day plan...`);
 
   try {
-    const systemInstructions = `
-You are a professional strength and conditioning coach and personal trainer.
-Create a customized 7-day workout routine (Monday to Sunday) for an athlete based on their goal and user information.
+    const templatesPath = path.join(path.dirname(fileURLToPath(import.meta.url)), "trainingTemplates.json");
+    const templateData = JSON.parse(fs.readFileSync(templatesPath, "utf-8"));
 
-Goals can be:
-- "hypertrophy" (focused on muscle growth, typical reps 8-12, balanced muscle group division)
-- "strength" (focused on maximum strength powerlifting style, typical reps 1-6, compound lifts)
-- "endurance" (focused on muscular endurance and cardiovascular capacity, typical reps 15-20)
-- "fat_loss" (focused on fat definition/calorie burn, combination of strength, high volume, and cardio segments)
+    // Flatten all template exercises to present them to Gemini
+    const exerciseList = [];
+    for (const dayKey of Object.keys(templateData.days)) {
+      for (const ex of templateData.days[dayKey]) {
+        exerciseList.push({
+          name: ex.name,
+          muscleGroup: ex.muscleGroup
+        });
+      }
+    }
+    
+    // Deduplicate exercise list by name
+    const uniqueExercises = [];
+    const seenNames = new Set();
+    for (const ex of exerciseList) {
+      const norm = ex.name.trim().toUpperCase();
+      if (!seenNames.has(norm)) {
+        seenNames.add(norm);
+        uniqueExercises.push(ex);
+      }
+    }
+
+    const exercisesPromptText = uniqueExercises.map(ex => `- ${ex.name} (Primary muscle group: ${ex.muscleGroup})`).join("\n");
+
+    const systemInstructions = `
+You are a professional strength and conditioning coach.
+Create a customized 7-day workout routine (Monday to Sunday) for an athlete based on their goal, user info, and days per week requested.
+
+The user wants to train EXACTLY ${targetDays} active days per week. The remaining ${7 - targetDays} days must be rest days (muscleGroup: "rest", exercises: []).
+
+You MUST choose exercises ONLY from the following list of professional exercises (do NOT invent new names):
+${exercisesPromptText}
+
+Goals:
+- "hypertrophy" (muscle growth, reps 6-12, balanced PPL/split)
+- "strength" (powerlifting style, heavy compound, reps 1-6)
+- "endurance" (cardio & endurance, reps 15-20)
+- "fat_loss" (calorie burn, high volume, combination of strength and conditioning)
+
+For each active day, assign 4 to 6 exercises from the list above. Ensure they represent a logical, professional training split.
 
 Return a JSON array of 7 items representing the days of the week, starting from Monday (dayIndex 0) to Sunday (dayIndex 6).
-Every single day must be listed (if it is a rest day, set muscleGroup to "rest" and exercises to an empty array).
 For active days, set muscleGroup to one of: "legs", "chest", "back", "shoulders", "arms", "full_body".
-Each active day must have a list of 4-6 exercises with:
-- "name": Spanish descriptive name of the exercise.
-- "sets": Integer (e.g. 3 or 4).
-- "reps": String representing reps or time (e.g. "8-12", "5x5", "30s", "15").
-- "weight": A realistic starting weight in kg (Float/Number) or null if it's bodyweight.
-- "muscleGroup": The exact target zones worked. It MUST be a comma-separated string containing the primary category (one of: 'legs', 'chest', 'back', 'shoulders', 'arms', 'core', 'full_body') AND any specific target muscles/zones worked (such as 'quads', 'hamstrings', 'glutes', 'calves', 'biceps', 'triceps', 'lats', 'traps', 'lower_back', 'abs'). For example: 'legs, quads, glutes' or 'back, lats, traps' or 'arms, biceps' or 'chest, triceps' or 'legs, calves'.
+Each active day must have a list of exercises with:
+- "name": The exact name of the exercise from the provided list.
+- "sets": Integer (e.g. 3 or 4)
+- "reps": String representing reps or time (e.g. "6-10", "10-15")
+- "weight": null
+- "muscleGroup": The target zone (e.g. "chest", "back", "legs", "shoulders", "arms", "full_body").
 
 Return only the raw JSON array matching this structure exactly (No markdown formatting or code blocks):
 [
   {
     "dayIndex": 0,
-    "name": "Día 1: Pecho e Hombros",
+    "name": "Día 1: Empuje (Pecho/Hombro/Tríceps)",
     "muscleGroup": "chest",
     "exercises": [
       {
-        "name": "Press de banca plano con barra",
-        "sets": 4,
-        "reps": "8-10",
-        "weight": 60.0,
-        "muscleGroup": "chest, triceps, shoulders"
+        "name": "CHEST PRESS INCLINADO CONVERGENTE",
+        "sets": 3,
+        "reps": "6-10",
+        "weight": null,
+        "muscleGroup": "chest"
       }
     ]
   },
@@ -298,7 +482,7 @@ Return only the raw JSON array matching this structure exactly (No markdown form
 `;
 
     const userPrompt = `
-Generate a 7-day workout schedule for:
+Generate a 7-day workout schedule with EXACTLY ${targetDays} training days for:
 - Plan Name: ${planName || "Plan de Entrenamiento Personalizado"}
 - Goal: ${goal}
 - Athlete Info:
@@ -351,8 +535,52 @@ Generate a 7-day workout schedule for:
 
     const planDays = JSON.parse(responseText.trim());
     
-    // Quick validation to ensure it is an array and has days
     if (Array.isArray(planDays) && planDays.length > 0) {
+      // Map and enrich parsed exercises with full metadata from trainingTemplates.json
+      const templateExercisesMap = new Map();
+      for (const dayKey of Object.keys(templateData.days)) {
+        for (const ex of templateData.days[dayKey]) {
+          templateExercisesMap.set(ex.name.trim().toUpperCase(), ex);
+        }
+      }
+
+      for (const day of planDays) {
+        if (day.exercises && Array.isArray(day.exercises)) {
+          day.exercises = day.exercises.map((ex) => {
+            const match = templateExercisesMap.get(ex.name.trim().toUpperCase());
+            if (match) {
+              const adjusted = adjustExerciseVariables(goal, match, ex);
+              return {
+                name: match.name,
+                sets: adjusted.sets,
+                reps: adjusted.reps,
+                weight: null,
+                muscleGroup: match.muscleGroup === "arms" ? "arms, triceps, biceps" : (match.muscleGroup === "legs" ? "legs, quads, glutes" : match.muscleGroup === "chest" ? "chest, triceps" : match.muscleGroup === "back" ? "back, lats" : match.muscleGroup),
+                videoUrl: match.videoUrl || "",
+                technique: match.technique || "",
+                notes: adjusted.notes,
+                rest: adjusted.rest,
+                rir: adjusted.rir,
+                alternatives: match.alternatives || []
+              };
+            } else {
+              return {
+                name: ex.name,
+                sets: ex.sets || 3,
+                reps: ex.reps || "8-12",
+                weight: null,
+                muscleGroup: ex.muscleGroup || "full_body",
+                videoUrl: "",
+                technique: "",
+                notes: "",
+                rest: "",
+                rir: "",
+                alternatives: []
+              };
+            }
+          });
+        }
+      }
       return planDays;
     }
     
@@ -360,6 +588,7 @@ Generate a 7-day workout schedule for:
 
   } catch (error) {
     console.error("Training Engine: Error calling Gemini API. Falling back to simulation...", error);
-    return simulateTrainingPlan(goal, planName);
+    return simulateTrainingPlanFromTemplates(targetDays, goal);
   }
 }
+

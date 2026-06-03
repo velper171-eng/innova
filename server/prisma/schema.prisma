@@ -202,6 +202,12 @@ model TrainingExercise {
   weight      Float?        // in kg, optional
   muscleGroup String        // primary muscle group for the diagram
   order       Int           @default(0)
+  videoUrl    String?
+  technique   String?
+  notes       String?
+  rest        String?
+  rir         String?
+  alternatives String?      // stored as serialized JSON array of alternatives
   logs        ExerciseLog[]
 }
 

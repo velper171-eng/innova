@@ -476,20 +476,98 @@ const VolumeBarChart = ({ logs = [] }) => {
 };
 
 // ─── Exercise Card ────────────────────────────────────────────────────────────
-const ExerciseCard = ({ exercise, log, onToggle, onUpdateLog, onDelete, isAdminMode, somatotypeData, onMouseEnter, onMouseLeave }) => {
+const ExerciseCard = ({ exercise, log, onToggle, onUpdateLog, onDelete, isAdminMode, somatotypeData, onMouseEnter, onMouseLeave, onSwapSuccess, onUpdateLogSets }) => {
   const isCompleted = log?.completed || false;
   const [editing, setEditing] = useState(false);
   const [actualWeight, setActualWeight] = useState(log?.actualWeight || exercise.weight || "");
+  const [showAlts, setShowAlts] = useState(false);
+  const [swapping, setSwapping] = useState(false);
+  const [savingSets, setSavingSets] = useState(false);
+
+  // Parse existing sets from log if present
+  const getInitialSets = () => {
+    if (log?.actualReps) {
+      try {
+        const parsed = JSON.parse(log.actualReps);
+        if (Array.isArray(parsed)) {
+          const result = [...parsed];
+          while (result.length < (exercise.sets || 3)) {
+            result.push({ weight: exercise.weight || "", reps: "" });
+          }
+          return result;
+        }
+      } catch (e) {
+        // Not a JSON array
+      }
+    }
+    return Array.from({ length: exercise.sets || 3 }, () => ({
+      weight: exercise.weight || "",
+      reps: ""
+    }));
+  };
+
+  const [setsData, setSetsData] = useState(getInitialSets);
+
+  useEffect(() => {
+    setSetsData(getInitialSets());
+  }, [log?.actualReps, exercise.sets]);
+
+  const handleSaveSets = async () => {
+    if (!onUpdateLogSets) return;
+    try {
+      setSavingSets(true);
+      await onUpdateLogSets(exercise.id, setsData);
+    } catch (e) {
+      console.error("Error saving sets:", e);
+    } finally {
+      setSavingSets(false);
+    }
+  };
+
+  let alternativesList = [];
+  if (exercise.alternatives) {
+    try {
+      alternativesList = typeof exercise.alternatives === "string" 
+        ? JSON.parse(exercise.alternatives) 
+        : exercise.alternatives;
+    } catch (e) {
+      console.error("Error parsing alternatives:", e);
+    }
+  }
+
+  const handleSwap = async (altName, altVideoUrl) => {
+    try {
+      setSwapping(true);
+      const res = await fetch(`${API_BASE}/training-exercises/${exercise.id}/swap`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          alternativeName: altName,
+          alternativeVideoUrl: altVideoUrl
+        })
+      });
+      if (res.ok) {
+        if (onSwapSuccess) onSwapSuccess();
+        setShowAlts(false);
+      } else {
+        alert("Error al intercambiar el ejercicio");
+      }
+    } catch (e) {
+      console.error("Error swapping:", e);
+      alert("Error de conexión");
+    } finally {
+      setSwapping(false);
+    }
+  };
 
   return (
     <div 
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
       style={{
-        display: "grid",
-        gridTemplateColumns: "64px 1fr auto",
+        display: "flex",
+        flexDirection: "column",
         gap: "12px",
-        alignItems: "center",
         padding: "14px",
         borderRadius: "12px",
         background: isCompleted ? "rgba(0,128,128,0.06)" : "var(--bg-main)",
@@ -497,127 +575,432 @@ const ExerciseCard = ({ exercise, log, onToggle, onUpdateLog, onDelete, isAdminM
         transition: "all 0.2s",
       }}
     >
-      {/* Muscle silhouette */}
-      <div style={{
-        background: "var(--bg-card)", borderRadius: "10px", padding: "4px",
-        border: "1px solid var(--border-color)"
-      }}>
-        <MuscleSilhouette highlight={exercise.muscleGroup} exerciseName={exercise.name} somatotypeData={somatotypeData} />
-      </div>
-
-      {/* Info */}
-      <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-        <span style={{
-          fontSize: "0.95rem", fontWeight: 700,
-          color: isCompleted ? "var(--primary)" : "var(--text-main)",
-          textDecoration: isCompleted ? "line-through" : "none"
+      {/* Main card row */}
+      <div style={{ display: "grid", gridTemplateColumns: "64px 1fr auto", gap: "12px", alignItems: "center" }}>
+        {/* Muscle silhouette */}
+        <div style={{
+          background: "var(--bg-card)", borderRadius: "10px", padding: "4px",
+          border: "1px solid var(--border-color)"
         }}>
-          {exercise.name}
-        </span>
-        <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
-          {exercise.sets} series × {exercise.reps} reps
-          {exercise.weight ? ` · ${exercise.weight} kg` : ""}
-        </span>
-        {!isAdminMode && editing ? (
-          <div style={{ display: "flex", gap: "6px", alignItems: "center", marginTop: "4px" }}>
-            <input
-              type="number"
-              value={actualWeight}
-              onChange={(e) => setActualWeight(e.target.value)}
-              placeholder="Peso real (kg)"
-              style={{
-                width: "100px", padding: "4px 8px", fontSize: "0.8rem",
-                border: "1px solid var(--primary)", borderRadius: "6px",
-                background: "white", color: "var(--text-main)"
-              }}
-            />
-            <button
-              onClick={() => { onUpdateLog(parseFloat(actualWeight)); setEditing(false); }}
-              style={{
-                padding: "4px 10px", fontSize: "0.75rem", border: "none",
-                background: "var(--primary)", color: "white", borderRadius: "6px",
-                cursor: "pointer"
-              }}
-            >
-              ✓
-            </button>
-          </div>
-        ) : (
-          log?.actualWeight && (
-            <span style={{ fontSize: "0.75rem", color: "var(--success)", fontWeight: 600 }}>
-              ✓ Real: {log.actualWeight} kg
-            </span>
-          )
-        )}
-      </div>
+          <MuscleSilhouette highlight={exercise.muscleGroup} exerciseName={exercise.name} somatotypeData={somatotypeData} />
+        </div>
 
-      {/* Action / Delete / Toggle */}
-      <div style={{ display: "flex", flexDirection: "column", gap: "6px", alignItems: "center" }}>
-        {isAdminMode ? (
-          <button
-            onClick={onDelete}
-            style={{
-              background: "rgba(244, 63, 94, 0.08)",
-              border: "1px solid rgba(244, 63, 94, 0.2)",
-              borderRadius: "8px",
-              width: "36px",
-              height: "36px",
-              color: "#f43f5e",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "1.1rem",
-              transition: "all 0.2s"
-            }}
-            title="Eliminar ejercicio"
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "rgba(244, 63, 94, 0.15)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "rgba(244, 63, 94, 0.08)";
-            }}
-          >
-            🗑️
-          </button>
-        ) : (
-          <>
-            <button
-              onClick={onToggle}
-              style={{
-                width: "36px",
-                height: "36px",
-                borderRadius: "50%",
-                border: "none",
-                background: isCompleted ? "var(--primary)" : "var(--border-color)",
-                color: isCompleted ? "white" : "var(--text-muted)",
-                cursor: "pointer",
-                fontSize: "1rem",
-                transition: "all 0.2s",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center"
-              }}
-            >
-              {isCompleted ? "✓" : "○"}
-            </button>
-            {isCompleted && !editing && (
-              <button
-                onClick={() => setEditing(true)}
+        {/* Info */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+            {exercise.videoUrl ? (
+              <a 
+                href={exercise.videoUrl} 
+                target="_blank" 
+                rel="noopener noreferrer"
                 style={{
-                  background: "none",
-                  border: "none",
+                  fontSize: "0.95rem", fontWeight: 700,
+                  color: isCompleted ? "var(--primary)" : "var(--text-main)",
+                  textDecoration: "underline",
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "4px"
+                }}
+              >
+                {exercise.name} <span style={{ fontSize: "0.75rem" }}>🎬</span>
+              </a>
+            ) : (
+              <span style={{
+                fontSize: "0.95rem", fontWeight: 700,
+                color: isCompleted ? "var(--primary)" : "var(--text-main)",
+                textDecoration: isCompleted ? "line-through" : "none"
+              }}>
+                {exercise.name}
+              </span>
+            )}
+            
+            {/* Show alternatives button if any exist */}
+            {alternativesList.length > 0 && (
+              <button
+                onClick={() => setShowAlts(!showAlts)}
+                style={{
+                  background: "rgba(0,128,128,0.08)",
+                  border: "1px solid rgba(0,128,128,0.2)",
+                  borderRadius: "6px",
+                  padding: "2px 8px",
                   fontSize: "0.7rem",
-                  color: "var(--text-muted)",
+                  color: "var(--primary)",
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "2px",
+                  marginLeft: "4px",
+                  fontWeight: 600,
+                  transition: "all 0.2s"
+                }}
+              >
+                🔄 Alternativas
+              </button>
+            )}
+          </div>
+
+          <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
+            {exercise.sets} series × {exercise.reps} reps
+            {exercise.weight ? ` · ${exercise.weight} kg` : ""}
+          </span>
+          
+          {/* Metadatos: chips */}
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginTop: "4px" }}>
+            {exercise.rest && (
+              <span style={{
+                fontSize: "0.75rem", background: "rgba(0,128,128,0.08)", color: "var(--primary)",
+                padding: "2px 8px", borderRadius: "8px", display: "inline-flex", alignItems: "center", gap: "2px"
+              }}>
+                ⏱️ {exercise.rest}
+              </span>
+            )}
+            {exercise.rir && (
+              <span style={{
+                fontSize: "0.75rem", background: "rgba(255,165,0,0.1)", color: "orange",
+                padding: "2px 8px", borderRadius: "8px", display: "inline-flex", alignItems: "center", gap: "2px"
+              }}>
+                🔥 RIR {exercise.rir}
+              </span>
+            )}
+            {exercise.technique && (
+              <span style={{
+                fontSize: "0.75rem", background: "rgba(128,0,128,0.08)", color: "purple",
+                padding: "2px 8px", borderRadius: "8px", display: "inline-flex", alignItems: "center", gap: "2px"
+              }}>
+                ⚙️ {exercise.technique}
+              </span>
+            )}
+            {exercise.notes && (
+              <span style={{
+                fontSize: "0.75rem", background: "rgba(0,0,255,0.05)", color: "#4f46e5",
+                padding: "2px 8px", borderRadius: "8px", display: "inline-flex", alignItems: "center", gap: "2px",
+                maxWidth: "240px", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap"
+              }} title={exercise.notes}>
+                📝 {exercise.notes}
+              </span>
+            )}
+          </div>
+
+          {!isAdminMode && editing ? (
+            <div style={{ display: "flex", gap: "6px", alignItems: "center", marginTop: "4px" }}>
+              <input
+                type="number"
+                value={actualWeight}
+                onChange={(e) => setActualWeight(e.target.value)}
+                placeholder="Peso real (kg)"
+                style={{
+                  width: "100px", padding: "4px 8px", fontSize: "0.8rem",
+                  border: "1px solid var(--primary)", borderRadius: "6px",
+                  background: "white", color: "var(--text-main)"
+                }}
+              />
+              <button
+                onClick={() => { onUpdateLog(parseFloat(actualWeight)); setEditing(false); }}
+                style={{
+                  padding: "4px 10px", fontSize: "0.75rem", border: "none",
+                  background: "var(--primary)", color: "white", borderRadius: "6px",
                   cursor: "pointer"
                 }}
               >
-                ✏️ Peso
+                ✓
               </button>
-            )}
-          </>
-        )}
+            </div>
+          ) : (
+            log?.actualWeight && (
+              <span style={{ fontSize: "0.75rem", color: "var(--success)", fontWeight: 600, display: "block", marginTop: "2px" }}>
+                ✓ Real: {log.actualWeight} kg
+              </span>
+            )
+          )}
+
+          {(() => {
+            let loggedSets = [];
+            if (log?.actualReps) {
+              try {
+                const parsed = JSON.parse(log.actualReps);
+                if (Array.isArray(parsed)) {
+                  loggedSets = parsed.filter(s => s.weight !== "" || s.reps !== "");
+                }
+              } catch (e) {}
+            }
+            if (loggedSets.length === 0) return null;
+            return (
+              <div style={{ 
+                marginTop: "6px", 
+                padding: "8px 10px", 
+                background: "rgba(0,128,128,0.04)", 
+                border: "1px solid rgba(0,128,128,0.15)",
+                borderRadius: "8px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "4px"
+              }}>
+                <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--primary)" }}>
+                  🏋️ {isAdminMode ? "Series registradas del atleta:" : "Mis series registradas:"}
+                </span>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                  {loggedSets.map((s, idx) => (
+                    <span key={idx} style={{ 
+                      fontSize: "0.7rem", 
+                      color: "var(--text-main)",
+                      background: "var(--bg-main)",
+                      padding: "2px 6px",
+                      borderRadius: "4px",
+                      border: "1px solid var(--border-color)",
+                      fontWeight: 500
+                    }}>
+                      S{idx + 1}: <strong>{s.weight || 0} kg</strong> × {s.reps || 0} reps
+                    </span>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
+        </div>
+
+        {/* Action / Delete / Toggle */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "6px", alignItems: "center" }}>
+          {isAdminMode ? (
+            <button
+              onClick={onDelete}
+              style={{
+                background: "rgba(244, 63, 94, 0.08)",
+                border: "1px solid rgba(244, 63, 94, 0.2)",
+                borderRadius: "8px",
+                width: "36px",
+                height: "36px",
+                color: "#f43f5e",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "1.1rem",
+                transition: "all 0.2s"
+              }}
+              title="Eliminar ejercicio"
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "rgba(244, 63, 94, 0.15)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "rgba(244, 63, 94, 0.08)";
+              }}
+            >
+              🗑️
+            </button>
+          ) : (
+            <>
+              <button
+                onClick={onToggle}
+                style={{
+                  width: "36px",
+                  height: "36px",
+                  borderRadius: "50%",
+                  border: "none",
+                  background: isCompleted ? "var(--primary)" : "var(--border-color)",
+                  color: isCompleted ? "white" : "var(--text-muted)",
+                  cursor: "pointer",
+                  fontSize: "1rem",
+                  transition: "all 0.2s",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center"
+                }}
+              >
+                {isCompleted ? "✓" : "○"}
+              </button>
+              {isCompleted && !editing && (
+                <button
+                  onClick={() => setEditing(true)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    fontSize: "0.7rem",
+                    color: "var(--text-muted)",
+                    cursor: "pointer"
+                  }}
+                >
+                  ✏️ Peso
+                </button>
+              )}
+            </>
+          )}
+        </div>
       </div>
+
+      {/* Registrar Series Section */}
+      {!isAdminMode && (
+        <div style={{
+          marginTop: "4px",
+          padding: "12px",
+          background: "var(--bg-card)",
+          borderRadius: "8px",
+          border: "1px solid var(--border-color)",
+          display: "flex",
+          flexDirection: "column",
+          gap: "8px"
+        }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--text-main)" }}>
+              📊 Registrar Cargas y Reps por Serie
+            </span>
+            {isCompleted && (
+              <span style={{ fontSize: "0.75rem", color: "var(--success)", fontWeight: 600 }}>
+                ✓ Guardado
+              </span>
+            )}
+          </div>
+          
+          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            {setsData.map((setData, index) => (
+              <div 
+                key={index} 
+                style={{ 
+                  display: "grid", 
+                  gridTemplateColumns: "60px 1fr 1fr", 
+                  alignItems: "center", 
+                  gap: "10px" 
+                }}
+              >
+                <span style={{ fontSize: "0.8rem", color: "var(--text-muted)", fontWeight: 600 }}>
+                  Serie {index + 1}
+                </span>
+                
+                <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                  <input
+                    type="number"
+                    step="any"
+                    value={setData.weight}
+                    onChange={(e) => {
+                      const updated = [...setsData];
+                      updated[index].weight = e.target.value;
+                      setSetsData(updated);
+                    }}
+                    placeholder="Peso"
+                    style={{
+                      width: "100%",
+                      padding: "4px 8px",
+                      fontSize: "0.8rem",
+                      border: "1px solid var(--border-color)",
+                      borderRadius: "6px",
+                      background: "white",
+                      color: "var(--text-main)"
+                    }}
+                  />
+                  <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>kg</span>
+                </div>
+
+                <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                  <input
+                    type="number"
+                    value={setData.reps}
+                    onChange={(e) => {
+                      const updated = [...setsData];
+                      updated[index].reps = e.target.value;
+                      setSetsData(updated);
+                    }}
+                    placeholder="Reps"
+                    style={{
+                      width: "100%",
+                      padding: "4px 8px",
+                      fontSize: "0.8rem",
+                      border: "1px solid var(--border-color)",
+                      borderRadius: "6px",
+                      background: "white",
+                      color: "var(--text-main)"
+                    }}
+                  />
+                  <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>reps</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <button
+            onClick={handleSaveSets}
+            disabled={savingSets}
+            style={{
+              marginTop: "4px",
+              padding: "6px 12px",
+              fontSize: "0.8rem",
+              fontWeight: 600,
+              background: "var(--primary)",
+              color: "white",
+              border: "none",
+              borderRadius: "6px",
+              cursor: "pointer",
+              transition: "all 0.2s"
+            }}
+          >
+            {savingSets ? "Guardando..." : "Guardar Series"}
+          </button>
+        </div>
+      )}
+
+      {/* Alternatives panel */}
+      {showAlts && (
+        <div style={{
+          marginTop: "6px",
+          padding: "10px",
+          background: "var(--bg-card)",
+          border: "1px dashed var(--border-color)",
+          borderRadius: "8px",
+          display: "flex",
+          flexDirection: "column",
+          gap: "8px"
+        }}>
+          <span style={{ fontSize: "0.8rem", fontWeight: 600, color: "var(--text-muted)" }}>
+            Reemplazar por una alternativa:
+          </span>
+          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            {alternativesList.map((alt, idx) => (
+              <div 
+                key={idx} 
+                style={{ 
+                  display: "flex", 
+                  justifyContent: "space-between", 
+                  alignItems: "center",
+                  padding: "6px 8px",
+                  background: "var(--bg-main)",
+                  borderRadius: "6px",
+                  border: "1px solid var(--border-color)"
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                  <span style={{ fontSize: "0.85rem", color: "var(--text-main)", fontWeight: 500 }}>
+                    {alt.name}
+                  </span>
+                  {alt.videoUrl && (
+                    <a 
+                      href={alt.videoUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      style={{ fontSize: "0.75rem", textDecoration: "underline", color: "var(--primary)" }}
+                    >
+                      🎬 Video
+                    </a>
+                  )}
+                </div>
+                <button
+                  disabled={swapping}
+                  onClick={() => handleSwap(alt.name, alt.videoUrl)}
+                  style={{
+                    padding: "3px 8px",
+                    fontSize: "0.75rem",
+                    background: "var(--primary)",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "4px",
+                    cursor: "pointer"
+                  }}
+                >
+                  {swapping ? "Intercambiando..." : "Seleccionar"}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -636,6 +1019,7 @@ const TrainingPlanner = ({ patientId, isAdminMode = false }) => {
   const [showAddExercise, setShowAddExercise] = useState(false);
   const [creatingPlan, setCreatingPlan] = useState(false);
   const [planError, setPlanError] = useState("");
+  const [newPlanDays, setNewPlanDays] = useState(4);
   const [hoveredExercise, setHoveredExercise] = useState(null);
 
   const [somatotypeData, setSomatotypeData] = useState({
@@ -766,7 +1150,7 @@ const TrainingPlanner = ({ patientId, isAdminMode = false }) => {
         body: JSON.stringify({
           name: newPlanName,
           goal: newPlanGoal,
-          daysPerWeek: 4,
+          daysPerWeek: newPlanDays,
         }),
       });
       if (res.ok) {
@@ -881,6 +1265,44 @@ const TrainingPlanner = ({ patientId, isAdminMode = false }) => {
     }
   };
 
+  const handleUpdateLogSets = async (exerciseId, setsData) => {
+    const existingLog = exerciseLogs.find(
+      (l) => l.exerciseId === exerciseId && l.date === today
+    );
+    try {
+      const actualRepsStr = JSON.stringify(setsData);
+      const firstWeight = setsData.find(s => s.weight !== "")?.weight;
+      const actualWeightVal = firstWeight ? parseFloat(firstWeight) : null;
+
+      if (existingLog) {
+        await fetch(`${API_BASE}/exercise-logs/${existingLog.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            actualReps: actualRepsStr,
+            actualWeight: actualWeightVal,
+            completed: true
+          }),
+        });
+      } else {
+        await fetch(`${API_BASE}/exercise-logs`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            exerciseId,
+            date: today,
+            completed: true,
+            actualReps: actualRepsStr,
+            actualWeight: actualWeightVal
+          }),
+        });
+      }
+      fetchLogs();
+    } catch (err) {
+      console.error("Error updating sets log:", err);
+    }
+  };
+
   const handleDeleteExercise = async (exerciseId) => {
     if (!window.confirm("¿Seguro que deseas eliminar este ejercicio de la rutina?")) return;
     try {
@@ -971,6 +1393,16 @@ const TrainingPlanner = ({ patientId, isAdminMode = false }) => {
               <select className="form-select" value={newPlanGoal}
                 onChange={(e) => setNewPlanGoal(e.target.value)}>
                 {GOALS.map((g) => <option key={g.value} value={g.value}>{g.label}</option>)}
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Días por semana</label>
+              <select className="form-select" value={newPlanDays}
+                onChange={(e) => setNewPlanDays(parseInt(e.target.value))}>
+                <option value={3}>3 días / semana</option>
+                <option value={4}>4 días / semana</option>
+                <option value={5}>5 días / semana</option>
+                <option value={6}>6 días / semana (PPL Completo)</option>
               </select>
             </div>
           </div>
@@ -1201,6 +1633,8 @@ const TrainingPlanner = ({ patientId, isAdminMode = false }) => {
                       onDelete={() => handleDeleteExercise(ex.id)}
                       onMouseEnter={() => setHoveredExercise(ex)}
                       onMouseLeave={() => setHoveredExercise(null)}
+                      onSwapSuccess={fetchPlans}
+                      onUpdateLogSets={handleUpdateLogSets}
                     />
                   );
                 })

@@ -1481,7 +1481,7 @@ app.post("/api/patients/:id/training-plans", async (req, res) => {
     };
 
     // Generate training plan via AI (or fallback to simulator)
-    const generatedDays = await generateTrainingPlanWithAI({ goal, planName: name, patientInfo });
+    const generatedDays = await generateTrainingPlanWithAI({ goal, planName: name, patientInfo, daysPerWeek: daysPerWeek ? parseInt(daysPerWeek) : 4 });
 
     // Deactivate previous plans
     await prisma.trainingPlan.updateMany({
@@ -1501,7 +1501,13 @@ app.post("/api/patients/:id/training-plans", async (req, res) => {
           reps: String(ex.reps || "8-12"),
           weight: (ex.weight !== undefined && ex.weight !== null && !isNaN(parseFloat(ex.weight))) ? parseFloat(ex.weight) : null,
           muscleGroup: ex.muscleGroup || day.muscleGroup,
-          order: idx
+          order: idx,
+          videoUrl: ex.videoUrl || null,
+          technique: ex.technique || null,
+          notes: ex.notes || null,
+          rest: ex.rest || null,
+          rir: ex.rir || null,
+          alternatives: ex.alternatives ? (typeof ex.alternatives === "string" ? ex.alternatives : JSON.stringify(ex.alternatives)) : null
         }))
       }
     }));
@@ -1544,6 +1550,51 @@ app.delete("/api/training-plans/:id", async (req, res) => {
     res.json({ message: "Plan eliminado" });
   } catch (error) {
     res.status(500).json({ error: "Error al eliminar el plan" });
+  }
+});
+
+// POST /api/training-exercises/:id/swap — Swap an exercise for one of its alternatives
+app.post("/api/training-exercises/:id/swap", async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ error: "ID de ejercicio inválido" });
+
+    const { alternativeName, alternativeVideoUrl } = req.body;
+    if (!alternativeName) return res.status(400).json({ error: "El nombre de la alternativa es requerido" });
+
+    // Fetch the current exercise
+    const exercise = await prisma.trainingExercise.findUnique({ where: { id } });
+    if (!exercise) return res.status(404).json({ error: "Ejercicio no encontrado" });
+
+    // Parse the current alternatives
+    let alts = [];
+    if (exercise.alternatives) {
+      try {
+        alts = JSON.parse(exercise.alternatives);
+      } catch (err) {
+        alts = [];
+      }
+    }
+
+    // Add current exercise state to alternatives (so the user can swap back!)
+    const updatedAlts = [
+      ...alts.filter(a => a.name.toLowerCase() !== alternativeName.toLowerCase()),
+      { name: exercise.name, videoUrl: exercise.videoUrl || "" }
+    ];
+
+    const updated = await prisma.trainingExercise.update({
+      where: { id },
+      data: {
+        name: alternativeName,
+        videoUrl: alternativeVideoUrl || "",
+        alternatives: JSON.stringify(updatedAlts)
+      }
+    });
+
+    res.json(updated);
+  } catch (error) {
+    console.error("Error swapping exercise:", error);
+    res.status(500).json({ error: "Error al intercambiar el ejercicio por su alternativa" });
   }
 });
 
