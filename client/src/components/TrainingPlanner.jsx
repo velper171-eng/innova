@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { bodyPathsFront, bodyPathsBack } from "./bodyPaths";
 
 const API_BASE = "/api";
 
@@ -165,25 +164,44 @@ const MuscleSilhouette = ({ highlight = "legs", exerciseName = "", view = "front
     );
   };
   
+  const activeColor = "transparent";
+  const activeStroke = "transparent";
+  const inactiveColor = "transparent";
+  const strokeColor = "transparent"; 
+
+  const getStyleForMuscle = (muscles) => {
+    const active = isHighlighted(muscles);
+    return {
+      fill: active ? activeColor : inactiveColor,
+      stroke: active ? activeStroke : strokeColor,
+      strokeWidth: active ? "1.5" : "0",
+      filter: active ? "url(#neonGlowMuscle)" : "none",
+      transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
+    };
+  };
+
   const getBodyModelParams = (somatotype, viewMode) => {
     const suffix = viewMode === "back" ? "_back.png" : ".png";
     if (somatotype === "ectomorph") {
       return {
         href: `/ectomorph_body${suffix}`,
-        width: 304,
-        height: 637,
+        width: 192.2,
+        x: 153.9,
+        height: 424,
       };
     } else if (somatotype === "endomorph") {
       return {
         href: `/endomorph_body${suffix}`,
-        width: 304,
-        height: 637,
+        width: 212.4,
+        x: 143.8,
+        height: 424,
       };
     } else {
       return {
         href: `/athletic_body${suffix}`,
-        width: 304,
-        height: 637,
+        width: 202.3,
+        x: 148.85,
+        height: 424,
       };
     }
   };
@@ -199,243 +217,136 @@ const MuscleSilhouette = ({ highlight = "legs", exerciseName = "", view = "front
   
   const sX = typeof scaleX === "number" ? scaleX : 1.0;
   const sY = typeof scaleY === "number" ? scaleY : 1.0;
-  const transformStr = `translate(152, 318.5) scale(${sX.toFixed(3)}, ${sY.toFixed(3)}) translate(-152, -318.5)`;
+  const transformStr = `translate(250, 260) scale(${sX.toFixed(3)}, ${sY.toFixed(3)}) translate(-250, -260)`;
 
   return (
     <svg 
-      viewBox="0 0 304 637" 
+      viewBox="160 50 180 440" 
       style={{ 
         display: "block", 
         margin: "0 auto", 
         overflow: "visible", 
         width: "100%", 
         height: "auto", 
-        maxWidth: "110px", 
-        maxHeight: "230px" 
+        maxWidth: "90px", 
+        maxHeight: "180px" 
       }}
     >
       <defs>
-        {/* Clip path utilizing the exact outer silhouette boundary of the body */}
-        <clipPath id="bodyClip">
-          <path d={bodyPathsFront[0]?.d || ""} />
-        </clipPath>
-        
-        {/* Front clip paths for each specific muscle group in 304 x 637 space */}
-        <clipPath id="chestClip">
-          <path d="M 152 115 L 120 122 C 115 140, 115 155, 118 162 L 152 166 L 186 162 C 189 155, 189 140, 184 122 Z" />
-        </clipPath>
-        <clipPath id="shouldersClip">
-          <path d="M 120 122 L 95 128 C 90 140, 90 155, 93 162 L 118 162 Z M 184 122 L 209 128 C 214 140, 214 155, 211 162 L 186 162 Z" />
-        </clipPath>
-        <clipPath id="armsClip">
-          <path d="M 93 162 L 75 195 L 60 245 L 45 295 L 65 295 L 90 235 L 116 162 Z M 211 162 L 229 195 L 244 245 L 259 295 L 239 295 L 214 235 L 188 162 Z" />
-        </clipPath>
-        <clipPath id="coreClip">
-          <path d="M 118 162 L 152 166 L 186 162 L 188 220 C 188 245, 186 258, 186 260 L 152 260 L 118 260 C 118 258, 116 245, 116 220 Z" />
-        </clipPath>
-        <clipPath id="legsQuadsClip">
-          <path d="M 118 260 L 152 260 L 186 260 L 194 320 C 198 370, 202 400, 202 410 L 152 410 L 102 410 C 102 400, 106 370, 110 320 Z" />
-        </clipPath>
-        <clipPath id="legsCalvesClip">
-          <path d="M 102 410 L 152 410 L 202 410 L 210 500 L 216 600 L 152 630 L 88 600 L 94 500 Z" />
-        </clipPath>
-        
-        {/* Posterior clip paths in 304 x 637 space */}
-        <clipPath id="backUpperClip">
-          <path d="M 152 110 L 120 122 L 110 165 L 152 175 L 194 165 L 184 122 Z" />
-        </clipPath>
-        <clipPath id="backLowerClip">
-          <path d="M 110 165 L 152 175 L 194 165 L 194 248 L 152 248 L 110 248 Z" />
-        </clipPath>
-        <clipPath id="shouldersClipBack">
-          <path d="M 120 122 L 95 128 L 90 165 L 110 165 Z M 184 122 L 209 128 C 214 140, 214 155, 211 162 L 186 162 Z" />
-        </clipPath>
-        <clipPath id="armsClipBack">
-          <path d="M 90 165 L 75 200 L 60 250 L 50 300 L 70 300 L 95 240 L 110 165 Z M 214 165 L 229 200 L 244 250 L 254 300 L 234 300 L 209 240 L 194 165 Z" />
-        </clipPath>
-        <clipPath id="backGlutesClip">
-          <path d="M 110 248 L 152 248 L 194 248 L 200 296 L 152 305 L 104 296 Z" />
-        </clipPath>
-        <clipPath id="backHamstringsClip">
-          <path d="M 104 296 L 152 305 L 200 296 L 204 410 L 152 410 L 100 410 Z" />
-        </clipPath>
-        <clipPath id="legsCalvesClipBack">
-          <path d="M 100 410 L 152 410 L 204 410 L 212 500 L 216 600 L 152 630 L 86 600 L 92 500 Z" />
-        </clipPath>
+        <filter id="neonGlowMuscle" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="4" result="blur1" />
+          <feGaussianBlur stdDeviation="8" result="blur2" />
+          <feMerge>
+            <feMergeNode in="blur2" />
+            <feMergeNode in="blur1" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
       </defs>
       
       <g transform={transformStr} style={{ transition: "transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)" }}>
-        {/* Layer 1: High-fidelity 3D Body Model PNG */}
+        {/* High-fidelity 3D Body Model Image */}
         <image
           href={bodyModel.href}
-          x="0"
-          y="0"
-          width="304"
-          height="637"
+          x={bodyModel.x}
+          y="64"
+          width={bodyModel.width}
+          height={bodyModel.height}
           style={{
             opacity: 0.95,
             transition: "all 0.3s ease"
           }}
         />
         
-        {/* Layer 2: Clipped soft green fills inside active muscles */}
-        <g clipPath="url(#bodyClip)">
-          {view === "front" ? (
-            <>
-              {isHighlighted(["chest", "pecho"]) && (
-                <path d="M 152 115 L 120 122 C 115 140, 115 155, 118 162 L 152 166 L 186 162 C 189 155, 189 140, 184 122 Z" fill="rgba(16, 185, 129, 0.2)" />
-              )}
-              {isHighlighted(["shoulders", "hombros"]) && (
-                <path d="M 120 122 L 95 128 C 90 140, 90 155, 93 162 L 118 162 Z M 184 122 L 209 128 C 214 140, 214 155, 211 162 L 186 162 Z" fill="rgba(16, 185, 129, 0.2)" />
-              )}
-              {isHighlighted(["arms", "biceps", "bíceps"]) && (
-                <path d="M 93 162 L 75 195 L 60 245 L 45 295 L 65 295 L 90 235 L 116 162 Z M 211 162 L 229 195 L 244 245 L 259 295 L 239 295 L 214 235 L 188 162 Z" fill="rgba(16, 185, 129, 0.2)" />
-              )}
-              {isHighlighted(["core", "abs", "abdomen"]) && (
-                <path d="M 118 162 L 152 166 L 186 162 L 188 220 C 188 245, 186 258, 186 260 L 152 260 L 118 260 C 118 258, 116 245, 116 220 Z" fill="rgba(16, 185, 129, 0.2)" />
-              )}
-              {isHighlighted(["legs", "quads", "cuádriceps"]) && (
-                <path d="M 118 260 L 152 260 L 186 260 L 194 320 C 198 370, 202 400, 202 410 L 152 410 L 102 410 C 102 400, 106 370, 110 320 Z" fill="rgba(16, 185, 129, 0.2)" />
-              )}
-              {isHighlighted(["legs", "calves", "gemelos", "pantorrillas"]) && (
-                <path d="M 102 410 L 152 410 L 202 410 L 210 500 L 216 600 L 152 630 L 88 600 L 94 500 Z" fill="rgba(16, 185, 129, 0.2)" />
-              )}
-            </>
-          ) : (
-            <>
-              {isHighlighted(["back", "espalda", "lats", "dorsales", "traps", "trapecios"]) && (
-                <path d="M 152 110 L 120 122 L 110 165 L 152 175 L 194 165 L 184 122 Z" fill="rgba(16, 185, 129, 0.2)" />
-              )}
-              {isHighlighted(["back", "espalda", "lower_back", "lumbares"]) && (
-                <path d="M 110 165 L 152 175 L 194 165 L 194 248 L 152 248 L 110 248 Z" fill="rgba(16, 185, 129, 0.2)" />
-              )}
-              {isHighlighted(["shoulders", "hombros"]) && (
-                <path d="M 120 122 L 95 128 L 90 165 L 110 165 Z M 184 122 L 209 128 C 214 140, 214 155, 211 162 L 186 162 Z" fill="rgba(16, 185, 129, 0.2)" />
-              )}
-              {isHighlighted(["arms", "triceps", "tríceps"]) && (
-                <path d="M 90 165 L 75 200 L 60 250 L 50 300 L 70 300 L 95 240 L 110 165 Z M 214 165 L 229 200 L 244 250 L 254 300 L 234 300 L 209 240 L 194 165 Z" fill="rgba(16, 185, 129, 0.2)" />
-              )}
-              {isHighlighted(["legs", "glutes", "glúteos"]) && (
-                <path d="M 110 248 L 152 248 L 194 248 L 200 296 L 152 305 L 104 296 Z" fill="rgba(16, 185, 129, 0.2)" />
-              )}
-              {isHighlighted(["legs", "hamstrings", "isquiotibiales", "femoral"]) && (
-                <path d="M 104 296 L 152 305 L 200 296 L 204 410 L 152 410 L 100 410 Z" fill="rgba(16, 185, 129, 0.2)" />
-              )}
-              {isHighlighted(["legs", "calves", "gemelos", "pantorrillas"]) && (
-                <path d="M 100 410 L 152 410 L 204 410 L 212 500 L 216 600 L 152 630 L 86 600 L 92 500 Z" fill="rgba(16, 185, 129, 0.2)" />
-              )}
-            </>
-          )}
-        </g>
-
-        {/* Layer 3: High-fidelity base SVG drawing lines */}
-        <g style={{ opacity: 0.85, transition: "all 0.3s ease", pointerEvents: "none" }}>
-          {(view === "front" ? bodyPathsFront : bodyPathsBack).map(p => (
-            <path
-              key={p.id}
-              d={p.d}
-              fill="#1f2937"
-            />
-          ))}
-        </g>
-
-        {/* Layer 4: Green glowing lines specifically for the active muscle groups using clipping masks */}
         {view === "front" ? (
           <>
-            {isHighlighted(["chest", "pecho"]) && (
-              <g clipPath="url(#chestClip)">
-                {bodyPathsFront.map(p => (
-                  <path key={`${p.id}_active_chest`} d={p.d} fill="#10b981" style={{ filter: "drop-shadow(0 0 3px #10b981)" }} />
-                ))}
-              </g>
-            )}
-            {isHighlighted(["shoulders", "hombros"]) && (
-              <g clipPath="url(#shouldersClip)">
-                {bodyPathsFront.map(p => (
-                  <path key={`${p.id}_active_shoulders`} d={p.d} fill="#10b981" style={{ filter: "drop-shadow(0 0 3px #10b981)" }} />
-                ))}
-              </g>
-            )}
-            {isHighlighted(["arms", "biceps", "bíceps"]) && (
-              <g clipPath="url(#armsClip)">
-                {bodyPathsFront.map(p => (
-                  <path key={`${p.id}_active_arms`} d={p.d} fill="#10b981" style={{ filter: "drop-shadow(0 0 3px #10b981)" }} />
-                ))}
-              </g>
-            )}
-            {isHighlighted(["core", "abs", "abdomen"]) && (
-              <g clipPath="url(#coreClip)">
-                {bodyPathsFront.map(p => (
-                  <path key={`${p.id}_active_core`} d={p.d} fill="#10b981" style={{ filter: "drop-shadow(0 0 3px #10b981)" }} />
-                ))}
-              </g>
-            )}
-            {isHighlighted(["legs", "quads", "cuádriceps"]) && (
-              <g clipPath="url(#legsQuadsClip)">
-                {bodyPathsFront.map(p => (
-                  <path key={`${p.id}_active_quads`} d={p.d} fill="#10b981" style={{ filter: "drop-shadow(0 0 3px #10b981)" }} />
-                ))}
-              </g>
-            )}
-            {isHighlighted(["legs", "calves", "gemelos", "pantorrillas"]) && (
-              <g clipPath="url(#legsCalvesClip)">
-                {bodyPathsFront.map(p => (
-                  <path key={`${p.id}_active_calves`} d={p.d} fill="#10b981" style={{ filter: "drop-shadow(0 0 3px #10b981)" }} />
-                ))}
-              </g>
-            )}
+            {/* Head & Neck (transparent) */}
+            <path d="M 250,64 C 243,64 236,68 236,78 C 236,88 234,88 234,92 C 234,96 238,98 241,102 C 245,98 249,98 250,98 C 251,98 255,98 259,102 C 262,98 266,96 266,92 C 266,88 264,88 264,78 C 264,68 257,64 250,64 Z" fill="transparent" stroke="transparent" strokeWidth="0" />
+            <path d="M 241,102 C 241,108 236,114 228,122 L 235,122 C 242,116 247,112 250,112 C 253,112 258,116 265,122 L 272,122 C 264,114 259,108 259,102 Z" fill="transparent" stroke="transparent" strokeWidth="0" />
+
+            {/* Chest */}
+            <path 
+              d="M 250,122 C 240,122 232,126 229,136 C 227,144 227,156 229,165 C 235,168 244,168 250,167 C 256,168 265,168 271,165 C 273,144 273,156 271,136 C 268,126 260,122 250,122 Z M 250,122 L 250,167" 
+              style={getStyleForMuscle(["chest", "pecho"])} 
+            />
+
+            {/* Shoulders */}
+            <path 
+              d="M 228,122 C 220,126 214,128 206,132 C 198,136 198,146 200,160 C 202,170 196,182 191,196 L 195,196 C 202,182 208,170 208,160 C 208,154 213,145 224,136 Z M 272,122 C 280,126 286,128 294,132 C 302,136 302,146 300,160 C 298,170 304,182 309,196 L 305,196 C 298,182 292,170 292,160 C 292,154 287,145 276,136 Z" 
+              style={getStyleForMuscle(["shoulders", "hombros"])} 
+            />
+
+            {/* Arms (Biceps) */}
+            <path 
+              d="M 200,160 C 202,170 196,182 191,196 L 206,188 C 208,206 211,228 214,248 C 217,262 216,274 218,284 L 222,284 C 220,274 220,262 218,248 C 215,228 212,206 210,188 C 212,182 218,170 218,160 Z M 300,160 C 298,170 304,182 309,196 L 294,188 C 292,206 289,228 286,248 C 283,262 284,274 282,284 L 278,284 C 280,274 280,262 282,248 C 285,228 288,206 290,188 C 288,182 282,170 282,160 Z" 
+              style={getStyleForMuscle(["arms", "biceps", "bíceps"])} 
+            />
+
+            {/* Core */}
+            <path 
+              d="M 229,165 C 235,168 244,168 250,167 C 256,168 265,168 271,165 C 271,180 270,210 272,248 L 228,248 C 230,210 229,180 229,165 Z M 238,175 H 262 V 190 H 238 Z M 238,195 H 262 V 210 H 238 Z M 238,215 H 262 V 230 H 238 Z M 238,235 H 262 V 246 H 238 Z" 
+              style={getStyleForMuscle(["core", "abs", "abdomen"])} 
+            />
+
+            {/* Legs (Quads) */}
+            <path 
+              d="M 228,248 C 228,256 226,278 224,302 C 220,332 216,364 218,394 L 248,394 C 250,370 250,308 250,296 C 250,308 250,370 252,394 L 282,394 C 284,364 280,332 276,302 C 274,278 272,256 272,248 Z" 
+              style={getStyleForMuscle(["legs", "quads", "cuádriceps"])} 
+            />
+
+            {/* Legs (Calves/Shins Front) */}
+            <path 
+              d="M 218,394 C 220,412 216,442 222,468 C 224,474 220,480 220,483 C 220,486 226,488 234,488 C 242,488 244,476 C 244,460 243,438 244,416 C 245,394 246,370 248,348 L 248,394 Z M 282,394 C 280,412 284,442 278,468 C 276,474 280,480 280,483 C 280,486 274,488 266,488 C 258,488 256,484 256,476 C 256,460 257,438 256,416 C 255,394 254,370 252,348 L 252,394 Z" 
+              style={getStyleForMuscle(["legs", "calves", "gemelos", "pantorrillas"])} 
+            />
           </>
         ) : (
           <>
-            {isHighlighted(["back", "espalda", "lats", "dorsales", "traps", "trapecios"]) && (
-              <g clipPath="url(#backUpperClip)">
-                {bodyPathsBack.map(p => (
-                  <path key={`${p.id}_active_back_upper`} d={p.d} fill="#10b981" style={{ filter: "drop-shadow(0 0 3px #10b981)" }} />
-                ))}
-              </g>
-            )}
-            {isHighlighted(["back", "espalda", "lower_back", "lumbares"]) && (
-              <g clipPath="url(#backLowerClip)">
-                {bodyPathsBack.map(p => (
-                  <path key={`${p.id}_active_back_lower`} d={p.d} fill="#10b981" style={{ filter: "drop-shadow(0 0 3px #10b981)" }} />
-                ))}
-              </g>
-            )}
-            {isHighlighted(["shoulders", "hombros"]) && (
-              <g clipPath="url(#shouldersClipBack)">
-                {bodyPathsBack.map(p => (
-                  <path key={`${p.id}_active_shoulders_back`} d={p.d} fill="#10b981" style={{ filter: "drop-shadow(0 0 3px #10b981)" }} />
-                ))}
-              </g>
-            )}
-            {isHighlighted(["arms", "triceps", "tríceps"]) && (
-              <g clipPath="url(#armsClipBack)">
-                {bodyPathsBack.map(p => (
-                  <path key={`${p.id}_active_arms_back`} d={p.d} fill="#10b981" style={{ filter: "drop-shadow(0 0 3px #10b981)" }} />
-                ))}
-              </g>
-            )}
-            {isHighlighted(["legs", "glutes", "glúteos"]) && (
-              <g clipPath="url(#backGlutesClip)">
-                {bodyPathsBack.map(p => (
-                  <path key={`${p.id}_active_glutes`} d={p.d} fill="#10b981" style={{ filter: "drop-shadow(0 0 3px #10b981)" }} />
-                ))}
-              </g>
-            )}
-            {isHighlighted(["legs", "hamstrings", "isquiotibiales", "femoral"]) && (
-              <g clipPath="url(#backHamstringsClip)">
-                {bodyPathsBack.map(p => (
-                  <path key={`${p.id}_active_hamstrings`} d={p.d} fill="#10b981" style={{ filter: "drop-shadow(0 0 3px #10b981)" }} />
-                ))}
-              </g>
-            )}
-            {isHighlighted(["legs", "calves", "gemelos", "pantorrillas"]) && (
-              <g clipPath="url(#legsCalvesClipBack)">
-                {bodyPathsBack.map(p => (
-                  <path key={`${p.id}_active_calves_back`} d={p.d} fill="#10b981" style={{ filter: "drop-shadow(0 0 3px #10b981)" }} />
-                ))}
-              </g>
-            )}
+            {/* Head & Neck (transparent) */}
+            <path d="M 250,64 C 243,64 236,68 236,78 C 236,88 234,88 234,92 C 234,96 238,98 241,102 C 245,98 249,98 250,98 C 251,98 255,98 259,102 C 262,98 266,96 266,92 C 266,88 264,88 264,78 C 264,68 257,64 250,64 Z" fill="transparent" stroke="transparent" strokeWidth="0" />
+            <path d="M 241,102 C 241,108 236,114 228,122 L 235,122 C 242,116 247,112 250,112 C 253,112 258,116 265,122 L 272,122 C 264,114 259,108 259,102 Z" fill="transparent" stroke="transparent" strokeWidth="0" />
+
+            {/* Upper Back (Traps & Lats) */}
+            <path 
+              d="M 250,122 C 240,122 232,126 228,122 L 222,165 C 232,175 242,177 250,176 C 258,177 268,175 278,165 L 272,122 C 268,126 260,122 250,122 Z" 
+              style={getStyleForMuscle(["back", "espalda", "lats", "dorsales", "traps", "trapecios"])} 
+            />
+
+            {/* Lower Back */}
+            <path 
+              d="M 222,165 C 232,175 242,177 250,176 C 258,177 268,175 278,165 L 272,248 L 228,248 Z" 
+              style={getStyleForMuscle(["back", "espalda", "lower_back", "lumbares"])} 
+            />
+
+            {/* Shoulders (Posterior) */}
+            <path 
+              d="M 228,122 C 220,126 214,128 206,132 C 198,136 198,146 200,160 C 202,170 196,182 191,196 L 195,196 C 202,182 208,170 208,160 C 208,154 213,145 224,136 Z M 272,122 C 280,126 286,128 294,132 C 302,136 302,146 300,160 C 298,170 304,182 309,196 L 305,196 C 298,182 292,170 292,160 C 292,154 287,145 276,136 Z" 
+              style={getStyleForMuscle(["shoulders", "hombros"])} 
+            />
+
+            {/* Arms (Posterior/Triceps) */}
+            <path 
+              d="M 200,160 C 202,170 196,182 191,196 L 206,188 C 208,206 211,228 214,248 C 217,262 216,274 218,284 L 222,284 C 220,274 220,262 218,248 C 215,228 212,206 210,188 C 212,182 218,170 218,160 Z M 300,160 C 298,170 304,182 309,196 L 294,188 C 292,206 289,228 286,248 C 283,262 284,274 282,284 L 278,284 C 280,274 280,262 282,248 C 285,228 288,206 290,188 C 288,182 282,170 282,160 Z" 
+              style={getStyleForMuscle(["arms", "triceps", "tríceps"])} 
+            />
+
+            {/* Glutes (Glúteos) */}
+            <path 
+              d="M 228,248 C 228,260 226,278 224,296 L 250,296 L 276,296 C 274,278 272,260 272,248 Z" 
+              style={getStyleForMuscle(["legs", "glutes", "glúteos"])} 
+            />
+
+            {/* Hamstrings (Isquiotibiales) */}
+            <path 
+              d="M 224,296 C 220,332 216,364 218,394 L 248,394 C 250,370 250,308 250,296 Z M 250,296 C 250,308 250,370 252,394 L 282,394 C 280,364 276,332 276,296 Z" 
+              style={getStyleForMuscle(["legs", "hamstrings", "isquiotibiales", "femoral"])} 
+            />
+
+            {/* Calves (Pantorrillas) */}
+            <path 
+              d="M 218,394 C 220,412 216,442 222,468 C 224,474 220,480 220,483 C 220,486 226,488 234,488 C 242,488 244,476 C 244,460 243,438 244,416 C 245,394 246,370 248,348 L 248,394 Z M 282,394 C 280,412 284,442 278,468 C 276,474 280,480 280,483 C 280,486 274,488 266,488 C 258,488 256,484 256,476 C 256,460 257,438 256,416 C 255,394 254,370 252,348 L 252,394 Z" 
+              style={getStyleForMuscle(["legs", "calves", "gemelos", "pantorrillas"])} 
+            />
           </>
         )}
       </g>
