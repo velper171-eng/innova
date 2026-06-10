@@ -217,7 +217,7 @@ const MuscleSilhouette = ({ highlight = "legs", exerciseName = "", view = "front
     );
   };
   
-  const activeColor = "rgba(16, 185, 129, 0.65)"; // Glowing green semi-transparent
+  const activeColor = "rgba(16, 185, 129, 0.75)"; // Glowing premium green semi-transparent
   const activeStroke = "#34d399";
   const inactiveColor = "transparent";
   const strokeColor = "transparent"; 
@@ -229,24 +229,28 @@ const MuscleSilhouette = ({ highlight = "legs", exerciseName = "", view = "front
       stroke: active ? activeStroke : strokeColor,
       strokeWidth: active ? "1.5" : "0",
       filter: active ? "url(#neonGlowMuscle)" : "none",
-      transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
+      transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+      mixBlendMode: "overlay"
     };
   };
 
   const getBodyModelParams = (somatotype, viewMode) => {
     const suffix = viewMode === "back" ? "_back.png" : ".png";
+    // We homogeneous the base layout dimensions for all somatotypes so the 
+    // vector muscle paths align perfectly with the PNG image underneath.
+    // The specific patient-level scaleX/scaleY handles horizontal morphing.
     if (somatotype === "ectomorph") {
       return {
         href: `/ectomorph_body${suffix}`,
-        width: 192.2,
-        x: 153.9,
+        width: 202.3,
+        x: 148.85,
         height: 424,
       };
     } else if (somatotype === "endomorph") {
       return {
         href: `/endomorph_body${suffix}`,
-        width: 212.4,
-        x: 143.8,
+        width: 202.3,
+        x: 148.85,
         height: 424,
       };
     } else {
@@ -286,9 +290,14 @@ const MuscleSilhouette = ({ highlight = "legs", exerciseName = "", view = "front
       }}
     >
       <defs>
-        <filter id="neonGlowMuscle" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur stdDeviation="4" result="blur1" />
-          <feGaussianBlur stdDeviation="8" result="blur2" />
+        {/* Clip path utilizing the exact outer silhouette boundary of the body */}
+        <clipPath id="bodyClip">
+          <path d={bodySilhouettePath} />
+        </clipPath>
+        {/* Refined, tighter glow filter to conform nicely to muscle structures */}
+        <filter id="neonGlowMuscle" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="1.5" result="blur1" />
+          <feGaussianBlur stdDeviation="3" result="blur2" />
           <feMerge>
             <feMergeNode in="blur2" />
             <feMergeNode in="blur1" />
@@ -311,97 +320,100 @@ const MuscleSilhouette = ({ highlight = "legs", exerciseName = "", view = "front
           }}
         />
         
-        {view === "front" ? (
-          <>
-            {/* Head & Neck (transparent) */}
-            <path d="M 250,64 C 243,64 236,68 236,78 C 236,88 234,88 234,92 C 234,96 238,98 241,102 C 245,98 249,98 250,98 C 251,98 255,98 259,102 C 262,98 266,96 266,92 C 266,88 264,88 264,78 C 264,68 257,64 250,64 Z" fill="transparent" stroke="transparent" strokeWidth="0" />
-            <path d="M 241,102 C 241,108 236,114 228,122 L 235,122 C 242,116 247,112 250,112 C 253,112 258,116 265,122 L 272,122 C 264,114 259,108 259,102 Z" fill="transparent" stroke="transparent" strokeWidth="0" />
+        {/* Clipped group to ensure no green highlight overflows the silhouette boundary */}
+        <g clipPath="url(#bodyClip)">
+          {view === "front" ? (
+            <>
+              {/* Head & Neck (transparent) */}
+              <path d="M 250,64 C 243,64 236,68 236,78 C 236,88 234,88 234,92 C 234,96 238,98 241,102 C 245,98 249,98 250,98 C 251,98 255,98 259,102 C 262,98 266,96 266,92 C 266,88 264,88 264,78 C 264,68 257,64 250,64 Z" fill="transparent" stroke="transparent" strokeWidth="0" />
+              <path d="M 241,102 C 241,108 236,114 228,122 L 235,122 C 242,116 247,112 250,112 C 253,112 258,116 265,122 L 272,122 C 264,114 259,108 259,102 Z" fill="transparent" stroke="transparent" strokeWidth="0" />
 
-            {/* Chest */}
-            <path 
-              d="M 250,122 C 240,122 232,126 229,136 C 227,144 227,156 229,165 C 235,168 244,168 250,167 C 256,168 265,168 271,165 C 273,144 273,156 271,136 C 268,126 260,122 250,122 Z M 250,122 L 250,167" 
-              style={getStyleForMuscle(["chest", "pecho"])} 
-            />
+              {/* Chest (Pectorals separated left & right) */}
+              <path 
+                d="M 250,125 C 242,125 233,127 229,134 C 227,142 227,154 229,163 C 235,166 244,166 250,165 Z M 250,125 C 258,125 267,127 271,134 C 273,142 273,154 271,163 C 265,166 256,166 250,165 Z" 
+                style={getStyleForMuscle(["chest", "pecho"])} 
+              />
 
-            {/* Shoulders */}
-            <path 
-              d="M 228,122 C 220,126 214,128 206,132 C 198,136 198,146 200,160 C 202,170 196,182 191,196 L 195,196 C 202,182 208,170 208,160 C 208,154 213,145 224,136 Z M 272,122 C 280,126 286,128 294,132 C 302,136 302,146 300,160 C 298,170 304,182 309,196 L 305,196 C 298,182 292,170 292,160 C 292,154 287,145 276,136 Z" 
-              style={getStyleForMuscle(["shoulders", "hombros"])} 
-            />
+              {/* Shoulders (Deltoids tailored to upper arm insertion) */}
+              <path 
+                d="M 228,122 C 220,126 212,128 206,132 C 198,136 198,146 200,160 C 204,163 210,158 214,150 C 218,142 222,132 228,122 Z M 272,122 C 280,126 288,128 294,132 C 302,136 302,146 300,160 C 296,163 290,158 286,150 C 282,142 278,132 272,122 Z" 
+                style={getStyleForMuscle(["shoulders", "hombros"])} 
+              />
 
-            {/* Arms (Biceps) */}
-            <path 
-              d="M 200,160 C 202,170 196,182 191,196 L 206,188 C 208,206 211,228 214,248 C 217,262 216,274 218,284 L 222,284 C 220,274 220,262 218,248 C 215,228 212,206 210,188 C 212,182 218,170 218,160 Z M 300,160 C 298,170 304,182 309,196 L 294,188 C 292,206 289,228 286,248 C 283,262 284,274 282,284 L 278,284 C 280,274 280,262 282,248 C 285,228 288,206 290,188 C 288,182 282,170 282,160 Z" 
-              style={getStyleForMuscle(["arms", "biceps", "bíceps"])} 
-            />
+              {/* Arms (Biceps & Forearms separated and contoured) */}
+              <path 
+                d="M 200,160 C 202,170 196,182 191,196 C 196,196 204,192 208,188 C 210,182 214,170 214,160 Z M 191,196 C 186,210 180,228 177,246 C 182,246 190,234 198,218 C 202,204 204,196 206,188 Z M 300,160 C 298,170 304,182 309,196 C 304,196 296,192 292,188 C 290,182 286,170 286,160 Z M 309,196 C 314,210 320,228 323,246 C 318,246 310,234 302,218 C 298,204 296,196 294,188 Z" 
+                style={getStyleForMuscle(["arms", "biceps", "bíceps"])} 
+              />
 
-            {/* Core */}
-            <path 
-              d="M 229,165 C 235,168 244,168 250,167 C 256,168 265,168 271,165 C 271,180 270,210 272,248 L 228,248 C 230,210 229,180 229,165 Z M 238,175 H 262 V 190 H 238 Z M 238,195 H 262 V 210 H 238 Z M 238,215 H 262 V 230 H 238 Z M 238,235 H 262 V 246 H 238 Z" 
-              style={getStyleForMuscle(["core", "abs", "abdomen"])} 
-            />
+              {/* Core (Anatomically detailed abs pack and independent obliques) */}
+              <path 
+                d="M 234,172 H 248 V 190 H 234 Z M 234,194 H 248 V 210 H 234 Z M 234,214 H 248 V 230 H 234 Z M 235,234 H 248 V 246 H 235 Z M 252,172 H 266 V 190 H 252 Z M 252,194 H 266 V 210 H 252 Z M 252,214 H 266 V 230 H 252 Z M 252,234 H 265 V 246 H 252 Z M 229,165 C 229,180 228,210 230,246 C 233,246 234,246 234,246 C 232,210 231,180 231,165 Z M 271,165 C 271,180 272,210 270,246 C 267,246 266,246 266,246 C 268,210 269,180 269,165 Z" 
+                style={getStyleForMuscle(["core", "abs", "abdomen"])} 
+              />
 
-            {/* Legs (Quads) */}
-            <path 
-              d="M 228,248 C 228,256 226,278 224,302 C 220,332 216,364 218,394 L 248,394 C 250,370 250,308 250,296 C 250,308 250,370 252,394 L 282,394 C 284,364 280,332 276,302 C 274,278 272,256 272,248 Z" 
-              style={getStyleForMuscle(["legs", "quads", "cuádriceps"])} 
-            />
+              {/* Legs (Quads separated left & right with groin creases) */}
+              <path 
+                d="M 228,248 C 226,278 224,302 218,394 C 224,396 242,396 248,394 C 250,370 250,308 250,296 C 250,275 238,255 228,248 Z M 272,248 C 274,278 276,302 282,394 C 276,396 258,396 252,394 C 250,370 250,308 250,296 C 250,275 262,255 272,248 Z" 
+                style={getStyleForMuscle(["legs", "quads", "cuádriceps"])} 
+              />
 
-            {/* Legs (Calves/Shins Front) */}
-            <path 
-              d="M 218,394 C 220,412 216,442 222,468 C 224,474 220,480 220,483 C 220,486 226,488 234,488 C 242,488 244,476 C 244,460 243,438 244,416 C 245,394 246,370 248,348 L 248,394 Z M 282,394 C 280,412 284,442 278,468 C 276,474 280,480 280,483 C 280,486 274,488 266,488 C 258,488 256,484 256,476 C 256,460 257,438 256,416 C 255,394 254,370 252,348 L 252,394 Z" 
-              style={getStyleForMuscle(["legs", "calves", "gemelos", "pantorrillas"])} 
-            />
-          </>
-        ) : (
-          <>
-            {/* Head & Neck (transparent) */}
-            <path d="M 250,64 C 243,64 236,68 236,78 C 236,88 234,88 234,92 C 234,96 238,98 241,102 C 245,98 249,98 250,98 C 251,98 255,98 259,102 C 262,98 266,96 266,92 C 266,88 264,88 264,78 C 264,68 257,64 250,64 Z" fill="transparent" stroke="transparent" strokeWidth="0" />
-            <path d="M 241,102 C 241,108 236,114 228,122 L 235,122 C 242,116 247,112 250,112 C 253,112 258,116 265,122 L 272,122 C 264,114 259,108 259,102 Z" fill="transparent" stroke="transparent" strokeWidth="0" />
+              {/* Legs (Calves/Shins Front separated correctly below the knee) */}
+              <path 
+                d="M 218,394 C 220,412 216,442 222,468 C 224,474 220,480 220,483 C 220,486 226,488 234,488 C 242,488 244,484 244,476 C 244,460 243,438 244,416 C 245,406 247,398 248,394 C 240,392 226,392 218,394 Z M 282,394 C 280,412 284,442 278,468 C 276,474 280,480 280,483 C 280,486 274,488 266,488 C 258,488 256,484 256,476 C 256,460 257,438 256,416 C 255,406 253,398 252,394 C 260,392 274,392 282,394 Z" 
+                style={getStyleForMuscle(["legs", "calves", "gemelos", "pantorrillas"])} 
+              />
+            </>
+          ) : (
+            <>
+              {/* Head & Neck (transparent) */}
+              <path d="M 250,64 C 243,64 236,68 236,78 C 236,88 234,88 234,92 C 234,96 238,98 241,102 C 245,98 249,98 250,98 C 251,98 255,98 259,102 C 262,98 266,96 266,92 C 266,88 264,88 264,78 C 264,68 257,64 250,64 Z" fill="transparent" stroke="transparent" strokeWidth="0" />
+              <path d="M 241,102 C 241,108 236,114 228,122 L 235,122 C 242,116 247,112 250,112 C 253,112 258,116 265,122 L 272,122 C 264,114 259,108 259,102 Z" fill="transparent" stroke="transparent" strokeWidth="0" />
 
-            {/* Upper Back (Traps & Lats) */}
-            <path 
-              d="M 250,122 C 240,122 232,126 228,122 L 222,165 C 232,175 242,177 250,176 C 258,177 268,175 278,165 L 272,122 C 268,126 260,122 250,122 Z" 
-              style={getStyleForMuscle(["back", "espalda", "lats", "dorsales", "traps", "trapecios"])} 
-            />
+              {/* Upper Back (Traps & Lats separated left & right) */}
+              <path 
+                d="M 250,122 C 240,122 232,126 228,122 C 224,142 222,154 222,165 C 230,170 240,173 250,174 Z M 250,122 C 260,122 268,126 272,122 C 276,142 278,154 278,165 C 270,170 260,173 250,174 Z" 
+                style={getStyleForMuscle(["back", "espalda", "lats", "dorsales", "traps", "trapecios"])} 
+              />
 
-            {/* Lower Back */}
-            <path 
-              d="M 222,165 C 232,175 242,177 250,176 C 258,177 268,175 278,165 L 272,248 L 228,248 Z" 
-              style={getStyleForMuscle(["back", "espalda", "lower_back", "lumbares"])} 
-            />
+              {/* Lower Back (Left & Right lower back with spine division) */}
+              <path 
+                d="M 222,165 C 230,170 240,173 250,174 L 250,248 C 242,248 234,249 228,248 C 226,220 224,190 222,165 Z M 278,165 C 270,170 260,173 250,174 L 250,248 C 258,248 266,249 272,248 C 274,220 276,190 278,165 Z" 
+                style={getStyleForMuscle(["back", "espalda", "lower_back", "lumbares"])} 
+              />
 
-            {/* Shoulders (Posterior) */}
-            <path 
-              d="M 228,122 C 220,126 214,128 206,132 C 198,136 198,146 200,160 C 202,170 196,182 191,196 L 195,196 C 202,182 208,170 208,160 C 208,154 213,145 224,136 Z M 272,122 C 280,126 286,128 294,132 C 302,136 302,146 300,160 C 298,170 304,182 309,196 L 305,196 C 298,182 292,170 292,160 C 292,154 287,145 276,136 Z" 
-              style={getStyleForMuscle(["shoulders", "hombros"])} 
-            />
+              {/* Shoulders (Posterior) */}
+              <path 
+                d="M 228,122 C 220,126 212,128 206,132 C 198,136 198,146 200,160 C 204,163 210,158 214,150 C 218,142 222,132 228,122 Z M 272,122 C 280,126 288,128 294,132 C 302,136 302,146 300,160 C 296,163 290,158 286,150 C 282,142 278,132 272,122 Z" 
+                style={getStyleForMuscle(["shoulders", "hombros"])} 
+              />
 
-            {/* Arms (Posterior/Triceps) */}
-            <path 
-              d="M 200,160 C 202,170 196,182 191,196 L 206,188 C 208,206 211,228 214,248 C 217,262 216,274 218,284 L 222,284 C 220,274 220,262 218,248 C 215,228 212,206 210,188 C 212,182 218,170 218,160 Z M 300,160 C 298,170 304,182 309,196 L 294,188 C 292,206 289,228 286,248 C 283,262 284,274 282,284 L 278,284 C 280,274 280,262 282,248 C 285,228 288,206 290,188 C 288,182 282,170 282,160 Z" 
-              style={getStyleForMuscle(["arms", "triceps", "tríceps"])} 
-            />
+              {/* Arms (Posterior/Triceps & Forearms) */}
+              <path 
+                d="M 200,160 C 202,170 196,182 191,196 C 196,196 204,192 208,188 C 210,182 214,170 214,160 Z M 191,196 C 186,210 180,228 177,246 C 182,246 190,234 198,218 C 202,204 204,196 206,188 Z M 300,160 C 298,170 304,182 309,196 C 304,196 296,192 292,188 C 290,182 286,170 286,160 Z M 309,196 C 314,210 320,228 323,246 C 318,246 310,234 302,218 C 298,204 296,196 294,188 Z" 
+                style={getStyleForMuscle(["arms", "triceps", "tríceps"])} 
+              />
 
-            {/* Glutes (Glúteos) */}
-            <path 
-              d="M 228,248 C 228,260 226,278 224,296 L 250,296 L 276,296 C 274,278 272,260 272,248 Z" 
-              style={getStyleForMuscle(["legs", "glutes", "glúteos"])} 
-            />
+              {/* Glutes (Separated left & right cheeks with bottom and top curves) */}
+              <path 
+                d="M 228,248 C 228,260 226,278 224,296 C 232,298 242,298 248,296 C 249,280 249,260 250,248 C 242,248 234,248 228,248 Z M 272,248 C 272,260 274,278 276,296 C 268,298 258,298 252,296 C 251,280 251,260 250,248 C 258,248 266,248 272,248 Z" 
+                style={getStyleForMuscle(["legs", "glutes", "glúteos"])} 
+              />
 
-            {/* Hamstrings (Isquiotibiales) */}
-            <path 
-              d="M 224,296 C 220,332 216,364 218,394 L 248,394 C 250,370 250,308 250,296 Z M 250,296 C 250,308 250,370 252,394 L 282,394 C 280,364 276,332 276,296 Z" 
-              style={getStyleForMuscle(["legs", "hamstrings", "isquiotibiales", "femoral"])} 
-            />
+              {/* Hamstrings (Hamstrings separated left & right with crease curves) */}
+              <path 
+                d="M 224,296 C 220,332 216,364 218,394 C 224,396 242,396 248,394 C 250,370 250,308 250,296 C 242,298 232,298 224,296 Z M 276,296 C 280,332 284,364 282,394 C 276,396 258,396 252,394 C 250,370 250,308 250,296 C 258,298 268,298 276,296 Z" 
+                style={getStyleForMuscle(["legs", "hamstrings", "isquiotibiales", "femoral"])} 
+              />
 
-            {/* Calves (Pantorrillas) */}
-            <path 
-              d="M 218,394 C 220,412 216,442 222,468 C 224,474 220,480 220,483 C 220,486 226,488 234,488 C 242,488 244,476 C 244,460 243,438 244,416 C 245,394 246,370 248,348 L 248,394 Z M 282,394 C 280,412 284,442 278,468 C 276,474 280,480 280,483 C 280,486 274,488 266,488 C 258,488 256,484 256,476 C 256,460 257,438 256,416 C 255,394 254,370 252,348 L 252,394 Z" 
-              style={getStyleForMuscle(["legs", "calves", "gemelos", "pantorrillas"])} 
-            />
-          </>
-        )}
+              {/* Calves (Pantorrillas Posterior separated) */}
+              <path 
+                d="M 218,394 C 220,412 216,442 222,468 C 224,474 220,480 220,483 C 220,486 226,488 234,488 C 242,488 244,484 244,476 C 244,460 243,438 244,416 C 245,406 247,398 248,394 C 240,392 226,392 218,394 Z M 282,394 C 280,412 284,442 278,468 C 276,474 280,480 280,483 C 280,486 274,488 266,488 C 258,488 256,484 256,476 C 256,460 257,438 256,416 C 255,406 253,398 252,394 C 260,392 274,392 282,394 Z" 
+                style={getStyleForMuscle(["legs", "calves", "gemelos", "pantorrillas"])} 
+              />
+            </>
+          )}
+        </g>
       </g>
     </svg>
   );
