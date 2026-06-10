@@ -217,28 +217,17 @@ const MuscleSilhouette = ({ highlight = "legs", exerciseName = "", view = "front
     );
   };
   
-  const activeColor = "rgba(16, 185, 129, 0.75)"; // Glowing premium green semi-transparent
-  const activeStroke = "#34d399";
-  const inactiveColor = "transparent";
-  const strokeColor = "transparent"; 
-
   const getStyleForMuscle = (muscles) => {
     const active = isHighlighted(muscles);
     return {
-      fill: active ? activeColor : inactiveColor,
-      stroke: active ? activeStroke : strokeColor,
-      strokeWidth: active ? "1.5" : "0",
-      filter: active ? "url(#neonGlowMuscle)" : "none",
-      transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-      mixBlendMode: "overlay"
+      fill: active ? "rgba(16, 185, 129, 0.2)" : "transparent",
+      stroke: "none",
+      transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
     };
   };
 
   const getBodyModelParams = (somatotype, viewMode) => {
     const suffix = viewMode === "back" ? "_back.png" : ".png";
-    // We homogeneous the base layout dimensions for all somatotypes so the 
-    // vector muscle paths align perfectly with the PNG image underneath.
-    // The specific patient-level scaleX/scaleY handles horizontal morphing.
     if (somatotype === "ectomorph") {
       return {
         href: `/ectomorph_body${suffix}`,
@@ -294,20 +283,44 @@ const MuscleSilhouette = ({ highlight = "legs", exerciseName = "", view = "front
         <clipPath id="bodyClip">
           <path d={bodySilhouettePath} />
         </clipPath>
-        {/* Refined, tighter glow filter to conform nicely to muscle structures */}
-        <filter id="neonGlowMuscle" x="-20%" y="-20%" width="140%" height="140%">
-          <feGaussianBlur stdDeviation="1.5" result="blur1" />
-          <feGaussianBlur stdDeviation="3" result="blur2" />
-          <feMerge>
-            <feMergeNode in="blur2" />
-            <feMergeNode in="blur1" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
+        
+        {/* Clip paths for each specific muscle group for green-filtering the SVG lines */}
+        <clipPath id="chestClip">
+          <path d="M 250,125 C 242,125 233,127 229,134 C 227,142 227,154 229,163 C 235,166 244,166 250,165 Z M 250,125 C 258,125 267,127 271,134 C 273,142 273,154 271,163 C 265,166 256,166 250,165 Z" />
+        </clipPath>
+        <clipPath id="shouldersClip">
+          <path d="M 228,122 C 220,126 212,128 206,132 C 198,136 198,146 200,160 C 204,163 210,158 214,150 C 218,142 222,132 228,122 Z M 272,122 C 280,126 288,128 294,132 C 302,136 302,146 300,160 C 296,163 290,158 286,150 C 282,142 278,132 272,122 Z" />
+        </clipPath>
+        <clipPath id="armsClip">
+          <path d="M 200,160 C 202,170 196,182 191,196 C 196,196 204,192 208,188 C 210,182 214,170 214,160 Z M 191,196 C 186,210 180,228 177,246 C 182,246 190,234 198,218 C 202,204 204,196 206,188 Z M 300,160 C 298,170 304,182 309,196 C 304,196 296,192 292,188 C 290,182 286,170 286,160 Z M 309,196 C 314,210 320,228 323,246 C 318,246 310,234 302,218 C 298,204 296,196 294,188 Z" />
+        </clipPath>
+        <clipPath id="coreClip">
+          <path d="M 234,172 H 248 V 190 H 234 Z M 234,194 H 248 V 210 H 234 Z M 234,214 H 248 V 230 H 234 Z M 235,234 H 248 V 246 H 235 Z M 252,172 H 266 V 190 H 252 Z M 252,194 H 266 V 210 H 252 Z M 252,214 H 266 V 230 H 252 Z M 252,234 H 265 V 246 H 252 Z M 229,165 C 229,180 228,210 230,246 C 233,246 234,246 234,246 C 232,210 231,180 231,165 Z M 271,165 C 271,180 272,210 270,246 C 267,246 266,246 266,246 C 268,210 269,180 269,165 Z" />
+        </clipPath>
+        <clipPath id="legsQuadsClip">
+          <path d="M 228,248 C 226,278 224,302 218,394 C 224,396 242,396 248,394 C 250,370 250,308 250,296 C 250,275 238,255 228,248 Z M 272,248 C 274,278 276,302 282,394 C 276,396 258,396 252,394 C 250,370 250,308 250,296 C 250,275 262,255 272,248 Z" />
+        </clipPath>
+        <clipPath id="legsCalvesClip">
+          <path d="M 218,394 C 220,412 216,442 222,468 C 224,474 220,480 220,483 C 220,486 226,488 234,488 C 242,488 244,484 244,476 C 244,460 243,438 244,416 C 245,406 247,398 248,394 C 240,392 226,392 218,394 Z M 282,394 C 280,412 284,442 278,468 C 276,474 280,480 280,483 C 280,486 274,488 266,488 C 258,488 256,484 256,476 C 256,460 257,438 256,416 C 255,406 253,398 252,394 C 260,392 274,392 282,394 Z" />
+        </clipPath>
+        
+        {/* Posterior clips */}
+        <clipPath id="backUpperClip">
+          <path d="M 250,122 C 240,122 232,126 228,122 C 224,142 222,154 222,165 C 230,170 240,173 250,174 Z M 250,122 C 260,122 268,126 272,122 C 276,142 278,154 278,165 C 270,170 260,173 250,174 Z" />
+        </clipPath>
+        <clipPath id="backLowerClip">
+          <path d="M 222,165 C 230,170 240,173 250,174 L 250,248 C 242,248 234,249 228,248 C 226,220 224,190 222,165 Z M 278,165 C 270,170 260,173 250,174 L 250,248 C 258,248 266,249 272,248 C 274,220 276,190 278,165 Z" />
+        </clipPath>
+        <clipPath id="backGlutesClip">
+          <path d="M 228,248 C 228,260 226,278 224,296 C 232,298 242,298 248,296 C 249,280 249,260 250,248 C 242,248 234,248 228,248 Z M 272,248 C 272,260 274,278 276,296 C 268,298 258,298 252,296 C 251,280 251,260 250,248 C 258,248 266,248 272,248 Z" />
+        </clipPath>
+        <clipPath id="backHamstringsClip">
+          <path d="M 224,296 C 220,332 216,364 218,394 C 224,396 242,396 248,394 C 250,370 250,308 250,296 C 242,298 232,298 224,296 Z M 276,296 C 280,332 284,364 282,394 C 276,396 258,396 252,394 C 250,370 250,308 250,296 C 258,298 268,298 276,296 Z" />
+        </clipPath>
       </defs>
       
       <g transform={transformStr} style={{ transition: "transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)" }}>
-        {/* High-fidelity 3D Body Model Image */}
+        {/* Layer 1: High-fidelity 3D Body Model PNG */}
         <image
           href={bodyModel.href}
           x={bodyModel.x}
@@ -320,13 +333,13 @@ const MuscleSilhouette = ({ highlight = "legs", exerciseName = "", view = "front
           }}
         />
         
-        {/* Clipped group to ensure no green highlight overflows the silhouette boundary */}
+        {/* Layer 2: Clipped soft green fills inside active muscles */}
         <g clipPath="url(#bodyClip)">
           {view === "front" ? (
             <>
               {/* Head & Neck (transparent) */}
-              <path d="M 250,64 C 243,64 236,68 236,78 C 236,88 234,88 234,92 C 234,96 238,98 241,102 C 245,98 249,98 250,98 C 251,98 255,98 259,102 C 262,98 266,96 266,92 C 266,88 264,88 264,78 C 264,68 257,64 250,64 Z" fill="transparent" stroke="transparent" strokeWidth="0" />
-              <path d="M 241,102 C 241,108 236,114 228,122 L 235,122 C 242,116 247,112 250,112 C 253,112 258,116 265,122 L 272,122 C 264,114 259,108 259,102 Z" fill="transparent" stroke="transparent" strokeWidth="0" />
+              <path d="M 250,64 C 243,64 236,68 236,78 C 236,88 234,88 234,92 C 234,96 238,98 241,102 C 245,98 249,98 250,98 C 251,98 255,98 259,102 C 262,98 266,96 266,92 C 266,88 264,88 264,78 C 264,68 257,64 250,64 Z" fill="transparent" stroke="none" />
+              <path d="M 241,102 C 241,108 236,114 228,122 L 235,122 C 242,116 247,112 250,112 C 253,112 258,116 265,122 L 272,122 C 264,114 259,108 259,102 Z" fill="transparent" stroke="none" />
 
               {/* Chest (Pectorals separated left & right) */}
               <path 
@@ -367,8 +380,8 @@ const MuscleSilhouette = ({ highlight = "legs", exerciseName = "", view = "front
           ) : (
             <>
               {/* Head & Neck (transparent) */}
-              <path d="M 250,64 C 243,64 236,68 236,78 C 236,88 234,88 234,92 C 234,96 238,98 241,102 C 245,98 249,98 250,98 C 251,98 255,98 259,102 C 262,98 266,96 266,92 C 266,88 264,88 264,78 C 264,68 257,64 250,64 Z" fill="transparent" stroke="transparent" strokeWidth="0" />
-              <path d="M 241,102 C 241,108 236,114 228,122 L 235,122 C 242,116 247,112 250,112 C 253,112 258,116 265,122 L 272,122 C 264,114 259,108 259,102 Z" fill="transparent" stroke="transparent" strokeWidth="0" />
+              <path d="M 250,64 C 243,64 236,68 236,78 C 236,88 234,88 234,92 C 234,96 238,98 241,102 C 245,98 249,98 250,98 C 251,98 255,98 259,102 C 262,98 266,96 266,92 C 266,88 264,88 264,78 C 264,68 257,64 250,64 Z" fill="transparent" stroke="none" />
+              <path d="M 241,102 C 241,108 236,114 228,122 L 235,122 C 242,116 247,112 250,112 C 253,112 258,116 265,122 L 272,122 C 264,114 259,108 259,102 Z" fill="transparent" stroke="none" />
 
               {/* Upper Back (Traps & Lats separated left & right) */}
               <path 
@@ -414,6 +427,224 @@ const MuscleSilhouette = ({ highlight = "legs", exerciseName = "", view = "front
             </>
           )}
         </g>
+
+        {/* Layer 3: High-fidelity black SVG drawing lines rendered on top to define all muscle contours */}
+        <image
+          href={view === "back" ? "/athletic_body_back.svg" : "/athletic_body.svg"}
+          x={bodyModel.x}
+          y="64"
+          width={bodyModel.width}
+          height={bodyModel.height}
+          style={{
+            opacity: 0.85,
+            transition: "all 0.3s ease",
+            pointerEvents: "none"
+          }}
+        />
+
+        {/* Layer 4: Green glowing lines specifically for the active muscle groups using clipping masks */}
+        {view === "front" ? (
+          <>
+            {isHighlighted(["chest", "pecho"]) && (
+              <g clipPath="url(#chestClip)">
+                <image
+                  href="/athletic_body.svg"
+                  x={bodyModel.x}
+                  y="64"
+                  width={bodyModel.width}
+                  height={bodyModel.height}
+                  style={{
+                    filter: "invert(62%) sepia(47%) saturate(1313%) hue-rotate(120deg) brightness(96%) contrast(92%) drop-shadow(0 0 3px #34d399)",
+                    pointerEvents: "none"
+                  }}
+                />
+              </g>
+            )}
+            {isHighlighted(["shoulders", "hombros"]) && (
+              <g clipPath="url(#shouldersClip)">
+                <image
+                  href="/athletic_body.svg"
+                  x={bodyModel.x}
+                  y="64"
+                  width={bodyModel.width}
+                  height={bodyModel.height}
+                  style={{
+                    filter: "invert(62%) sepia(47%) saturate(1313%) hue-rotate(120deg) brightness(96%) contrast(92%) drop-shadow(0 0 3px #34d399)",
+                    pointerEvents: "none"
+                  }}
+                />
+              </g>
+            )}
+            {isHighlighted(["arms", "biceps", "bíceps"]) && (
+              <g clipPath="url(#armsClip)">
+                <image
+                  href="/athletic_body.svg"
+                  x={bodyModel.x}
+                  y="64"
+                  width={bodyModel.width}
+                  height={bodyModel.height}
+                  style={{
+                    filter: "invert(62%) sepia(47%) saturate(1313%) hue-rotate(120deg) brightness(96%) contrast(92%) drop-shadow(0 0 3px #34d399)",
+                    pointerEvents: "none"
+                  }}
+                />
+              </g>
+            )}
+            {isHighlighted(["core", "abs", "abdomen"]) && (
+              <g clipPath="url(#coreClip)">
+                <image
+                  href="/athletic_body.svg"
+                  x={bodyModel.x}
+                  y="64"
+                  width={bodyModel.width}
+                  height={bodyModel.height}
+                  style={{
+                    filter: "invert(62%) sepia(47%) saturate(1313%) hue-rotate(120deg) brightness(96%) contrast(92%) drop-shadow(0 0 3px #34d399)",
+                    pointerEvents: "none"
+                  }}
+                />
+              </g>
+            )}
+            {isHighlighted(["legs", "quads", "cuádriceps"]) && (
+              <g clipPath="url(#legsQuadsClip)">
+                <image
+                  href="/athletic_body.svg"
+                  x={bodyModel.x}
+                  y="64"
+                  width={bodyModel.width}
+                  height={bodyModel.height}
+                  style={{
+                    filter: "invert(62%) sepia(47%) saturate(1313%) hue-rotate(120deg) brightness(96%) contrast(92%) drop-shadow(0 0 3px #34d399)",
+                    pointerEvents: "none"
+                  }}
+                />
+              </g>
+            )}
+            {isHighlighted(["legs", "calves", "gemelos", "pantorrillas"]) && (
+              <g clipPath="url(#legsCalvesClip)">
+                <image
+                  href="/athletic_body.svg"
+                  x={bodyModel.x}
+                  y="64"
+                  width={bodyModel.width}
+                  height={bodyModel.height}
+                  style={{
+                    filter: "invert(62%) sepia(47%) saturate(1313%) hue-rotate(120deg) brightness(96%) contrast(92%) drop-shadow(0 0 3px #34d399)",
+                    pointerEvents: "none"
+                  }}
+                />
+              </g>
+            )}
+          </>
+        ) : (
+          <>
+            {isHighlighted(["back", "espalda", "lats", "dorsales", "traps", "trapecios"]) && (
+              <g clipPath="url(#backUpperClip)">
+                <image
+                  href="/athletic_body_back.svg"
+                  x={bodyModel.x}
+                  y="64"
+                  width={bodyModel.width}
+                  height={bodyModel.height}
+                  style={{
+                    filter: "invert(62%) sepia(47%) saturate(1313%) hue-rotate(120deg) brightness(96%) contrast(92%) drop-shadow(0 0 3px #34d399)",
+                    pointerEvents: "none"
+                  }}
+                />
+              </g>
+            )}
+            {isHighlighted(["back", "espalda", "lower_back", "lumbares"]) && (
+              <g clipPath="url(#backLowerClip)">
+                <image
+                  href="/athletic_body_back.svg"
+                  x={bodyModel.x}
+                  y="64"
+                  width={bodyModel.width}
+                  height={bodyModel.height}
+                  style={{
+                    filter: "invert(62%) sepia(47%) saturate(1313%) hue-rotate(120deg) brightness(96%) contrast(92%) drop-shadow(0 0 3px #34d399)",
+                    pointerEvents: "none"
+                  }}
+                />
+              </g>
+            )}
+            {isHighlighted(["shoulders", "hombros"]) && (
+              <g clipPath="url(#shouldersClip)">
+                <image
+                  href="/athletic_body_back.svg"
+                  x={bodyModel.x}
+                  y="64"
+                  width={bodyModel.width}
+                  height={bodyModel.height}
+                  style={{
+                    filter: "invert(62%) sepia(47%) saturate(1313%) hue-rotate(120deg) brightness(96%) contrast(92%) drop-shadow(0 0 3px #34d399)",
+                    pointerEvents: "none"
+                  }}
+                />
+              </g>
+            )}
+            {isHighlighted(["arms", "triceps", "tríceps"]) && (
+              <g clipPath="url(#armsClip)">
+                <image
+                  href="/athletic_body_back.svg"
+                  x={bodyModel.x}
+                  y="64"
+                  width={bodyModel.width}
+                  height={bodyModel.height}
+                  style={{
+                    filter: "invert(62%) sepia(47%) saturate(1313%) hue-rotate(120deg) brightness(96%) contrast(92%) drop-shadow(0 0 3px #34d399)",
+                    pointerEvents: "none"
+                  }}
+                />
+              </g>
+            )}
+            {isHighlighted(["legs", "glutes", "glúteos"]) && (
+              <g clipPath="url(#backGlutesClip)">
+                <image
+                  href="/athletic_body_back.svg"
+                  x={bodyModel.x}
+                  y="64"
+                  width={bodyModel.width}
+                  height={bodyModel.height}
+                  style={{
+                    filter: "invert(62%) sepia(47%) saturate(1313%) hue-rotate(120deg) brightness(96%) contrast(92%) drop-shadow(0 0 3px #34d399)",
+                    pointerEvents: "none"
+                  }}
+                />
+              </g>
+            )}
+            {isHighlighted(["legs", "hamstrings", "isquiotibiales", "femoral"]) && (
+              <g clipPath="url(#backHamstringsClip)">
+                <image
+                  href="/athletic_body_back.svg"
+                  x={bodyModel.x}
+                  y="64"
+                  width={bodyModel.width}
+                  height={bodyModel.height}
+                  style={{
+                    filter: "invert(62%) sepia(47%) saturate(1313%) hue-rotate(120deg) brightness(96%) contrast(92%) drop-shadow(0 0 3px #34d399)",
+                    pointerEvents: "none"
+                  }}
+                />
+              </g>
+            )}
+            {isHighlighted(["legs", "calves", "gemelos", "pantorrillas"]) && (
+              <g clipPath="url(#legsCalvesClip)">
+                <image
+                  href="/athletic_body_back.svg"
+                  x={bodyModel.x}
+                  y="64"
+                  width={bodyModel.width}
+                  height={bodyModel.height}
+                  style={{
+                    filter: "invert(62%) sepia(47%) saturate(1313%) hue-rotate(120deg) brightness(96%) contrast(92%) drop-shadow(0 0 3px #34d399)",
+                    pointerEvents: "none"
+                  }}
+                />
+              </g>
+            )}
+          </>
+        )}
       </g>
     </svg>
   );
