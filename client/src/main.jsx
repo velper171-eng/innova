@@ -15,5 +15,14 @@ if ('serviceWorker' in navigator) {
       .then(reg => console.log('Service Worker registered successfully:', reg.scope))
       .catch(err => console.log('Service Worker registration failed:', err));
   });
+
+  // Reload the page when a new service worker takes over control
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!refreshing) {
+      refreshing = true;
+      window.location.reload();
+    }
+  });
 }
 
