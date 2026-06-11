@@ -1693,7 +1693,7 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
                                 outline: "none"
                               }}
                             >
-                              {isEaten ? "✓ Consumido" : "⚪ Marcar como comido"}
+                              {isEaten ? "✓ Consumido" : "⚪ Consumido"}
                             </button>
                           )}
                         </div>
