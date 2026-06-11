@@ -149,6 +149,42 @@ const compressImage = (file, maxWidth = 1024, maxHeight = 1024, quality = 0.8) =
   });
 };
 
+const PORTION_VALUES = {
+  lacteos: { kcal: 75, prot: 10.0, carbs: 3.9, fat: 1.9 },
+  sustitutos: { kcal: 75, prot: 6.5, carbs: 0.8, fat: 5.0 },
+  carnes: { kcal: 85, prot: 18.5, carbs: 0.0, fat: 1.0 },
+  harinas: { kcal: 95, prot: 2.0, carbs: 20.0, fat: 0.5 },
+  frutas: { kcal: 60, prot: 0.8, carbs: 15.0, fat: 0.2 },
+  verduras: { kcal: 25, prot: 1.0, carbs: 5.0, fat: 0.1 },
+  nueces: { kcal: 58, prot: 1.5, carbs: 2.2, fat: 4.8 },
+  grasas: { kcal: 48, prot: 0.0, carbs: 0.0, fat: 5.0 }
+};
+
+const getMealNutrients = (meal) => {
+  let calories = 0;
+  let protein = 0;
+  let carbs = 0;
+  let fat = 0;
+  if (meal && meal.portions) {
+    Object.entries(meal.portions).forEach(([key, val]) => {
+      const multiplier = parseFloat(val) || 0;
+      const portionVal = PORTION_VALUES[key];
+      if (portionVal && multiplier > 0) {
+        calories += portionVal.kcal * multiplier;
+        protein += portionVal.prot * multiplier;
+        carbs += portionVal.carbs * multiplier;
+        fat += portionVal.fat * multiplier;
+      }
+    });
+  }
+  return {
+    calories: Math.round(calories),
+    protein: Math.round(protein * 10) / 10,
+    carbs: Math.round(carbs * 10) / 10,
+    fat: Math.round(fat * 10) / 10
+  };
+};
+
 const CalorieCounter = ({ patientId, isAdminMode = false }) => {
   // Navigation tabs: "diary" | "plan" | "products"
   const [subTab, setSubTab] = useState("diary");
@@ -730,6 +766,50 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
     }
   };
 
+  const handleToggleMealEaten = async (meal) => {
+    const logName = `[Plan] ${meal.name}`;
+    const existingLog = filteredLogs.find(log => log.foodName === logName);
+
+    if (existingLog) {
+      try {
+        const res = await fetch(`${API_BASE}/calories/logs/${existingLog.id}`, {
+          method: "DELETE",
+        });
+        if (res.ok) {
+          fetchLogs();
+        }
+      } catch (err) {
+        console.error("Error deleting meal plan log:", err);
+      }
+    } else {
+      const nutrients = getMealNutrients(meal);
+      try {
+        const res = await fetch(`${API_BASE}/patients/${patientId}/calories/logs`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            date: selectedDate,
+            foodName: logName,
+            calories: nutrients.calories,
+            protein: nutrients.protein,
+            carbs: nutrients.carbs,
+            fat: nutrients.fat,
+            sugar: 0,
+            sodium: 0,
+            ingredients: `Consumido desde el plan: ${meal.name}\n${meal.foods}`,
+            preparation: "Asignado automáticamente",
+            imagePath: null
+          }),
+        });
+        if (res.ok) {
+          fetchLogs();
+        }
+      } catch (err) {
+        console.error("Error logging meal plan meal:", err);
+      }
+    }
+  };
+
   // Filter logs by selected date
   const filteredLogs = logs.filter(log => log.date === selectedDate);
   const totalCaloriesToday = filteredLogs.reduce((sum, log) => sum + log.calories, 0);
@@ -1224,30 +1304,39 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
         <div className="animate-fade-in" style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
           
           {/* Plan Management Header Control */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+          {isAdminMode ? (
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+              <div>
+                <h3 className="glow-text" style={{ fontSize: "1.3rem", margin: 0 }}>Gestión del Plan de Nutrición</h3>
+                <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", margin: 0, marginTop: "2px" }}>
+                  Genera, activa o elimina planes alimenticios basados en el objetivo antropométrico del atleta.
+                </p>
+              </div>
+              {activePlan && (
+                <button
+                  className="btn btn-primary"
+                  onClick={() => setShowGeneratorForm(!showGeneratorForm)}
+                  style={{ padding: "8px 16px", fontSize: "0.8rem", borderRadius: "20px", background: showGeneratorForm ? "rgba(255,255,255,0.05)" : "var(--primary)", borderColor: "var(--primary)" }}
+                >
+                  {showGeneratorForm ? "📋 Ver Plan Activo" : "➕ Crear Nuevo Plan"}
+                </button>
+              )}
+            </div>
+          ) : (
             <div>
-              <h3 className="glow-text" style={{ fontSize: "1.3rem", margin: 0 }}>Gestión del Plan de Nutrición</h3>
+              <h3 className="glow-text" style={{ fontSize: "1.3rem", margin: 0 }}>Mi Plan de Alimentación</h3>
               <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", margin: 0, marginTop: "2px" }}>
-                Genera, activa o elimina planes alimenticios basados en el objetivo antropométrico del atleta.
+                Comidas sugeridas por tu entrenador para tu objetivo físico diario.
               </p>
             </div>
-            {activePlan && (
-              <button
-                className="btn btn-primary"
-                onClick={() => setShowGeneratorForm(!showGeneratorForm)}
-                style={{ padding: "8px 16px", fontSize: "0.8rem", borderRadius: "20px", background: showGeneratorForm ? "rgba(255,255,255,0.05)" : "var(--primary)", borderColor: "var(--primary)" }}
-              >
-                {showGeneratorForm ? "📋 Ver Plan Activo" : "➕ Crear Nuevo Plan"}
-              </button>
-            )}
-          </div>
+          )}
 
           {loadingPlan ? (
             <div className="glass-card" style={{ display: "flex", justifyContent: "center", padding: "40px", color: "var(--text-muted)" }}>
               <span>Buscando plan de alimentación activo...</span>
             </div>
-          ) : (showGeneratorForm || !activePlan) ? (
-            // Setup Form block (if toggled open OR if there's no active plan)
+          ) : (showGeneratorForm || !activePlan) && isAdminMode ? (
+            // Setup Form block (if toggled open OR if there's no active plan) - ONLY for coach
             <form onSubmit={handleGenerateMealPlan} className="glass-card animate-fade-in" style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
               <div style={{ borderBottom: "1px solid var(--border-color)", paddingBottom: "12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div>
@@ -1413,8 +1502,8 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
                 {generatingPlan ? "Generando Pautas y Distribuyendo..." : "⚡ Generar Plan de Alimentación y Pautas"}
               </button>
             </form>
-          ) : (
-            // Active Plan view (if not showing generator form and an active plan exists)
+          ) : activePlan ? (
+            // Active Plan view
             <>
               {/* Profile Metabolic Dashboard */}
               <div className="glass-card" style={{ display: "grid", gridTemplateColumns: "1fr 1.5fr", gap: "20px" }}>
@@ -1539,112 +1628,158 @@ const CalorieCounter = ({ patientId, isAdminMode = false }) => {
                 </p>
 
                 <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-                  {activePlan.planJson?.meals?.map((meal, idx) => (
-                    <div
-                      key={idx}
-                      style={{
-                        background: "rgba(255,255,255,0.01)",
-                        border: "1px solid var(--border-color)",
-                        borderRadius: "12px",
-                        padding: "16px",
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "10px"
-                      }}
-                    >
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "6px" }}>
-                        <h5 style={{ fontSize: "1.05rem", color: "var(--text-main)", fontWeight: 700, margin: 0 }}>
-                          🍽️ {meal.name}
-                        </h5>
-                        <span style={{ fontSize: "0.8rem", color: "var(--primary)", fontWeight: "bold", background: "var(--primary-glow)", padding: "2px 8px", borderRadius: "10px" }}>
-                          ⏱️ {meal.time}
-                        </span>
-                      </div>
+                  {activePlan.planJson?.meals?.map((meal, idx) => {
+                    const logName = `[Plan] ${meal.name}`;
+                    const isEaten = filteredLogs.some(log => log.foodName === logName);
+                    const nutrients = getMealNutrients(meal);
+                    return (
+                      <div
+                        key={idx}
+                        style={{
+                          background: "rgba(255,255,255,0.01)",
+                          border: isEaten ? "1.5px solid var(--primary)" : "1px solid var(--border-color)",
+                          borderRadius: "12px",
+                          padding: "16px",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "10px",
+                          boxShadow: isEaten ? "0 0 10px rgba(0, 128, 128, 0.08)" : "none",
+                          transition: "all var(--transition-fast)"
+                        }}
+                      >
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "6px" }}>
+                          <h5 style={{ fontSize: "1.05rem", color: "var(--text-main)", fontWeight: 700, margin: 0, display: "flex", alignItems: "center", gap: "6px" }}>
+                            {isEaten ? "✅" : "🍽️"} {meal.name}
+                          </h5>
+                          <span style={{ fontSize: "0.8rem", color: "var(--primary)", fontWeight: "bold", background: "var(--primary-glow)", padding: "2px 8px", borderRadius: "10px" }}>
+                            ⏱️ {meal.time}
+                          </span>
+                        </div>
 
-                      <div style={{ fontSize: "0.85rem", color: "var(--text-muted)", background: "rgba(0,0,0,0.1)", padding: "10px", borderRadius: "8px" }}>
-                        <strong>Porciones: </strong>
-                        {Object.entries(meal.portions || {})
-                          .filter(([_, val]) => val > 0)
-                          .map(([key, val]) => `${val} ${key}`)
-                          .join(" | ") || "Sin porciones registradas"}
-                      </div>
+                        <div style={{ fontSize: "0.85rem", color: "var(--text-muted)", background: "rgba(0,0,0,0.1)", padding: "10px", borderRadius: "8px" }}>
+                          <strong>Porciones: </strong>
+                          {Object.entries(meal.portions || {})
+                            .filter(([_, val]) => val > 0)
+                            .map(([key, val]) => `${val} ${key}`)
+                            .join(" | ") || "Sin porciones registradas"}
+                        </div>
 
-                      <div style={{ fontSize: "0.9rem", color: "var(--text-main)", whiteSpace: "pre-line", lineHeight: "1.4", paddingLeft: "6px" }}>
-                        {meal.foods}
+                        <div style={{ fontSize: "0.9rem", color: "var(--text-main)", whiteSpace: "pre-line", lineHeight: "1.4", paddingLeft: "6px" }}>
+                          {meal.foods}
+                        </div>
+
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid var(--border-color)", paddingTop: "10px", marginTop: "4px", flexWrap: "wrap", gap: "8px" }}>
+                          <div style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
+                            <strong>{nutrients.calories} kcal</strong> | P: {nutrients.protein}g | C: {nutrients.carbs}g | G: {nutrients.fat}g
+                          </div>
+                          {!isAdminMode && (
+                            <button
+                              type="button"
+                              onClick={() => handleToggleMealEaten(meal)}
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "6px",
+                                padding: "6px 12px",
+                                borderRadius: "20px",
+                                fontSize: "0.78rem",
+                                fontWeight: 700,
+                                cursor: "pointer",
+                                transition: "all var(--transition-fast)",
+                                border: "1px solid",
+                                background: isEaten ? "var(--primary-glow)" : "transparent",
+                                color: isEaten ? "var(--primary)" : "var(--text-muted)",
+                                borderColor: isEaten ? "var(--primary)" : "var(--border-color)",
+                                outline: "none"
+                              }}
+                            >
+                              {isEaten ? "✓ Consumido" : "⚪ Marcar como comido"}
+                            </button>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             </>
+          ) : (
+            // No active plan and !isAdminMode (athlete with no plan assigned)
+            <div className="glass-card" style={{ padding: "40px", textAlign: "center", color: "var(--text-muted)", display: "flex", flexDirection: "column", gap: "10px", alignItems: "center" }}>
+              <span style={{ fontSize: "2rem" }}>📋</span>
+              <h4 style={{ margin: 0, color: "var(--text-main)", fontWeight: 700 }}>Sin Plan Activo</h4>
+              <p style={{ fontSize: "0.85rem", maxWidth: "300px", margin: 0 }}>No tienes un plan de alimentación activo asignado en este momento. Contacta a tu entrenador.</p>
+            </div>
           )}
 
           {/* Meal Plans History Section */}
-          <div className="glass-card" style={{ marginTop: "20px" }}>
-            <h4 className="glow-text" style={{ fontSize: "1.2rem", marginBottom: "12px" }}>Historial de Planes Nutricionales</h4>
-            {planHistory.length === 0 ? (
-              <div style={{ color: "var(--text-muted)", fontStyle: "italic", textAlign: "center", padding: "20px" }}>
-                No hay planes en el historial. Crea uno para comenzar.
-              </div>
-            ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                {planHistory.map((plan) => {
-                  const isPlanActive = activePlan && activePlan.id === plan.id;
-                  return (
-                    <div
-                      key={plan.id}
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        padding: "12px 16px",
-                        background: isPlanActive ? "rgba(0, 242, 254, 0.03)" : "rgba(255,255,255,0.01)",
-                        border: `1px solid ${isPlanActive ? "var(--primary)" : "var(--border-color)"}`,
-                        borderRadius: "12px",
-                        gap: "12px",
-                        flexWrap: "wrap"
-                      }}
-                    >
-                      <div style={{ flex: 1, minWidth: "200px" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                          <strong style={{ color: "var(--text-main)", fontSize: "0.95rem" }}>{plan.name}</strong>
-                          {isPlanActive ? (
-                            <span style={{ fontSize: "0.7rem", color: "var(--success)", background: "rgba(16,185,129,0.15)", padding: "2px 8px", borderRadius: "10px", fontWeight: "bold" }}>
-                              Activo
-                            </span>
-                          ) : null}
+          {isAdminMode && (
+            <div className="glass-card" style={{ marginTop: "20px" }}>
+              <h4 className="glow-text" style={{ fontSize: "1.2rem", marginBottom: "12px" }}>Historial de Planes Nutricionales</h4>
+              {planHistory.length === 0 ? (
+                <div style={{ color: "var(--text-muted)", fontStyle: "italic", textAlign: "center", padding: "20px" }}>
+                  No hay planes en el historial. Crea uno para comenzar.
+                </div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                  {planHistory.map((plan) => {
+                    const isPlanActive = activePlan && activePlan.id === plan.id;
+                    return (
+                      <div
+                        key={plan.id}
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          padding: "12px 16px",
+                          background: isPlanActive ? "rgba(0, 242, 254, 0.03)" : "rgba(255,255,255,0.01)",
+                          border: `1px solid ${isPlanActive ? "var(--primary)" : "var(--border-color)"}`,
+                          borderRadius: "12px",
+                          gap: "12px",
+                          flexWrap: "wrap"
+                        }}
+                      >
+                        <div style={{ flex: 1, minWidth: "200px" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                            <strong style={{ color: "var(--text-main)", fontSize: "0.95rem" }}>{plan.name}</strong>
+                            {isPlanActive ? (
+                              <span style={{ fontSize: "0.7rem", color: "var(--success)", background: "rgba(16,185,129,0.15)", padding: "2px 8px", borderRadius: "10px", fontWeight: "bold" }}>
+                                Activo
+                              </span>
+                            ) : null}
+                          </div>
+                          <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "4px" }}>
+                            Calorías: <strong style={{ color: "var(--text-main)" }}>{plan.calories} kcal</strong> | Objetivo: <strong>{
+                              plan.goal === "hypertrophy" ? "Aumento de Masa (6 comidas)" :
+                              plan.goal === "fat_loss" ? "Pérdida de Grasa (4 comidas)" : "Mantenimiento (5 comidas)"
+                            }</strong>
+                          </div>
                         </div>
-                        <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "4px" }}>
-                          Calorías: <strong style={{ color: "var(--text-main)" }}>{plan.calories} kcal</strong> | Objetivo: <strong>{
-                            plan.goal === "hypertrophy" ? "Aumento de Masa (6 comidas)" :
-                            plan.goal === "fat_loss" ? "Pérdida de Grasa (4 comidas)" : "Mantenimiento (5 comidas)"
-                          }</strong>
-                        </div>
-                      </div>
-                      <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                        {!isPlanActive && (
+                        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                          {!isPlanActive && (
+                            <button
+                              className="btn btn-secondary"
+                              onClick={() => handleActivateMealPlan(plan.id)}
+                              style={{ padding: "6px 12px", fontSize: "0.75rem", borderRadius: "10px" }}
+                            >
+                              ✓ Activar
+                            </button>
+                          )}
                           <button
-                            className="btn btn-secondary"
-                            onClick={() => handleActivateMealPlan(plan.id)}
-                            style={{ padding: "6px 12px", fontSize: "0.75rem", borderRadius: "10px" }}
+                            className="btn"
+                            onClick={() => handleDeleteMealPlan(plan.id)}
+                            style={{ padding: "6px 10px", fontSize: "0.75rem", background: "rgba(244,63,94,0.05)", color: "var(--error)", border: "1px solid rgba(244,63,94,0.15)", borderRadius: "10px" }}
                           >
-                            ✓ Activar
+                            🗑️
                           </button>
-                        )}
-                        <button
-                          className="btn"
-                          onClick={() => handleDeleteMealPlan(plan.id)}
-                          style={{ padding: "6px 10px", fontSize: "0.75rem", background: "rgba(244,63,94,0.05)", color: "var(--error)", border: "1px solid rgba(244,63,94,0.15)", borderRadius: "10px" }}
-                        >
-                          🗑️
-                        </button>
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 

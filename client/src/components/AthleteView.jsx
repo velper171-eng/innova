@@ -599,57 +599,7 @@ const AthleteView = ({ patientId, onBack, isPublicShare = false }) => {
           <section className="glass-card">
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
               <h4 className="glow-text" style={{ fontSize: "1.2rem" }}>Mi Inventario de Suplementos</h4>
-              {!isPublicShare && (
-                <button
-                  className="btn btn-primary"
-                  style={{ padding: "6px 12px", fontSize: "0.8rem" }}
-                  onClick={() => setIsAddingSupplement(!isAddingSupplement)}
-                >
-                  {isAddingSupplement ? "Cancelar" : "+ Agregar"}
-                </button>
-              )}
             </div>
-
-            {/* Add supplement form */}
-            {isAddingSupplement && (
-              <form onSubmit={handleAddSupplement} style={{ marginBottom: "20px", padding: "16px", background: "var(--bg-main)", border: "1px solid var(--border-color)", borderRadius: "12px", display: "flex", flexDirection: "column", gap: "12px" }}>
-                <div className="grid-2-cols" style={{ gap: "12px" }}>
-                  <div className="form-group">
-                    <label className="form-label">Nombre *</label>
-                    <input type="text" className="form-input" value={newSupName} onChange={(e) => setNewSupName(e.target.value)} placeholder="Ej. Creatina" required />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Marca</label>
-                    <input type="text" className="form-input" value={newSupBrand} onChange={(e) => setNewSupBrand(e.target.value)} placeholder="Ej. Evolufit" />
-                  </div>
-                </div>
-                <div className="grid-3-cols" style={{ gap: "12px" }}>
-                  <div className="form-group">
-                    <label className="form-label">Capacidad Total *</label>
-                    <input type="number" className="form-input" value={newSupCap} onChange={(e) => setNewSupCap(e.target.value)} placeholder="300" required />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Cant. Restante *</label>
-                    <input type="number" className="form-input" value={newSupRem} onChange={(e) => setNewSupRem(e.target.value)} placeholder="300" required />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Unidad</label>
-                    <select className="form-select" value={newSupUnit} onChange={(e) => setNewSupUnit(e.target.value)}>
-                      <option value="g">gramos (g)</option>
-                      <option value="caps">cápsulas</option>
-                      <option value="scoops">scoops</option>
-                    </select>
-                  </div>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Enlace Recompra (WhatsApp / Tienda)</label>
-                  <input type="url" className="form-input" value={newSupLink} onChange={(e) => setNewSupLink(e.target.value)} placeholder="https://wa.me/..." />
-                </div>
-                <button type="submit" className="btn btn-primary" style={{ alignSelf: "flex-end" }}>
-                  Agregar al Stock
-                </button>
-              </form>
-            )}
 
             {/* Inventory list */}
             {supplements.length === 0 ? (
@@ -755,12 +705,6 @@ const AthleteView = ({ patientId, onBack, isPublicShare = false }) => {
           <SomatotypeBodyVisualizer
             evaluations={patientDetail.evaluations || []}
             activeTab={athleteTab === "somatotype" ? "anthropometry" : athleteTab}
-            setActiveTab={(tab) => {
-              if (tab === "anthropometry") setAthleteTab("somatotype");
-              else if (tab === "nutrition") setAthleteTab("calories");
-              else if (tab === "training") setAthleteTab("training");
-              else if (tab === "supplementation") setAthleteTab("supplements");
-            }}
           />
 
           {/* Body Trend Chart */}
